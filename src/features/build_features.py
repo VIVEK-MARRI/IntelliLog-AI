@@ -9,25 +9,39 @@ def validate_columns(df):
         raise ValueError(f"Missing columns in input data: {missing}")
 
 def build_features(df: pd.DataFrame):
-    """Feature engineering pipeline for IntelliLog-AI."""
-    validate_columns(df)
+    """Feature engineering pipeline for IntelliLog-AI.
+    Works for both training (with target) and inference (without target).
+    """
     df = df.copy()
-    if not pd.api.types.is_datetime64_any_dtype(df["order_time"]):
-        df["order_time"] = pd.to_datetime(df["order_time"])
+    if not pd.api.types.is_datetime64_any_dtype(df.get("order_time", pd.Series(dtype="datetime64[ns]"))):
+        if "order_time" in df.columns:
+            df["order_time"] = pd.to_datetime(df["order_time"], errors="coerce")
+        else:
+            # Use a dummy timestamp if order_time not provided
+            df["order_time"] = pd.Timestamp.now()
 
+    # time-based features
     df["hour"] = df["order_time"].dt.hour
     df["day_of_week"] = df["order_time"].dt.dayofweek
-    df["traffic_enc"] = df["traffic"].map({"low":0,"medium":1,"high":2})
-    df["weather_enc"] = df["weather"].map({"clear":0,"rain":1,"storm":2})
-    df["order_type_enc"] = df["order_type"].map({"normal":0,"express":1})
+
+    # encode categorical
+    df["traffic_enc"] = df["traffic"].map({"low": 0, "medium": 1, "high": 2})
+    df["weather_enc"] = df["weather"].map({"clear": 0, "rain": 1, "storm": 2})
+    df["order_type_enc"] = df["order_type"].map({"normal": 0, "express": 1})
+
+    # interaction features
     df["dist_x_traffic"] = df["distance_km"] * (1 + 0.3 * df["traffic_enc"])
 
+    # define feature list
     features = [
-        "distance_km","hour","day_of_week",
-        "traffic_enc","weather_enc","order_type_enc","dist_x_traffic"
+        "distance_km", "hour", "day_of_week",
+        "traffic_enc", "weather_enc", "order_type_enc", "dist_x_traffic"
     ]
-    target = "delivery_time_min"
+    
+    target = "delivery_time_min" if "delivery_time_min" in df.columns else None
+
     return df, features, target
+
 
 
 def main(input_csv="data/raw_orders.csv", out_dir="data/processed"):
