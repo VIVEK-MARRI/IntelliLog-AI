@@ -1,1 +1,31 @@
-ECHO is on.
+# Core ML + Data
+pandas==2.1.1
+numpy==1.26.4
+scikit-learn==1.3.2
+xgboost==2.0.3
+joblib==1.3.2
+
+# Optimization & Graph
+networkx==3.1
+ortools==9.9.3963
+
+# API + Dashboard
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+streamlit==1.33.0
+folium==0.16.0
+streamlit-folium==0.14.0
+requests==2.31.0
+
+# Experimentation & Visualization
+jupyterlab==4.2.5
+matplotlib==3.8.2
+seaborn==0.13.2
+plotly==5.24.0
+
+# Utilities
+tqdm==4.66.1
+python-dotenv==1.0.1
+
+# Testing
+pytest==7.4.3
