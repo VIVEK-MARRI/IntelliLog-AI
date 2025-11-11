@@ -1,0 +1,16 @@
+2025-11-11 16:04:03,565 | INFO | ✅ Model loaded successfully from disk.
+2025-11-11 16:28:56,818 | INFO | ✅ Model loaded successfully from disk.
+2025-11-11 16:29:37,427 | INFO | Predicted 4 delivery times successfully.
+2025-11-11 16:29:37,428 | INFO | ✅ Prediction successful for 4 orders.
+2025-11-11 16:29:37,431 | INFO | POST /predict_delivery_time → 200 (0.031s)
+2025-11-11 16:29:43,277 | INFO | Predicted 4 delivery times successfully.
+2025-11-11 16:29:43,281 | INFO | ✅ Route optimization completed using greedy method.
+2025-11-11 16:29:43,282 | INFO | POST /plan_routes → 200 (0.044s)
+2025-11-11 16:29:54,798 | INFO | Metrics checked: CPU=0.0%, Memory=15.6%
+2025-11-11 16:29:54,801 | INFO | GET /metrics → 200 (0.005s)
+2025-11-11 16:30:17,559 | INFO | Predicted 4 delivery times successfully.
+2025-11-11 16:30:17,561 | INFO | ✅ Prediction successful for 4 orders.
+2025-11-11 16:30:17,566 | INFO | POST /predict_delivery_time → 200 (0.027s)
+2025-11-11 16:30:25,384 | INFO | Predicted 4 delivery times successfully.
+2025-11-11 16:30:25,445 | INFO | ✅ Route optimization completed using ortools method.
+2025-11-11 16:30:25,446 | INFO | POST /plan_routes → 200 (0.114s)
