@@ -12,10 +12,8 @@
 
 ## 🌟 Overview
 
-**IntelliLog-AI** is an **end-to-end AI system** that predicts delivery times using machine learning (XGBoost)  
-and optimizes delivery routes using algorithmic optimization (VRP via OR-Tools + heuristics).  
-
-It’s a hybrid **ML + DSA-based logistics engine** designed for **real-world scalability and deployment.**  
+**IntelliLog-AI** is an end-to-end AI system that predicts delivery times using machine learning (**XGBoost**) and optimizes delivery routes using algorithmic optimization (**VRP via OR-Tools + heuristics**).  
+It’s a hybrid **ML + DSA-based logistics engine** designed for **real-world scalability and deployment**.
 
 ---
 
@@ -32,24 +30,26 @@ It’s a hybrid **ML + DSA-based logistics engine** designed for **real-world sc
 
 ## 🏗️ Architecture
 
-                 ┌──────────────────────────┐
-                 │        Frontend          │
-                 │ Streamlit Dashboard      │
-                 │ (User Input + Map + KPIs)│
-                 └────────────┬─────────────┘
-                              │
-                        REST API Calls
-                              │
-                 ┌────────────┴─────────────┐
-                 │        Backend           │
-                 │ FastAPI (XGBoost + VRP)  │
-                 │ ML + Optimization Engine │
-                 └────────────┬─────────────┘
-                              │
-                 ┌────────────┴─────────────┐
-                 │     Model & Data Layer   │
-                 │  XGBoost | OR-Tools | CSV│
-                 └──────────────────────────┘
+```
+┌──────────────────────────┐
+│        Frontend          │
+│ Streamlit Dashboard      │
+│ (User Input + Map + KPIs)│
+└────────────┬─────────────┘
+             │
+       REST API Calls
+             │
+┌────────────┴─────────────┐
+│        Backend           │
+│ FastAPI (XGBoost + VRP)  │
+│ ML + Optimization Engine │
+└────────────┬─────────────┘
+             │
+┌────────────┴─────────────┐
+│     Model & Data Layer   │
+│  XGBoost | OR-Tools | CSV│
+└──────────────────────────┘
+```
 
 ---
 
@@ -73,39 +73,42 @@ It’s a hybrid **ML + DSA-based logistics engine** designed for **real-world sc
 ```bash
 git clone https://github.com/VIVEK-MARRI/IntelliLog-AI.git
 cd IntelliLog-AI
-2️⃣ Build & Run (Dockerized)
+```
+
+### 2️⃣ Build & Run (Dockerized)
+```bash
 docker compose up -d
+```
 
+**API runs on →** http://localhost:8000  
+**Dashboard runs on →** http://localhost:8501  
 
+### 3️⃣ Access the Dashboard
+Open your browser → http://localhost:8501  
 
-API runs on → http://localhost:8000
-
-
-Dashboard runs on → http://localhost:8501
-
-
-3️⃣ Access the Dashboard
-Open your browser → http://localhost:8501
 You’ll see:
+- 📊 Predicted delivery times  
+- 🧭 Optimized delivery routes  
+- 🗺️ Interactive real-time map  
+- 📈 API health metrics & smart insights  
 
+---
 
-📊 Predicted delivery times
+## 🧩 API Endpoints
 
+| Method | Endpoint | Description |
+|:------:|:----------|:-------------|
+| **GET** | `/` or `/health` | API health check |
+| **POST** | `/predict_delivery_time` | Predict delivery time for orders |
+| **POST** | `/plan_routes` | Optimize delivery routes using VRP |
+| **GET** | `/metrics` | API & system performance metrics |
 
-🧭 Optimized delivery routes
+---
 
+### 🧪 Example Request — `/predict_delivery_time`
 
-🗺️ Interactive real-time map
-
-
-📈 API health metrics & smart insights
-
-
-
-🧩 API Endpoints
-MethodEndpointDescriptionGET/API health checkPOST/predict_delivery_timePredict delivery time for ordersPOST/plan_routesOptimize delivery routes using VRPGET/metricsAPI & system performance metrics
-
-🧪 Example Request — /predict_delivery_time
+**Request:**
+```json
 {
   "orders": [
     {
@@ -119,17 +122,23 @@ MethodEndpointDescriptionGET/API health checkPOST/predict_delivery_timePredict d
     }
   ]
 }
+```
 
-Response:
+**Response:**
+```json
 [
   {
     "order_id": "O001",
     "predicted_delivery_time_min": 26.43
   }
 ]
+```
 
+---
 
-📦 Project Structure
+## 📦 Project Structure
+
+```
 IntelliLog-AI/
 ├── src/
 │   ├── api/                # FastAPI backend
@@ -147,25 +156,22 @@ IntelliLog-AI/
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
+```
 
+---
 
-📊 Smart Insights (from Dashboard)
+## 📊 Smart Insights (from Dashboard)
 
+- 🕒 **Average Predicted Time**  
+- 🧭 **Longest Route Distance**  
+- 💨 **Heaviest Route Load**  
+- 🚀 **Reduction in Delivery Delays (~25%)**  
 
-🕒 Average Predicted Time
+---
 
+## 🧰 Development Setup (Without Docker)
 
-🧭 Longest Route Distance
-
-
-💨 Heaviest Route Load
-
-
-🚀 Reduction in Delivery Delays (~25%)
-
-
-
-🧰 Development Setup (Without Docker)
+```bash
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # (Windows: venv\Scripts\activate)
@@ -178,37 +184,31 @@ uvicorn src.api.app:app --reload
 
 # Start dashboard
 streamlit run src/dashboard/app.py
-
-
-🧠 Future Enhancements
-
-
- Integrate real-time GPS tracking (Simulated IoT)
-
-
- Add dynamic traffic & weather data APIs
-
-
- Include SHAP explanations for ML interpretability
-
-
- Deploy to Render / GCP Cloud Run
-
-
- Add authentication (JWT) for API security
-
-
-
-🧾 License
-This project is released under the MIT License.
-Feel free to use, modify, and distribute with attribution.
-
-💡 Author
-Vivek Marri
-📧 vivekmarriofficial@gmail.com
-🌐 GitHub: VIVEK-MARRI
-
-"Where Machine Learning meets Real-World Optimization."
-
+```
 
 ---
+
+## 🧠 Future Enhancements
+
+- Integrate real-time GPS tracking (Simulated IoT)
+- Add dynamic traffic & weather data APIs
+- Include SHAP explanations for ML interpretability
+- Deploy to Render / GCP Cloud Run
+- Add authentication (JWT) for API security
+
+---
+
+## 🧾 License
+
+This project is released under the **MIT License**.  
+Feel free to use, modify, and distribute with attribution.
+
+---
+
+## 💡 Author
+
+**Vivek Marri**  
+📧 vivekmarriofficial@gmail.com  
+🌐 [GitHub: VIVEK-MARRI](https://github.com/VIVEK-MARRI)
+
+> “Where Machine Learning meets Real-World Optimization.”
