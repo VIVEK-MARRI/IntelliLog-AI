@@ -1,49 +1,79 @@
 """
 src/api/app.py
 
-Production-grade FastAPI backend for IntelliLog-AI.
+Production-grade FastAPI backend for IntelliLog-AI v3.1
 
 Endpoints:
 -----------
 1. POST /predict_delivery_time
-   → Predicts delivery time using trained XGBoost model.
+   → Predicts delivery time using trained XGBoost model (ModelEngine).
 
-2. POST /plan_routes
+2. POST /predict_explain
+   → Returns SHAP explainability data for given orders.
+
+3. POST /plan_routes
    → Plans optimized delivery routes using ML + DSA (VRP solver).
 
-3. GET /metrics
+4. GET /live_tracking
+   → Provides simulated live GPS tracking updates for drivers.
+
+5. GET /metrics
    → Provides API performance and system health metrics.
 
-Author: Vivek Yadav
+Author: Vivek Marri
 Project: IntelliLog-AI
+Version: 3.1.0
 """
 
 import os
 import sys
 import time
 import logging
-import psutil
 from datetime import datetime
+from typing import List, Optional
+
 import psutil
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
-from typing import List, Optional
-import pandas as pd
-import joblib
+from fastapi.middleware.cors import CORSMiddleware
 
-# Ensure src path is added
+# Ensure src path is added for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.features.build_features import build_features
+# Local imports
 from src.optimization.vrp_solver import plan_routes
+from src.api.services.ml_engine import ModelEngine
+from src.api.live_tracking import router as live_tracking_router  # 🚀 New import
+
+# -----------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------
+MODEL_PATH = os.path.join("models", "xgb_delivery_time_model.pkl")
+
+# -----------------------------------------------------------
+# Initialize ML Engine
+# -----------------------------------------------------------
+ML_ENGINE = ModelEngine(MODEL_PATH)
 
 # -----------------------------------------------------------
 # App Initialization
 # -----------------------------------------------------------
 app = FastAPI(
     title="IntelliLog-AI API",
-    description="Intelligent Logistics & Delivery Optimization API combining ML + DSA",
-    version="1.1.0"
+    description="AI-based Delivery Time Prediction, Route Optimization & Live Tracking (ML + OR-Tools + XAI)",
+    version="3.1.0",
+)
+
+# -----------------------------------------------------------
+# CORS Setup
+# -----------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production: replace with your Streamlit domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # -----------------------------------------------------------
@@ -55,37 +85,25 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler("logs/api.log"),
-        logging.StreamHandler()
-    ]
+        logging.FileHandler("logs/api.log", encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger("intellog-ai")
 
-# Middleware to log request info
+# -----------------------------------------------------------
+# Middleware for request timing and logging
+# -----------------------------------------------------------
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     process_time = round(time.time() - start_time, 3)
-    logger.info(f"{request.method} {request.url.path} → {response.status_code} ({process_time}s)")
+    logger.info(f"{request.method} {request.url.path} -> {response.status_code} ({process_time}s)")
     return response
 
 # -----------------------------------------------------------
-# Load trained model (only once at startup)
-# -----------------------------------------------------------
-MODEL_PATH = os.path.join("models", "xgb_delivery_time_model.pkl")
-
-if os.path.exists(MODEL_PATH):
-    model_data = joblib.load(MODEL_PATH)
-    model = model_data["model"]
-    features = model_data["features"]
-    logger.info("✅ Model loaded successfully from disk.")
-else:
-    model, features = None, None
-    logger.warning("⚠️ Model not found! Train model before using prediction endpoint.")
-
-# -----------------------------------------------------------
-# Request Models (Pydantic validation)
+# Pydantic Request Models
 # -----------------------------------------------------------
 class Order(BaseModel):
     order_id: str
@@ -105,110 +123,121 @@ class PredictRequest(BaseModel):
 class RoutePlanRequest(BaseModel):
     orders: List[Order]
     drivers: int = 3
-    method: str = "greedy"  # or 'ortools'
+    method: str = "greedy"  # or "ortools"
 
 # -----------------------------------------------------------
-# Utility: Prediction Function
+# Root Endpoint
 # -----------------------------------------------------------
-def predict_delivery_times(df: pd.DataFrame):
-    """Predict delivery times using the trained ML model."""
-    if model is None:
-        logger.error("❌ Model not loaded.")
-        raise HTTPException(status_code=500, detail="Model not loaded on server.")
-
-    df, feat_list, target = build_features(df)
-    preds = model.predict(df[features])
-    logger.info(f"Predicted {len(preds)} delivery times successfully.")
-    return preds.tolist()
-
-# -----------------------------------------------------------
-# API Endpoints
-# -----------------------------------------------------------
-@app.get("/")
+@app.get("/", summary="API Root")
 async def root():
     return {
-        "message": "🚀 IntelliLog-AI API is live!",
-        "version": "1.1.0",
-        "status": "running"
+        "message": "🚀 IntelliLog-AI API is running successfully",
+        "version": "3.1.0",
+        "status": "online",
+        "endpoints": [
+            "/predict_delivery_time",
+            "/predict_explain",
+            "/plan_routes",
+            "/live_tracking",
+            "/metrics",
+        ],
     }
 
-@app.post("/predict_delivery_time")
+# -----------------------------------------------------------
+# Prediction Endpoint
+# -----------------------------------------------------------
+@app.post("/predict_delivery_time", summary="Predict Delivery Time")
 async def predict_delivery_time(req: PredictRequest):
-    """Predict delivery time for each given order."""
     try:
+        if not ML_ENGINE.is_ready():
+            raise HTTPException(status_code=500, detail="Model not loaded on server.")
+
         df = pd.DataFrame([order.dict() for order in req.orders])
-        preds = predict_delivery_times(df)
+        preds = ML_ENGINE.predict(df)
         df["predicted_delivery_time_min"] = preds
+
         logger.info(f"✅ Prediction successful for {len(df)} orders.")
         return df.to_dict(orient="records")
     except Exception as e:
-        logger.exception("Prediction error")
+        logger.exception("Prediction API error:")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/plan_routes")
-async def plan_routes_endpoint(req: RoutePlanRequest):
-    """Plan optimal delivery routes using ML + DSA algorithms."""
+# -----------------------------------------------------------
+# Explainability Endpoint (SHAP)
+# -----------------------------------------------------------
+@app.post("/predict_explain", summary="Explain Predictions (SHAP)")
+async def predict_explain(req: PredictRequest, nsamples: int = 100):
+    """
+    Returns SHAP-based feature contributions for each prediction.
+    """
     try:
+        if not ML_ENGINE.is_ready():
+            raise HTTPException(status_code=500, detail="Model not loaded on server.")
+
+        df = pd.DataFrame([order.dict() for order in req.orders])
+        preds = ML_ENGINE.predict(df)
+        explanation = ML_ENGINE.explain(df, nsamples=nsamples)
+        logger.info("✅ SHAP explanation generated successfully.")
+        return {"predictions": preds, "explanation": explanation}
+    except Exception as e:
+        logger.exception("Explainability API error:")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# -----------------------------------------------------------
+# Route Optimization Endpoint
+# -----------------------------------------------------------
+@app.post("/plan_routes", summary="Plan Optimized Routes")
+async def plan_routes_endpoint(req: RoutePlanRequest):
+    try:
+        if not ML_ENGINE.is_ready():
+            raise HTTPException(status_code=500, detail="Model not loaded on server.")
+
         df = pd.DataFrame([order.dict() for order in req.orders])
 
         def predictor(input_df: pd.DataFrame):
-            return predict_delivery_times(input_df)
+            return ML_ENGINE.predict(input_df)
 
         result = plan_routes(
             orders=df.to_dict(orient="records"),
             drivers=req.drivers,
             method=req.method,
-            model_predictor=predictor
+            model_predictor=predictor,
         )
-        logger.info(f"✅ Route optimization completed using {req.method} method.")
+        logger.info(f"✅ Route optimization completed using method={req.method}.")
         return result
     except Exception as e:
-        logger.exception("Route planning error")
+        logger.exception("Route planning error:")
         raise HTTPException(status_code=500, detail=str(e))
 
 # -----------------------------------------------------------
-# System Health & Metrics Endpoint
+# Register Live Tracking Router
 # -----------------------------------------------------------
-@app.get("/metrics")
-def get_metrics():
-    """Return simple performance and health metrics."""
+app.include_router(live_tracking_router)
+
+# -----------------------------------------------------------
+# Metrics & Health Endpoint
+# -----------------------------------------------------------
+@app.get("/metrics", summary="System & Model Health Metrics")
+async def get_metrics():
     try:
-        cpu_usage = psutil.cpu_percent()
+        cpu_usage = psutil.cpu_percent(interval=0.5)
         mem_usage = psutil.virtual_memory().percent
         uptime = datetime.now().isoformat()
-
-        logger.info(f"Metrics checked: CPU={cpu_usage}%, Memory={mem_usage}%")
 
         return {
             "status": "healthy",
             "timestamp": uptime,
             "cpu_usage": cpu_usage,
             "memory_usage": mem_usage,
-            "model_loaded": model is not None,
-            "active_features": len(features) if features else 0
+            "model_loaded": ML_ENGINE.is_ready(),
+            "cached_predictions": getattr(ML_ENGINE, "_PRED_CACHE", None),
         }
     except Exception as e:
-        logger.exception("Metrics error")
+        logger.exception("Metrics retrieval failed:")
         raise HTTPException(status_code=500, detail=str(e))
-    
-
-@app.get("/metrics")
-async def get_metrics():
-    """System + model health metrics for dashboard monitoring."""
-    cpu = psutil.cpu_percent(interval=0.5)
-    mem = psutil.virtual_memory().percent
-    model_loaded = model is not None
-    active_features = len(features) if features else 0
-    return {
-        "cpu_usage": cpu,
-        "memory_usage": mem,
-        "model_loaded": model_loaded,
-        "active_features": active_features
-    }
-
 
 # -----------------------------------------------------------
-# Run the API
+# Run Server (Development)
 # -----------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
