@@ -1,19 +1,20 @@
 """
 src/optimization/vrp_solver.py
 
-Route optimization utilities for IntelliLog-AI.
+Advanced Route Optimization utilities for IntelliLog-AI.
 
-Provides:
-- haversine: accurate geodesic distance (km)
-- build_distance_matrix: pairwise distance matrix (km) from lat/lon points
-- build_graph: networkx graph with 'weight' attribute in km
-- shortest_path_dijkstra / shortest_path_astar: path finding on graph
-- ortools_vrp: wrapper around OR-Tools to solve VRP (returns routes)
-- greedy_vrp: simple ML-aware greedy assigner (assigns high-risk deliveries first)
-- plan_routes: integrates prediction + optimization for API use
+Features:
+---------
+✅ Accurate haversine-based geodesic distances
+✅ NetworkX graph-based pathfinding (Dijkstra / A*)
+✅ OR-Tools VRP with capacity + time window constraints
+✅ ML-aware greedy assignment (priority by predicted delay + distance)
+✅ Unified planner interface (plan_routes) for FastAPI use
+✅ Dynamic traffic/time-weighted penalty support
 
 Author: Vivek Marri
 Project: IntelliLog-AI
+Version: 2.1.0
 """
 
 from __future__ import annotations
@@ -22,9 +23,10 @@ import math
 import logging
 import numpy as np
 import pandas as pd
+import random
 
 # -------------------------------
-# Optional imports
+# Optional Imports
 # -------------------------------
 try:
     import networkx as nx
@@ -43,7 +45,6 @@ logger.addHandler(logging.NullHandler())
 # ===========================================================
 # Distance & Graph Utilities
 # ===========================================================
-
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Haversine distance between two lat/lon points in kilometers."""
     R = 6371.0
@@ -53,8 +54,7 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
          math.cos(math.radians(lat1)) *
          math.cos(math.radians(lat2)) *
          math.sin(dlon / 2) ** 2)
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 def build_distance_matrix(points: List[Tuple[float, float]]) -> np.ndarray:
@@ -64,13 +64,12 @@ def build_distance_matrix(points: List[Tuple[float, float]]) -> np.ndarray:
     for i in range(n):
         for j in range(i + 1, n):
             d = haversine(points[i][0], points[i][1], points[j][0], points[j][1])
-            mat[i, j] = d
-            mat[j, i] = d
+            mat[i, j] = mat[j, i] = d
     return mat
 
 
 def build_graph(points: List[Tuple[float, float]], distance_matrix: Optional[np.ndarray] = None) -> "nx.Graph":
-    """Build undirected NetworkX graph with distance as edge weight."""
+    """Build undirected graph with edge weight = distance (km)."""
     if distance_matrix is None:
         distance_matrix = build_distance_matrix(points)
     G = nx.Graph()
@@ -84,16 +83,15 @@ def build_graph(points: List[Tuple[float, float]], distance_matrix: Optional[np.
 # ===========================================================
 # Shortest Path Utilities
 # ===========================================================
-
 def shortest_path_dijkstra(graph: "nx.Graph", source: int, target: int) -> Tuple[List[int], float]:
-    """Return path and total distance (km) using Dijkstra."""
+    """Shortest path and distance using Dijkstra."""
     path = nx.dijkstra_path(graph, source, target, weight="weight")
     length = nx.dijkstra_path_length(graph, source, target, weight="weight")
     return path, float(length)
 
 
 def shortest_path_astar(graph: "nx.Graph", source: int, target: int, points: List[Tuple[float, float]]) -> Tuple[List[int], float]:
-    """Return path and total distance (km) using A* search."""
+    """Shortest path using A* with haversine heuristic."""
     def heuristic(u, v):
         return haversine(points[u][0], points[u][1], points[v][0], points[v][1])
     path = nx.astar_path(graph, source, target, heuristic=heuristic, weight="weight")
@@ -101,31 +99,61 @@ def shortest_path_astar(graph: "nx.Graph", source: int, target: int, points: Lis
     return path, float(length)
 
 # ===========================================================
-# VRP Solvers
+# OR-Tools VRP with Capacities + Time Windows
 # ===========================================================
-
-def ortools_vrp(distance_matrix: np.ndarray, num_vehicles: int = 1, depot: int = 0, time_limit_sec: int = 10) -> List[List[int]]:
-    """Solve a basic VRP with OR-Tools using the given distance matrix."""
+def ortools_vrp(
+    distance_matrix: np.ndarray,
+    num_vehicles: int = 3,
+    depot: int = 0,
+    capacities: Optional[List[int]] = None,
+    demands: Optional[List[int]] = None,
+    time_windows: Optional[List[Tuple[int, int]]] = None,
+    time_limit_sec: int = 10,
+) -> List[List[int]]:
+    """Solve Vehicle Routing Problem using OR-Tools with optional constraints."""
     if not _ORTOOLS_AVAILABLE:
         raise RuntimeError("OR-Tools not available. Install ortools to use this solver.")
 
-    dm = (distance_matrix * 1000).astype(int).tolist()
+    dm = (distance_matrix * 1000).astype(int).tolist()  # meters for precision
     manager = pywrapcp.RoutingIndexManager(len(dm), num_vehicles, depot)
     routing = pywrapcp.RoutingModel(manager)
 
+    # Distance callback
     def distance_callback(from_index, to_index):
-        from_node = manager.IndexToNode(from_index)
-        to_node = manager.IndexToNode(to_index)
+        from_node, to_node = manager.IndexToNode(from_index), manager.IndexToNode(to_index)
         return dm[from_node][to_node]
 
     transit_index = routing.RegisterTransitCallback(distance_callback)
     routing.SetArcCostEvaluatorOfAllVehicles(transit_index)
 
-    search_params = pywrapcp.DefaultRoutingSearchParameters()
-    search_params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
-    search_params.time_limit.seconds = time_limit_sec
+    # Capacities
+    if capacities and demands:
+        demand_callback = lambda from_index: demands[manager.IndexToNode(from_index)]
+        demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
+        routing.AddDimensionWithVehicleCapacity(
+            demand_callback_index, 0, capacities, True, "Capacity"
+        )
 
-    solution = routing.SolveWithParameters(search_params)
+    # Time windows
+    if time_windows:
+        routing.AddDimension(
+            transit_index,
+            300,  # allow waiting time (5 min buffer)
+            36000,  # max 10 hours per route
+            False,
+            "Time"
+        )
+        time_dim = routing.GetDimensionOrDie("Time")
+        for node_idx, (start, end) in enumerate(time_windows):
+            index = manager.NodeToIndex(node_idx)
+            time_dim.CumulVar(index).SetRange(start, end)
+
+    # Search parameters
+    params = pywrapcp.DefaultRoutingSearchParameters()
+    params.time_limit.seconds = time_limit_sec
+    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+
+    solution = routing.SolveWithParameters(params)
     routes = []
     if solution:
         for v in range(num_vehicles):
@@ -138,18 +166,29 @@ def ortools_vrp(distance_matrix: np.ndarray, num_vehicles: int = 1, depot: int =
             route.append(manager.IndexToNode(index))
             routes.append(route)
     else:
-        logger.warning("OR-Tools: No solution found within time limit.")
+        logger.warning("OR-Tools VRP: No solution found within time limit.")
     return routes
 
-
-def greedy_vrp(orders_df: pd.DataFrame, preds: Optional[List[float]] = None, drivers: int = 3) -> List[Dict[str, Any]]:
-    """Greedy assignment heuristic using predicted delays and distances."""
+# ===========================================================
+# Greedy ML-Aware Heuristic
+# ===========================================================
+def greedy_vrp(
+    orders_df: pd.DataFrame,
+    preds: Optional[List[float]] = None,
+    drivers: int = 3,
+    traffic_factor: bool = True
+) -> List[Dict[str, Any]]:
+    """Greedy heuristic that assigns deliveries by predicted delay + distance."""
     df = orders_df.reset_index(drop=True).copy()
     if preds is None:
         preds = [0.0] * len(df)
 
     df["pred_delay"] = list(map(float, preds))
     df["priority"] = df["pred_delay"] + df["distance_km"]
+
+    if traffic_factor and "traffic" in df.columns:
+        weights = {"low": 0.8, "medium": 1.0, "high": 1.3}
+        df["priority"] *= df["traffic"].map(weights).fillna(1.0)
 
     drivers_state = [{"id": i, "route": [], "load": 0.0} for i in range(drivers)]
 
@@ -162,26 +201,25 @@ def greedy_vrp(orders_df: pd.DataFrame, preds: Optional[List[float]] = None, dri
     return drivers_state
 
 # ===========================================================
-# Planner (Main Entry)
+# Main Planner
 # ===========================================================
-
 def plan_routes(
     orders: List[Dict[str, Any]],
     drivers: int = 3,
     method: str = "greedy",
     use_ml_predictions: bool = True,
     model_predictor: Optional[Any] = None,
-    ortools_time_limit: int = 5
+    ortools_time_limit: int = 10,
 ) -> Dict[str, Any]:
     """
     High-level planner: integrates ML predictions + VRP optimization.
-    Returns uniform route structure for dashboard and API.
+    Adds optional capacity/time-window handling for OR-Tools.
     """
     df = pd.DataFrame(orders)
     if df.empty:
         return {"routes": [], "debug": "no orders"}
 
-    points = list(zip(df["lat"].astype(float).tolist(), df["lon"].astype(float).tolist()))
+    points = list(zip(df["lat"].astype(float), df["lon"].astype(float)))
     distance_matrix = build_distance_matrix(points)
 
     preds = None
@@ -192,34 +230,50 @@ def plan_routes(
             logger.exception("Model predictor failed — using zero delays.")
             preds = [0.0] * len(df)
 
+    # ------------------ Greedy Heuristic ------------------
     if method == "greedy":
         routes = greedy_vrp(df, preds=preds, drivers=drivers)
+        avg_load = np.mean([r["load"] for r in routes])
         return {
             "routes": routes,
             "method": "greedy",
             "n_orders": len(df),
-            "debug": {"avg_load": np.mean([r["load"] for r in routes])}
+            "debug": {"avg_load": float(avg_load), "solver": "Greedy Heuristic"},
         }
 
+    # ------------------ OR-Tools Solver -------------------
     elif method == "ortools":
         if not _ORTOOLS_AVAILABLE:
-            raise RuntimeError("OR-Tools not available. Install ortools to use method='ortools'.")
+            raise RuntimeError("OR-Tools not available. Install ortools to use this solver.")
 
-        ort_routes = ortools_vrp(distance_matrix, num_vehicles=drivers, depot=0, time_limit_sec=ortools_time_limit)
+        # Add dummy capacities and time windows
+        capacities = [15] * drivers
+        demands = [random.randint(1, 3) for _ in range(len(df))]
+        base_time = random.randint(0, 100)
+        time_windows = [(base_time, base_time + 3600 + random.randint(0, 600)) for _ in range(len(df))]
+
+        routes_nodes = ortools_vrp(
+            distance_matrix,
+            num_vehicles=drivers,
+            depot=0,
+            capacities=capacities,
+            demands=demands,
+            time_windows=time_windows,
+            time_limit_sec=ortools_time_limit,
+        )
+
         routes_out = []
-        for i, route_nodes in enumerate(ort_routes):
-            order_ids = [df.iloc[idx]["order_id"] for idx in route_nodes]
-            total_distance = float(np.sum([df.iloc[idx]["distance_km"] for idx in route_nodes if idx < len(df)]))
-            routes_out.append({
-                "id": i,
-                "route": order_ids,
-                "load": total_distance  # ✅ always include load
-            })
+        for i, nodes in enumerate(routes_nodes):
+            order_ids = [df.iloc[idx]["order_id"] for idx in nodes if idx < len(df)]
+            total_distance = float(sum(df.iloc[idx]["distance_km"] for idx in nodes if idx < len(df)))
+            routes_out.append({"id": i, "route": order_ids, "load": total_distance})
+
+        avg_load = np.mean([r["load"] for r in routes_out]) if routes_out else 0.0
         return {
             "routes": routes_out,
             "method": "ortools",
             "n_orders": len(df),
-            "debug": {"avg_load": np.mean([r["load"] for r in routes_out])}
+            "debug": {"avg_load": float(avg_load), "solver": "OR-Tools VRP"},
         }
 
     else:
@@ -228,24 +282,25 @@ def plan_routes(
 # ===========================================================
 # CLI Demo
 # ===========================================================
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    from src.etl.ingest import simulate_orders
 
-    demo_df = simulate_orders(n=6, seed=42)
-    orders = demo_df.to_dict(orient="records")
+    sample_orders = [
+        {"order_id": f"O{i}", "lat": 12.9 + i * 0.01, "lon": 77.6 + i * 0.01,
+         "distance_km": round(2 + i * 1.5, 2), "traffic": "medium", "weather": "clear"}
+        for i in range(6)
+    ]
 
     def mock_predictor(df_input: pd.DataFrame):
-        return (df_input["distance_km"] * 1.5).tolist()
+        return (df_input["distance_km"] * 1.2).tolist()
 
     print("=== Greedy plan ===")
-    out = plan_routes(orders, drivers=2, method="greedy", model_predictor=mock_predictor)
+    out = plan_routes(sample_orders, drivers=2, method="greedy", model_predictor=mock_predictor)
     print(out["routes"])
 
     if _ORTOOLS_AVAILABLE:
-        print("=== OR-Tools plan ===")
-        out2 = plan_routes(orders, drivers=2, method="ortools")
+        print("\n=== OR-Tools plan ===")
+        out2 = plan_routes(sample_orders, drivers=2, method="ortools")
         print(out2["routes"])
     else:
-        print("OR-Tools not installed — skipping demo.")
+        print("\n⚠️ OR-Tools not installed — skipping advanced solver.")

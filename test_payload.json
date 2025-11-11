@@ -1,0 +1,6 @@
+{
+  "orders": [
+    {"order_id": "O0001", "lat": 12.97, "lon": 77.59, "distance_km": 3.5, "traffic": "medium", "weather": "clear", "order_type": "express"},
+    {"order_id": "O0002", "lat": 12.95, "lon": 77.61, "distance_km": 4.2, "traffic": "low", "weather": "rain", "order_type": "normal"}
+  ]
+}
