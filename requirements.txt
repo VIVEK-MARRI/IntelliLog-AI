@@ -33,3 +33,5 @@ pytest==7.4.3
 
 shap==0.42.1        # or latest compatible
 cachetools==5.3.0
+statsmodels
+geopy
