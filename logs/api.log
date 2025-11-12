@@ -1023,3 +1023,2322 @@ AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_s
 2025-11-11 19:30:13,522 | INFO | GET /live_tracking -> 307 (0.0s)
 2025-11-11 19:30:13,526 | INFO | GET /live_tracking/ -> 200 (0.001s)
 2025-11-11 19:30:14,236 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:35,692 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:42,398 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:38:42,454 | ERROR | Prediction API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 156, in predict_delivery_time
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:38:42,490 | INFO | POST /predict_delivery_time -> 500 (0.071s)
+2025-11-12 04:38:48,744 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:48,766 | ERROR | Model predictor failed — using zero delays.
+Traceback (most recent call last):
+  File "/app/src/optimization/vrp_solver.py", line 228, in plan_routes
+    preds = model_predictor(df)
+  File "/app/src/api/app.py", line 198, in predictor
+    return ML_ENGINE.predict(input_df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:38:48,797 | INFO | ✅ Route optimization completed using method=greedy.
+2025-11-12 04:38:48,798 | INFO | POST /plan_routes -> 200 (0.043s)
+2025-11-12 04:38:48,837 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:48,842 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:51,370 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:51,384 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:38:51,388 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:52,274 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:52,289 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:52,292 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:53,161 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:53,182 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:38:53,186 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:54,012 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:54,029 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:38:54,035 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:55,082 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:55,093 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:55,101 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:55,937 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:55,954 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:38:55,960 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:56,786 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:56,795 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:56,803 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:57,693 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:57,708 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:57,713 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:38:58,521 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:38:58,532 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:58,537 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:38:59,369 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:38:59,380 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:38:59,387 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:00,208 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:00,219 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:00,225 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:01,042 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:01,054 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:01,060 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:01,924 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:01,935 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:01,941 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:02,788 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:02,799 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:02,804 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:03,663 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:03,676 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:03,681 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:04,504 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:04,515 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:04,518 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:05,318 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:05,333 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:05,337 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:06,172 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:06,187 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:06,192 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:07,077 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:07,088 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:07,094 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:07,938 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:07,948 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:07,956 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:08,885 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:08,905 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:08,909 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:09,724 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:09,741 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:09,746 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:10,546 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:10,557 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:10,562 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:11,371 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:11,874 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:11,965 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:11,969 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:12,878 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:12,898 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:12,903 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:13,809 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:13,828 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:13,832 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:14,654 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:14,668 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:14,672 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:15,516 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:15,530 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:15,535 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:16,446 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:16,465 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:16,469 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:17,326 | INFO | GET /metrics -> 200 (0.504s)
+2025-11-12 04:39:17,350 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:17,354 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:18,213 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:18,231 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:18,239 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:19,047 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:19,550 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:19,641 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:19,651 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:20,486 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:20,499 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:20,502 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:21,337 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:21,353 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:21,360 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:22,212 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:22,228 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:22,234 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:23,040 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:23,058 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:23,067 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:23,870 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:23,882 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:23,888 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:24,715 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:25,218 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:25,293 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:25,298 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:26,060 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:26,071 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:26,077 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:26,900 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:26,912 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:26,916 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:27,703 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:27,720 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:27,724 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:28,520 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:39:28,531 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:28,534 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:29,391 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:29,404 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:29,409 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:30,311 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:30,322 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:30,329 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:31,027 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:31,531 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:31,613 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:31,618 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:32,491 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:32,504 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:32,513 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:33,370 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:33,386 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:33,402 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:34,226 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:34,238 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:34,248 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:35,041 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:35,056 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:35,060 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:35,936 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:35,951 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:35,955 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:36,783 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:36,799 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:36,802 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:37,610 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:37,632 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:37,638 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:38,448 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:38,470 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:38,475 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:39:39,284 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:39,787 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:39,860 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:39,865 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:39,959 | ERROR | Explainability API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 178, in predict_explain
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:39:39,976 | INFO | POST /predict_explain -> 500 (0.034s)
+2025-11-12 04:39:40,728 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:40,750 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:40,753 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:41,557 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:41,571 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:41,576 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:42,349 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:42,851 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:43,521 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:43,538 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:43,543 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:43,599 | ERROR | Explainability API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 178, in predict_explain
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:39:43,613 | INFO | POST /predict_explain -> 500 (0.022s)
+2025-11-12 04:39:44,347 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:44,851 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:44,927 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:44,931 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:44,980 | ERROR | Explainability API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 178, in predict_explain
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:39:44,998 | INFO | POST /predict_explain -> 500 (0.027s)
+2025-11-12 04:39:45,716 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:46,219 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:46,316 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:46,327 | INFO | GET /live_tracking/ -> 200 (0.003s)
+2025-11-12 04:39:46,415 | ERROR | Explainability API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 178, in predict_explain
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:39:46,433 | INFO | POST /predict_explain -> 500 (0.028s)
+2025-11-12 04:39:47,198 | INFO | GET /metrics -> 200 (0.493s)
+2025-11-12 04:39:47,219 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:47,225 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:39:48,033 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:48,537 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:48,615 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:48,621 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:49,565 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:49,575 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:49,581 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:50,411 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:50,428 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:50,435 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:51,280 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:51,290 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:51,294 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:52,150 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:52,163 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:52,167 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:52,979 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:53,003 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:53,008 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:53,817 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:53,832 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:53,838 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:54,559 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:55,065 | INFO | GET /metrics -> 200 (0.504s)
+2025-11-12 04:39:55,150 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:55,155 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:56,039 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:39:56,062 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:56,068 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:56,922 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:56,933 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:56,936 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:57,717 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:57,727 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:57,733 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:58,550 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:58,571 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:39:58,579 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:39:59,438 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:39:59,450 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:39:59,454 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:00,122 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:01,129 | INFO | GET /metrics -> 200 (1.005s)
+2025-11-12 04:40:01,131 | INFO | GET /metrics -> 200 (0.505s)
+2025-11-12 04:40:01,250 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:01,253 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:02,009 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:40:02,019 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:02,022 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:02,821 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:02,833 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:02,840 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:03,684 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:03,704 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:03,707 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:04,514 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:04,535 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:04,539 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:05,331 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:05,343 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:05,348 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:06,142 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:06,646 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:06,725 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:06,729 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:07,580 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:07,592 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:07,600 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:08,375 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:40:08,395 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:08,398 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:09,203 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:09,218 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:09,221 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:09,975 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:09,992 | INFO | GET /live_tracking -> 307 (0.004s)
+2025-11-12 04:40:09,997 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:10,742 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:10,755 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:10,758 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:11,525 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:12,030 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:12,616 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:12,629 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:12,636 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:13,481 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:13,492 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:13,498 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:14,308 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:14,325 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:14,329 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:15,095 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:40:15,108 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:15,117 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:40:15,922 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:15,944 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:15,951 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:16,737 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:16,746 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:16,752 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:17,507 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:18,011 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:18,127 | ERROR | Model predictor failed — using zero delays.
+Traceback (most recent call last):
+  File "/app/src/optimization/vrp_solver.py", line 228, in plan_routes
+    preds = model_predictor(df)
+  File "/app/src/api/app.py", line 198, in predictor
+    return ML_ENGINE.predict(input_df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:40:18,154 | INFO | ✅ Route optimization completed using method=greedy.
+2025-11-12 04:40:18,156 | INFO | POST /plan_routes -> 200 (0.049s)
+2025-11-12 04:40:18,663 | INFO | GET /metrics -> 200 (0.506s)
+2025-11-12 04:40:18,769 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:18,775 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:19,587 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:19,609 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:19,612 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:20,424 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:20,434 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:20,439 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:21,195 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:21,208 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:21,211 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:21,970 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:40:21,983 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:21,987 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:22,753 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:22,763 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:22,769 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:23,538 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:23,549 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:23,554 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:24,388 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:24,892 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:24,974 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:24,979 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:25,792 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:25,803 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:25,811 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:26,565 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:26,574 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:26,585 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:27,416 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:27,435 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:27,438 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:28,260 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:28,279 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:28,283 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:29,104 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:29,142 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:29,147 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:29,934 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:29,957 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:29,961 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:30,605 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:30,619 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:30,629 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:40:31,450 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:31,461 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:31,466 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:32,277 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:32,293 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:32,297 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:33,051 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:33,065 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:33,069 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:33,860 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:33,880 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:33,886 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:40:34,707 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:34,719 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:34,724 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:35,509 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:35,521 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:35,525 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:36,286 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:36,789 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:36,886 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:36,891 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:37,645 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:37,655 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:37,661 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:38,454 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:38,957 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:39,032 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:39,037 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:39,094 | ERROR | Explainability API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 178, in predict_explain
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:40:39,110 | INFO | POST /predict_explain -> 500 (0.022s)
+2025-11-12 04:40:39,803 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:39,814 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:39,819 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:40,622 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:40,640 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:40,643 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:41,406 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:41,421 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:41,424 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:42,227 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:42,730 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:42,802 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:42,808 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:43,597 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:43,610 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:43,615 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:44,400 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:44,411 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:44,415 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:45,224 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:45,239 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:45,243 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:46,069 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:46,081 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:46,086 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:46,883 | INFO | GET /metrics -> 200 (0.494s)
+2025-11-12 04:40:46,893 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:46,900 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:47,754 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:47,766 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:47,770 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:48,546 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:49,049 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:49,136 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:49,143 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:49,906 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:49,918 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:49,926 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:50,787 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:50,807 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:50,814 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:51,685 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:51,713 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:51,718 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:52,581 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:52,597 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:52,602 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:53,411 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:53,914 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:54,014 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:54,018 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:54,670 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:54,684 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:54,692 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:55,446 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:55,468 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:55,475 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:40:56,297 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:56,310 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:56,314 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:57,122 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:57,137 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:57,143 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:40:57,929 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:57,940 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:57,947 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:58,798 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:40:58,811 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:40:58,817 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:40:59,608 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:40:59,632 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:40:59,637 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:00,461 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:00,476 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:00,480 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:01,262 | INFO | GET /metrics -> 200 (0.501s)
+2025-11-12 04:41:01,272 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:01,276 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:02,189 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:02,201 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:02,209 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:03,168 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:03,188 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:03,194 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:41:04,155 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:04,179 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:04,189 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:05,143 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:05,159 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:05,167 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:06,220 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:06,233 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:06,241 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:07,468 | INFO | GET /metrics -> 200 (0.504s)
+2025-11-12 04:41:07,489 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:07,495 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:08,565 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:41:08,582 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:08,589 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:09,601 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:09,621 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:09,624 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:10,638 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:41:10,656 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:10,660 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:11,612 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:11,640 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:11,645 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:12,785 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:12,807 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:12,815 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:13,847 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:41:13,858 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:13,864 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:14,959 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:14,973 | INFO | GET /live_tracking -> 307 (0.003s)
+2025-11-12 04:41:14,977 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:15,973 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:15,986 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:15,990 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:16,985 | INFO | GET /metrics -> 200 (0.495s)
+2025-11-12 04:41:16,997 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:17,003 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:18,034 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:18,044 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:18,049 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:18,982 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:19,005 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:19,011 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:20,073 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:20,093 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:20,097 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:21,109 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:21,126 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:21,134 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:22,340 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:22,372 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:22,378 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:41:23,542 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:23,561 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:23,566 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:24,605 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:25,199 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:25,211 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:25,219 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:26,308 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:26,320 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:26,328 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:27,302 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:27,315 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:27,322 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:28,392 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:28,408 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:28,412 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:29,412 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:29,428 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:29,432 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:30,428 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:30,444 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:30,448 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:31,551 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:31,566 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:31,572 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:32,606 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:32,623 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:32,627 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:34,005 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:34,027 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:34,033 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:35,260 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:35,279 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:35,285 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:36,350 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:36,359 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:36,363 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:37,387 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:37,402 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:37,406 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:38,562 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:41:38,581 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:38,588 | INFO | GET /live_tracking/ -> 200 (0.003s)
+2025-11-12 04:41:39,622 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:39,644 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:39,647 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:40,626 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:40,641 | INFO | GET /live_tracking -> 307 (0.0s)
+2025-11-12 04:41:40,645 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:41,661 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:41,692 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:41,700 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:41:42,902 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:42,924 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:42,930 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:44,292 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:44,319 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:44,331 | INFO | GET /live_tracking/ -> 200 (0.002s)
+2025-11-12 04:41:45,700 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:41:45,724 | INFO | GET /live_tracking -> 307 (0.001s)
+2025-11-12 04:41:45,729 | INFO | GET /live_tracking/ -> 200 (0.001s)
+2025-11-12 04:41:56,843 | INFO | GET /metrics -> 200 (1.007s)
+2025-11-12 04:41:56,844 | INFO | GET /metrics -> 200 (0.504s)
+2025-11-12 04:42:00,593 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:42:00,617 | ERROR | Prediction API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 156, in predict_delivery_time
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:42:00,660 | INFO | POST /predict_delivery_time -> 500 (0.053s)
+2025-11-12 04:42:31,750 | INFO | GET /metrics -> 200 (0.503s)
+2025-11-12 04:42:45,986 | INFO | GET /metrics -> 200 (0.502s)
+2025-11-12 04:42:46,045 | ERROR | Prediction API error:
+Traceback (most recent call last):
+  File "/app/src/api/app.py", line 156, in predict_delivery_time
+    preds = ML_ENGINE.predict(df)
+  File "/app/src/api/services/ml_engine.py", line 123, in predict
+    df_h = _df_hash(X)
+  File "/app/src/api/services/ml_engine.py", line 49, in _df_hash
+    h.update(df.columns.to_string().encode("utf-8"))
+AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_series'?
+2025-11-12 04:42:46,085 | INFO | POST /predict_delivery_time -> 500 (0.091s)
+2025-11-12 05:00:39,156 | INFO | Metrics snapshot: CPU=1.0%, MEM=14.9%
+2025-11-12 05:00:39,158 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:00:43,003 | INFO | Metrics snapshot: CPU=0.7%, MEM=14.9%
+2025-11-12 05:00:43,004 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:00:43,028 | INFO | Received 5 orders for prediction.
+2025-11-12 05:00:43,030 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:00:43,083 | INFO | ✅ Predicted 5 rows in 0.008s
+2025-11-12 05:00:43,084 | INFO | ✅ Prediction successful for 5 records.
+2025-11-12 05:00:43,090 | INFO | POST /predict_delivery_time → 200 (0.064s)
+2025-11-12 05:01:00,163 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.0%
+2025-11-12 05:01:00,164 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:00,176 | INFO | Planning 5 routes using method=greedy, drivers=2.
+2025-11-12 05:01:00,215 | INFO | ✅ Predicted 5 rows in 0.029s
+2025-11-12 05:01:00,221 | INFO | ✅ Route optimization completed.
+2025-11-12 05:01:00,222 | INFO | POST /plan_routes → 200 (0.048s)
+2025-11-12 05:01:00,265 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:00,269 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:02,486 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.3%
+2025-11-12 05:01:02,487 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:02,498 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:02,503 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:03,464 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.3%
+2025-11-12 05:01:03,465 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:03,478 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:03,482 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:04,315 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.3%
+2025-11-12 05:01:04,315 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:04,326 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:04,332 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:05,221 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.3%
+2025-11-12 05:01:05,222 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:05,237 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:05,243 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:06,116 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:06,117 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:06,132 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:06,136 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:07,027 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:07,030 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:07,049 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:07,056 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:07,992 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.3%
+2025-11-12 05:01:07,993 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:08,008 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:08,012 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:08,781 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:08,782 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:08,791 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:08,795 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:09,638 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:09,640 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:09,660 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:09,664 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:10,504 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.3%
+2025-11-12 05:01:10,506 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:10,519 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:10,529 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:11,352 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:11,353 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:11,375 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:11,380 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:12,152 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.3%
+2025-11-12 05:01:12,154 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:12,177 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:12,182 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:12,989 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:12,991 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:13,012 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:13,017 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:01:13,833 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.3%
+2025-11-12 05:01:13,835 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:13,859 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:13,863 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:14,686 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.3%
+2025-11-12 05:01:14,688 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:14,711 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:14,715 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:15,568 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:15,568 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:15,578 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:15,584 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:16,404 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:16,405 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:16,415 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:16,421 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:17,267 | INFO | Metrics snapshot: CPU=3.0%, MEM=15.3%
+2025-11-12 05:01:17,268 | INFO | GET /metrics → 200 (0.5s)
+2025-11-12 05:01:17,288 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:17,300 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:18,118 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.3%
+2025-11-12 05:01:18,119 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:18,131 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:18,138 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:01:19,037 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.3%
+2025-11-12 05:01:19,038 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:19,060 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:19,066 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:19,928 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.3%
+2025-11-12 05:01:19,929 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:19,953 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:19,957 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:20,800 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:20,802 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:20,822 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:20,826 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:21,672 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.3%
+2025-11-12 05:01:21,675 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:21,699 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:21,704 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:22,517 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.3%
+2025-11-12 05:01:22,520 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:22,535 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:22,543 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:23,432 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:23,435 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:23,448 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:23,457 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:24,414 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.3%
+2025-11-12 05:01:24,415 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:24,433 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:24,437 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:25,184 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:25,185 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:25,689 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:25,691 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:25,783 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:25,787 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:26,563 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:26,565 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:27,068 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.3%
+2025-11-12 05:01:27,070 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:27,154 | INFO | Planning 5 routes using method=greedy, drivers=7.
+2025-11-12 05:01:27,229 | INFO | ✅ Predicted 5 rows in 0.052s
+2025-11-12 05:01:27,235 | INFO | ✅ Route optimization completed.
+2025-11-12 05:01:27,252 | INFO | POST /plan_routes → 200 (0.1s)
+2025-11-12 05:01:27,295 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:27,299 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:28,206 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:28,209 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:28,221 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:28,227 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:29,225 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.3%
+2025-11-12 05:01:29,226 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:29,240 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:29,244 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:30,215 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:30,216 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:30,228 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:30,234 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:31,033 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.3%
+2025-11-12 05:01:31,035 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:31,056 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:31,059 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:31,939 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.3%
+2025-11-12 05:01:31,940 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:31,958 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:31,963 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:32,918 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.3%
+2025-11-12 05:01:32,919 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:32,932 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:32,936 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:33,862 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.3%
+2025-11-12 05:01:33,864 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:33,876 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:33,881 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:34,810 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:01:34,811 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:34,826 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:34,831 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:35,717 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.3%
+2025-11-12 05:01:35,719 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:35,732 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:35,740 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:01:36,626 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:01:36,627 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:36,639 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:36,647 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:37,530 | INFO | Metrics snapshot: CPU=3.4%, MEM=15.3%
+2025-11-12 05:01:37,531 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:37,551 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:37,557 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:01:38,466 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:01:38,467 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:38,487 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:38,490 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:39,370 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.4%
+2025-11-12 05:01:39,371 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:39,390 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:39,395 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:01:40,235 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:01:40,237 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:40,251 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:40,257 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:41,164 | INFO | Metrics snapshot: CPU=3.0%, MEM=15.4%
+2025-11-12 05:01:41,166 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:41,190 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:41,193 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:42,031 | INFO | Metrics snapshot: CPU=2.7%, MEM=15.4%
+2025-11-12 05:01:42,032 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:42,046 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:42,050 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:42,993 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:01:42,994 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:43,012 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:43,016 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:43,755 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.4%
+2025-11-12 05:01:43,757 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:44,260 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.4%
+2025-11-12 05:01:44,262 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:44,387 | INFO | GET /live_tracking → 307 (0.013s)
+2025-11-12 05:01:44,392 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:45,251 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.4%
+2025-11-12 05:01:45,254 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:45,274 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:45,279 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:45,889 | INFO | Metrics snapshot: CPU=2.7%, MEM=15.4%
+2025-11-12 05:01:45,890 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:45,910 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:45,913 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:46,783 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:01:46,784 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:46,793 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:46,798 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:47,425 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:01:47,426 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:47,438 | INFO | Planning 5 routes using method=greedy, drivers=4.
+2025-11-12 05:01:47,453 | INFO | ✅ Predicted 5 rows in 0.005s
+2025-11-12 05:01:47,466 | INFO | ✅ Route optimization completed.
+2025-11-12 05:01:47,467 | INFO | POST /plan_routes → 200 (0.03s)
+2025-11-12 05:01:47,505 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:47,510 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:48,323 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.4%
+2025-11-12 05:01:48,326 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:48,336 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:48,341 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:49,245 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.4%
+2025-11-12 05:01:49,248 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:49,267 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:49,270 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:50,171 | INFO | Metrics snapshot: CPU=3.6%, MEM=15.4%
+2025-11-12 05:01:50,171 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:50,180 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:50,186 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:51,102 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.4%
+2025-11-12 05:01:51,103 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:51,117 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:51,121 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:01:52,017 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:01:52,018 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:52,030 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:52,034 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:52,976 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:01:52,977 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:52,990 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:52,993 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:53,830 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:01:53,833 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:01:53,852 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:53,857 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:54,766 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:01:54,769 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:54,789 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:54,794 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:55,613 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:01:55,614 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:55,631 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:55,635 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:56,498 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:01:56,499 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:56,513 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:56,520 | INFO | GET /live_tracking/ → 200 (0.003s)
+2025-11-12 05:01:57,442 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:01:57,443 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:01:57,467 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:57,472 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:58,307 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:01:58,308 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:01:58,322 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:01:58,326 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:01:59,237 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:01:59,240 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:01:59,261 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:01:59,265 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:00,187 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:02:00,188 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:00,212 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:00,217 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:01,834 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:02:01,835 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:01,863 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:01,869 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:02,775 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:02:02,776 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:02,785 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:02,792 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:03,676 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:02:03,679 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:03,693 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:03,701 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:04,673 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:02:04,674 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:04,688 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:04,698 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:05,677 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:02:05,680 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:02:05,702 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:05,706 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:06,591 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:02:06,593 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:06,611 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:06,616 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:07,458 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.4%
+2025-11-12 05:02:07,460 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:07,481 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:07,485 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:08,354 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.4%
+2025-11-12 05:02:08,355 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:08,371 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:08,382 | INFO | GET /live_tracking/ → 200 (0.005s)
+2025-11-12 05:02:09,278 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:02:09,279 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:09,290 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:09,299 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:10,160 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:02:10,164 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:02:10,669 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.4%
+2025-11-12 05:02:10,671 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:02:10,755 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:10,760 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:11,543 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:02:11,545 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:11,555 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:11,563 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:12,368 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:02:12,369 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:12,871 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:02:12,873 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:13,375 | INFO | Metrics snapshot: CPU=3.0%, MEM=15.4%
+2025-11-12 05:02:13,378 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:02:13,882 | INFO | Metrics snapshot: CPU=4.1%, MEM=15.4%
+2025-11-12 05:02:13,884 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:14,400 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.4%
+2025-11-12 05:02:14,906 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:02:14,908 | INFO | GET /metrics → 200 (1.01s)
+2025-11-12 05:02:14,910 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:02:15,004 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:15,007 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:15,053 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:02:15,062 | INFO | ✅ Predicted 5 rows in 0.002s
+2025-11-12 05:02:15,461 | INFO | 🧠 SHAP TreeExplainer initialized.
+2025-11-12 05:02:15,532 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:02:15,533 | INFO | POST /predict_explain → 200 (0.482s)
+2025-11-12 05:02:16,036 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.4%
+2025-11-12 05:02:16,539 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:02:16,540 | INFO | GET /metrics → 200 (1.006s)
+2025-11-12 05:02:16,541 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:02:16,651 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:16,663 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:17,792 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.4%
+2025-11-12 05:02:17,793 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:18,296 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.4%
+2025-11-12 05:02:18,299 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:18,399 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:18,406 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:18,479 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:02:18,499 | INFO | ✅ Predicted 5 rows in 0.002s
+2025-11-12 05:02:18,613 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:02:18,615 | INFO | POST /predict_explain → 200 (0.139s)
+2025-11-12 05:02:19,257 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:19,259 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:19,272 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:19,278 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:20,105 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.5%
+2025-11-12 05:02:20,106 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:20,122 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:20,129 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:21,204 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:02:21,206 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:21,233 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:21,242 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:22,365 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:02:22,367 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:22,404 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:22,415 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:23,400 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:02:23,401 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:23,420 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:23,426 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:24,433 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:24,434 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:24,450 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:24,456 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:25,406 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:02:25,407 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:25,427 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:25,434 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:26,390 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:02:26,392 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:26,411 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:26,416 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:27,313 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.5%
+2025-11-12 05:02:27,314 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:27,325 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:27,332 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:28,178 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:02:28,179 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:28,189 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:28,194 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:29,056 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:02:29,058 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:29,070 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:29,077 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:29,970 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:02:29,971 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:29,982 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:29,991 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:30,953 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:02:30,955 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:30,973 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:30,977 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:31,890 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:02:31,891 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:31,905 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:31,910 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:32,853 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:02:32,854 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:32,866 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:32,871 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:33,805 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:02:33,807 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:33,822 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:33,827 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:34,653 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:02:34,655 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:34,666 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:34,675 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:35,530 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.4%
+2025-11-12 05:02:35,531 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:35,545 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:35,551 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:36,416 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.4%
+2025-11-12 05:02:36,418 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:36,431 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:36,435 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:37,288 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:02:37,291 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:37,305 | INFO | GET /live_tracking → 307 (0.002s)
+2025-11-12 05:02:37,310 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:38,208 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:02:38,209 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:38,224 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:38,231 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:39,066 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:02:39,067 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:39,081 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:39,091 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:40,063 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:02:40,064 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:40,076 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:40,087 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:40,994 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:02:40,995 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:41,007 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:41,012 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:41,880 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:02:41,881 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:41,904 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:41,911 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:42,816 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:42,817 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:42,834 | INFO | GET /live_tracking → 307 (0.002s)
+2025-11-12 05:02:42,840 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:43,774 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.5%
+2025-11-12 05:02:43,776 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:43,794 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:43,799 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:44,817 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.5%
+2025-11-12 05:02:44,818 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:02:44,838 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:44,843 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:45,754 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:02:45,756 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:45,779 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:45,783 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:46,605 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:46,606 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:46,619 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:46,624 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:47,466 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:02:47,468 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:47,483 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:47,491 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:02:48,330 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.5%
+2025-11-12 05:02:48,332 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:48,835 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:02:48,837 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:48,940 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:48,945 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:49,016 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:02:49,033 | INFO | ✅ Predicted 5 rows in 0.003s
+2025-11-12 05:02:49,152 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:02:49,155 | INFO | POST /predict_explain → 200 (0.143s)
+2025-11-12 05:02:49,862 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.5%
+2025-11-12 05:02:49,863 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:49,886 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:49,892 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:50,766 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:02:50,768 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:50,783 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:50,787 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:51,679 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:02:51,681 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:51,697 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:51,701 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:52,311 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.5%
+2025-11-12 05:02:52,313 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:52,333 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:52,340 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:52,404 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:02:52,417 | INFO | ✅ Predicted 5 rows in 0.005s
+2025-11-12 05:02:52,495 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:02:52,497 | INFO | POST /predict_explain → 200 (0.095s)
+2025-11-12 05:02:53,174 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:53,176 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:53,186 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:53,192 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:54,017 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:02:54,018 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:54,031 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:54,035 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:54,890 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.5%
+2025-11-12 05:02:54,892 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:55,395 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:02:55,397 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:02:55,484 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:55,491 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:55,541 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:02:55,557 | INFO | ✅ Predicted 5 rows in 0.004s
+2025-11-12 05:02:55,668 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:02:55,670 | INFO | POST /predict_explain → 200 (0.13s)
+2025-11-12 05:02:56,340 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:02:56,342 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:56,357 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:02:56,366 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:57,184 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:57,186 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:57,689 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.5%
+2025-11-12 05:02:57,690 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:57,773 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:57,778 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:58,640 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:02:58,641 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:58,650 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:02:58,655 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:02:59,441 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:02:59,442 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:02:59,945 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:02:59,947 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:00,464 | INFO | Metrics snapshot: CPU=4.0%, MEM=15.5%
+2025-11-12 05:03:00,468 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:03:00,972 | INFO | Metrics snapshot: CPU=4.0%, MEM=15.5%
+2025-11-12 05:03:01,476 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.6%
+2025-11-12 05:03:01,479 | INFO | GET /metrics → 200 (1.009s)
+2025-11-12 05:03:01,481 | INFO | GET /metrics → 200 (0.507s)
+2025-11-12 05:03:01,983 | INFO | Metrics snapshot: CPU=1.9%, MEM=15.6%
+2025-11-12 05:03:02,487 | INFO | Metrics snapshot: CPU=3.3%, MEM=15.6%
+2025-11-12 05:03:02,489 | INFO | GET /metrics → 200 (1.009s)
+2025-11-12 05:03:02,490 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:03:02,992 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.6%
+2025-11-12 05:03:02,994 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:03,086 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:03,090 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:03,137 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:03:03,155 | INFO | ✅ Predicted 5 rows in 0.007s
+2025-11-12 05:03:03,278 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:03:03,280 | INFO | POST /predict_explain → 200 (0.144s)
+2025-11-12 05:03:04,089 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:03:04,091 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:04,108 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:04,114 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:05,011 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:03:05,012 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:05,029 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:05,038 | INFO | GET /live_tracking/ → 200 (0.005s)
+2025-11-12 05:03:05,894 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:03:05,895 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:05,909 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:05,914 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:06,776 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:03:06,777 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:06,791 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:06,796 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:07,777 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.5%
+2025-11-12 05:03:07,779 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:07,807 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:07,815 | INFO | GET /live_tracking/ → 200 (0.003s)
+2025-11-12 05:03:09,227 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:03:09,228 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:09,257 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:09,265 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:10,723 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:03:10,724 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:10,748 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:10,757 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:11,947 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:03:11,980 | INFO | GET /metrics → 200 (0.535s)
+2025-11-12 05:03:12,002 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:12,009 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:13,256 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.5%
+2025-11-12 05:03:13,258 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:13,276 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:13,281 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:14,418 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:03:14,419 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:14,436 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:14,441 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:15,574 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.5%
+2025-11-12 05:03:15,575 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:15,591 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:15,600 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:16,861 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:03:16,863 | INFO | GET /metrics → 200 (0.501s)
+2025-11-12 05:03:16,883 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:16,889 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:17,916 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.5%
+2025-11-12 05:03:17,918 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:17,943 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:17,955 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:19,228 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:03:19,229 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:19,244 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:19,253 | INFO | GET /live_tracking/ → 200 (0.003s)
+2025-11-12 05:03:20,322 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:03:20,323 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:20,337 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:20,341 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:21,320 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:03:21,321 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:21,332 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:21,338 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:22,350 | INFO | Metrics snapshot: CPU=2.7%, MEM=15.6%
+2025-11-12 05:03:22,377 | INFO | GET /metrics → 200 (0.528s)
+2025-11-12 05:03:22,421 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:22,438 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:23,543 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.6%
+2025-11-12 05:03:23,544 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:23,554 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:23,562 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:24,514 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.6%
+2025-11-12 05:03:24,515 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:24,527 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:24,530 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:25,583 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.6%
+2025-11-12 05:03:25,584 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:25,595 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:25,602 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:26,697 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.6%
+2025-11-12 05:03:26,698 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:26,714 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:26,726 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:27,902 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.6%
+2025-11-12 05:03:27,903 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:27,924 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:27,930 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:29,150 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.6%
+2025-11-12 05:03:29,152 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:29,167 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:29,173 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:30,290 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.6%
+2025-11-12 05:03:30,291 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:30,314 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:30,326 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:31,438 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.6%
+2025-11-12 05:03:31,440 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:31,455 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:31,463 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:32,629 | INFO | Metrics snapshot: CPU=3.0%, MEM=15.6%
+2025-11-12 05:03:32,631 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:32,646 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:32,651 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:34,022 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.6%
+2025-11-12 05:03:34,024 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:34,049 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:34,055 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:35,201 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.6%
+2025-11-12 05:03:35,203 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:35,217 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:35,222 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:36,333 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.6%
+2025-11-12 05:03:36,334 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:36,348 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:36,352 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:37,402 | INFO | Metrics snapshot: CPU=3.6%, MEM=15.6%
+2025-11-12 05:03:37,403 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:37,416 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:37,421 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:38,522 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.6%
+2025-11-12 05:03:38,524 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:38,537 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:38,543 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:39,611 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.6%
+2025-11-12 05:03:39,612 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:39,648 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:39,653 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:40,785 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.6%
+2025-11-12 05:03:40,786 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:40,796 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:40,800 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:41,802 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.6%
+2025-11-12 05:03:41,803 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:41,814 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:41,817 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:43,009 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.6%
+2025-11-12 05:03:43,011 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:43,031 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:43,036 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:44,071 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.6%
+2025-11-12 05:03:44,072 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:44,087 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:44,090 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:45,184 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.6%
+2025-11-12 05:03:45,184 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:45,198 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:45,201 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:46,219 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.6%
+2025-11-12 05:03:46,220 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:46,231 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:46,237 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:47,374 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.6%
+2025-11-12 05:03:47,375 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:47,390 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:47,397 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:48,586 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.6%
+2025-11-12 05:03:48,587 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:48,611 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:48,619 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:49,800 | INFO | Metrics snapshot: CPU=2.7%, MEM=15.6%
+2025-11-12 05:03:49,803 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:49,829 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:49,840 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:51,152 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.6%
+2025-11-12 05:03:51,153 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:51,182 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:51,187 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:52,407 | INFO | Metrics snapshot: CPU=3.4%, MEM=15.6%
+2025-11-12 05:03:52,409 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:52,438 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:52,444 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:53,802 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.6%
+2025-11-12 05:03:53,804 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:53,829 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:53,835 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:55,072 | INFO | Metrics snapshot: CPU=3.8%, MEM=15.6%
+2025-11-12 05:03:55,074 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:55,092 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:55,101 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:56,249 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.6%
+2025-11-12 05:03:56,250 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:03:56,265 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:56,269 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:57,321 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.6%
+2025-11-12 05:03:57,323 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:03:57,350 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:03:57,354 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:03:58,455 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.6%
+2025-11-12 05:03:58,456 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:03:58,476 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:03:58,483 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:03:59,597 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.6%
+2025-11-12 05:03:59,598 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:15:59,215 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.3%
+2025-11-12 05:15:59,216 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:02,717 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.3%
+2025-11-12 05:16:02,718 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:02,734 | INFO | Received 5 orders for prediction.
+2025-11-12 05:16:02,735 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:16:02,830 | INFO | ✅ Predicted 5 rows in 0.046s
+2025-11-12 05:16:02,831 | INFO | ✅ Prediction successful for 5 records.
+2025-11-12 05:16:02,841 | INFO | POST /predict_delivery_time → 200 (0.108s)
+2025-11-12 05:16:09,797 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.3%
+2025-11-12 05:16:09,798 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:16:19,329 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:16:19,335 | INFO | GET /metrics → 200 (0.508s)
+2025-11-12 05:16:19,384 | INFO | Planning 5 routes using method=greedy, drivers=2.
+2025-11-12 05:16:19,422 | INFO | ✅ Predicted 5 rows in 0.030s
+2025-11-12 05:16:19,440 | INFO | ✅ Route optimization completed.
+2025-11-12 05:16:19,441 | INFO | POST /plan_routes → 200 (0.069s)
+2025-11-12 05:16:19,474 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:19,478 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:20,759 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.4%
+2025-11-12 05:16:20,760 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:16:20,774 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:20,779 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:21,798 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:16:21,800 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:21,812 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:21,816 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:22,778 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:16:22,780 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:22,793 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:22,797 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:23,748 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:16:23,749 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:16:23,760 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:23,769 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:24,626 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:16:24,628 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:24,647 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:24,651 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:25,531 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.4%
+2025-11-12 05:16:25,532 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:25,549 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:25,553 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:26,536 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.3%
+2025-11-12 05:16:26,538 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:26,550 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:26,557 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:27,522 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.3%
+2025-11-12 05:16:27,523 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:27,544 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:27,558 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:28,541 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:16:28,542 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:28,561 | INFO | GET /live_tracking → 307 (0.003s)
+2025-11-12 05:16:28,567 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:29,577 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:16:29,578 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:29,593 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:29,601 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:30,616 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.4%
+2025-11-12 05:16:30,617 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:30,639 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:30,645 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:31,738 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:16:31,740 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:31,758 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:31,768 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:32,941 | INFO | Metrics snapshot: CPU=2.9%, MEM=15.4%
+2025-11-12 05:16:32,944 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:32,971 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:32,980 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:34,068 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.4%
+2025-11-12 05:16:34,070 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:34,086 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:34,094 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:35,215 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:35,217 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:35,245 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:35,250 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:36,427 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:36,429 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:36,448 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:36,454 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:37,498 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:16:37,499 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:37,513 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:37,521 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:38,569 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.4%
+2025-11-12 05:16:38,571 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:38,597 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:38,601 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:39,614 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:39,617 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:16:39,639 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:39,648 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:40,635 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:16:40,637 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:40,653 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:40,662 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:41,616 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.4%
+2025-11-12 05:16:41,618 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:41,634 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:41,643 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:42,593 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:42,594 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:42,609 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:42,622 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:43,701 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:16:43,702 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:43,718 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:43,730 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:44,732 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.4%
+2025-11-12 05:16:44,734 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:44,755 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:44,762 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:45,859 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:45,860 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:45,877 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:45,882 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:46,992 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.4%
+2025-11-12 05:16:46,993 | INFO | GET /metrics → 200 (0.501s)
+2025-11-12 05:16:47,013 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:47,020 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:48,067 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.4%
+2025-11-12 05:16:48,068 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:48,090 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:48,095 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:49,172 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.4%
+2025-11-12 05:16:49,182 | INFO | GET /metrics → 200 (0.512s)
+2025-11-12 05:16:49,215 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:49,220 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:50,307 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:16:50,309 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:50,323 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:50,330 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:51,415 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:51,416 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:16:51,432 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:51,436 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:52,390 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:16:52,392 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:52,407 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:52,412 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:53,445 | INFO | Metrics snapshot: CPU=5.2%, MEM=15.4%
+2025-11-12 05:16:53,446 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:53,948 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.4%
+2025-11-12 05:16:53,950 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:54,045 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:54,050 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:54,118 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:16:54,171 | INFO | ✅ Predicted 5 rows in 0.034s
+2025-11-12 05:16:54,680 | INFO | 🧠 SHAP TreeExplainer initialized.
+2025-11-12 05:16:54,755 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:16:54,757 | INFO | POST /predict_explain → 200 (0.642s)
+2025-11-12 05:16:55,260 | INFO | Metrics snapshot: CPU=4.6%, MEM=15.4%
+2025-11-12 05:16:55,261 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:55,313 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:16:55,320 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:16:56,334 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:16:56,335 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:56,348 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:56,352 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:57,318 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:16:57,319 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:16:57,330 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:57,334 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:58,252 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:16:58,254 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:16:58,759 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:16:58,761 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:16:58,879 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:58,883 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:16:59,853 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:16:59,855 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:16:59,868 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:16:59,881 | INFO | GET /live_tracking/ → 200 (0.004s)
+2025-11-12 05:17:00,790 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:17:00,791 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:00,808 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:00,817 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:17:02,025 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:17:02,026 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:02,044 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:02,054 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:17:03,198 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.5%
+2025-11-12 05:17:03,219 | INFO | GET /metrics → 200 (0.523s)
+2025-11-12 05:17:03,252 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:03,260 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:17:04,331 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.5%
+2025-11-12 05:17:04,332 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:04,362 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:04,369 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:17:05,588 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:17:05,589 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:05,610 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:05,615 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:17:06,547 | INFO | Metrics snapshot: CPU=2.7%, MEM=15.5%
+2025-11-12 05:17:06,549 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:07,052 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:17:07,557 | INFO | Metrics snapshot: CPU=3.0%, MEM=15.5%
+2025-11-12 05:17:07,560 | INFO | GET /metrics → 200 (1.009s)
+2025-11-12 05:17:08,062 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.5%
+2025-11-12 05:17:08,064 | INFO | GET /metrics → 200 (1.011s)
+2025-11-12 05:17:08,066 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:17:08,567 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:17:08,571 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:17:09,074 | INFO | Metrics snapshot: CPU=5.1%, MEM=15.5%
+2025-11-12 05:17:09,079 | INFO | GET /metrics → 200 (0.507s)
+2025-11-12 05:17:09,161 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:09,164 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:09,218 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:17:09,251 | INFO | ✅ Predicted 5 rows in 0.026s
+2025-11-12 05:17:09,338 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:17:09,340 | INFO | POST /predict_explain → 200 (0.124s)
+2025-11-12 05:17:09,985 | INFO | Metrics snapshot: CPU=3.0%, MEM=15.5%
+2025-11-12 05:17:09,987 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:10,490 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:17:10,492 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:10,580 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:10,583 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:10,660 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:17:10,676 | INFO | ✅ Predicted 5 rows in 0.002s
+2025-11-12 05:17:10,797 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:17:10,798 | INFO | POST /predict_explain → 200 (0.141s)
+2025-11-12 05:17:11,676 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:17:11,678 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:11,692 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:11,723 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:12,761 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:17:12,764 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:12,781 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:12,785 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:13,747 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:17:13,750 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:13,769 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:13,773 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:14,729 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:17:14,733 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:17:14,749 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:14,755 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:15,726 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:17:15,727 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:15,746 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:15,752 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:16,761 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:17:16,762 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:16,792 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:16,797 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:17,762 | INFO | Metrics snapshot: CPU=4.3%, MEM=15.5%
+2025-11-12 05:17:17,764 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:17,786 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:17,790 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:18,881 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.5%
+2025-11-12 05:17:18,882 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:18,904 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:18,909 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:17:19,889 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:17:19,890 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:19,905 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:19,912 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:20,922 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:17:20,923 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:20,941 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:20,946 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:22,006 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:17:22,007 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:22,025 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:22,030 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:23,062 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.5%
+2025-11-12 05:17:23,063 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:23,089 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:23,097 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:24,069 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:17:24,070 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:24,082 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:24,089 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:24,739 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.5%
+2025-11-12 05:17:24,740 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:24,755 | INFO | Received 5 orders for prediction.
+2025-11-12 05:17:24,756 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:17:24,774 | INFO | ✅ Predicted 5 rows in 0.003s
+2025-11-12 05:17:24,787 | INFO | ✅ Prediction successful for 5 records.
+2025-11-12 05:17:24,789 | INFO | POST /predict_delivery_time → 200 (0.036s)
+2025-11-12 05:17:24,815 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:24,819 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:25,687 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.5%
+2025-11-12 05:17:25,689 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:25,710 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:25,715 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:26,647 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:17:26,649 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:26,661 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:26,665 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:27,566 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:17:27,567 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:27,580 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:27,583 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:28,396 | INFO | Metrics snapshot: CPU=2.7%, MEM=15.5%
+2025-11-12 05:17:28,399 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:28,901 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:17:28,903 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:28,984 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:28,988 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:29,793 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:17:29,795 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:29,812 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:29,816 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:30,650 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:17:30,652 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:31,155 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:17:31,157 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:31,253 | INFO | Received 5 orders for prediction.
+2025-11-12 05:17:31,254 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:17:31,266 | INFO | ✅ Predicted 5 rows in 0.003s
+2025-11-12 05:17:31,280 | INFO | ✅ Prediction successful for 5 records.
+2025-11-12 05:17:31,284 | INFO | POST /predict_delivery_time → 200 (0.032s)
+2025-11-12 05:17:31,313 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:31,319 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:32,225 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:17:32,226 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:32,239 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:32,246 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:33,140 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:17:33,141 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:33,152 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:33,157 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:34,031 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:17:34,033 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:34,061 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:34,081 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:34,973 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:17:34,975 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:17:34,993 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:34,998 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:35,895 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:17:35,897 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:35,913 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:35,920 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:36,789 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.5%
+2025-11-12 05:17:36,790 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:36,806 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:36,811 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:37,625 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:17:37,626 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:37,640 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:37,647 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:38,514 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:17:38,515 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:38,527 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:38,534 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:39,400 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.5%
+2025-11-12 05:17:39,402 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:39,904 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.5%
+2025-11-12 05:17:39,905 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:39,984 | INFO | Received 5 orders for prediction.
+2025-11-12 05:17:39,984 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:17:39,995 | INFO | ✅ Predicted 5 rows in 0.002s
+2025-11-12 05:17:40,009 | INFO | ✅ Prediction successful for 5 records.
+2025-11-12 05:17:40,012 | INFO | POST /predict_delivery_time → 200 (0.03s)
+2025-11-12 05:17:40,026 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:40,034 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:40,923 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:17:40,924 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:17:40,936 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:40,940 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:41,871 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:17:41,873 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:41,883 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:41,888 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:42,837 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:17:42,839 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:42,862 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:42,868 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:43,749 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:17:43,752 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:17:43,767 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:43,773 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:44,720 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.5%
+2025-11-12 05:17:44,722 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:44,737 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:44,742 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:45,670 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:17:45,672 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:17:45,692 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:17:45,699 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:46,567 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:17:46,569 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:46,583 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:46,590 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:17:47,547 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:17:47,548 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:17:47,573 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:17:47,577 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:29:24,300 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.2%
+2025-11-12 05:29:24,302 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:29:25,408 | INFO | Metrics snapshot: CPU=3.4%, MEM=15.2%
+2025-11-12 05:29:25,409 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:29:37,521 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.2%
+2025-11-12 05:29:37,522 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:29:37,532 | INFO | Received 6 orders for prediction.
+2025-11-12 05:29:37,533 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:29:37,556 | INFO | ✅ Predicted 6 rows in 0.011s
+2025-11-12 05:29:37,558 | INFO | ✅ Prediction successful for 6 records.
+2025-11-12 05:29:37,562 | INFO | POST /predict_delivery_time → 200 (0.032s)
+2025-11-12 05:30:07,697 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:30:07,698 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:07,711 | INFO | Planning 6 routes using method=greedy, drivers=3.
+2025-11-12 05:30:07,722 | INFO | ✅ Predicted 6 rows in 0.004s
+2025-11-12 05:30:07,727 | INFO | ✅ Route optimization completed.
+2025-11-12 05:30:07,728 | INFO | POST /plan_routes → 200 (0.019s)
+2025-11-12 05:30:08,727 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:30:08,728 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:09,230 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:30:09,231 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:11,645 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:30:11,647 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:30:12,149 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:30:12,151 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:12,654 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.6%
+2025-11-12 05:30:12,656 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:13,158 | INFO | Metrics snapshot: CPU=3.3%, MEM=15.6%
+2025-11-12 05:30:13,160 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:30:14,232 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.6%
+2025-11-12 05:30:14,239 | INFO | GET /metrics → 200 (0.507s)
+2025-11-12 05:30:14,744 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.6%
+2025-11-12 05:30:14,746 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:15,249 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.6%
+2025-11-12 05:30:15,252 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:30:15,755 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.6%
+2025-11-12 05:30:15,757 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:17,019 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.6%
+2025-11-12 05:30:17,021 | INFO | GET /metrics → 200 (0.501s)
+2025-11-12 05:30:18,430 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:30:18,431 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:23,425 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:30:23,426 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:28,361 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:30:28,362 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:28,864 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.5%
+2025-11-12 05:30:28,866 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:29,368 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.5%
+2025-11-12 05:30:29,369 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:35,939 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.5%
+2025-11-12 05:30:35,940 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:30:42,270 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.5%
+2025-11-12 05:30:42,272 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:30:43,705 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:30:43,709 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:31:01,154 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:31:01,156 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:01,658 | INFO | Metrics snapshot: CPU=3.3%, MEM=15.4%
+2025-11-12 05:31:01,660 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:02,163 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:31:02,666 | INFO | Metrics snapshot: CPU=1.6%, MEM=15.4%
+2025-11-12 05:31:02,668 | INFO | GET /metrics → 200 (1.007s)
+2025-11-12 05:31:02,669 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:31:03,171 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:31:03,173 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:31:03,676 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.4%
+2025-11-12 05:31:03,678 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:31:12,197 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.5%
+2025-11-12 05:31:12,198 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:31:13,846 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.5%
+2025-11-12 05:31:13,850 | INFO | GET /metrics → 200 (0.505s)
+2025-11-12 05:31:13,864 | INFO | Planning 6 routes using method=ortools, drivers=3.
+2025-11-12 05:31:13,877 | INFO | ✅ Predicted 6 rows in 0.003s
+2025-11-12 05:31:13,917 | WARNING | OR-Tools VRP: No solution found within time limit.
+2025-11-12 05:31:13,919 | INFO | ✅ Route optimization completed.
+2025-11-12 05:31:13,920 | INFO | POST /plan_routes → 200 (0.058s)
+2025-11-12 05:31:14,783 | INFO | Metrics snapshot: CPU=2.8%, MEM=15.5%
+2025-11-12 05:31:14,786 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:31:18,148 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:31:18,150 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:18,159 | INFO | Planning 6 routes using method=ortools, drivers=3.
+2025-11-12 05:31:18,167 | INFO | ✅ Predicted 6 rows in 0.001s
+2025-11-12 05:31:18,173 | WARNING | OR-Tools VRP: No solution found within time limit.
+2025-11-12 05:31:18,174 | INFO | ✅ Route optimization completed.
+2025-11-12 05:31:18,174 | INFO | POST /plan_routes → 200 (0.016s)
+2025-11-12 05:31:25,239 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.5%
+2025-11-12 05:31:25,239 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:31:32,419 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.5%
+2025-11-12 05:31:32,420 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:32,923 | INFO | Metrics snapshot: CPU=4.5%, MEM=15.5%
+2025-11-12 05:31:32,925 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:33,427 | INFO | Metrics snapshot: CPU=1.4%, MEM=15.4%
+2025-11-12 05:31:33,929 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:31:33,931 | INFO | GET /metrics → 200 (1.005s)
+2025-11-12 05:31:33,931 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:34,433 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:31:34,435 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:37,547 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.4%
+2025-11-12 05:31:37,548 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:31:37,558 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:31:37,561 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:31:44,217 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:31:44,219 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:44,234 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:31:44,237 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:31:50,208 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.4%
+2025-11-12 05:31:50,209 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:31:50,220 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:31:50,223 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:31:56,196 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:31:56,197 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:31:56,699 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:31:56,700 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:31:56,763 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:31:56,767 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:04,667 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.4%
+2025-11-12 05:32:04,668 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:32:04,679 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:04,681 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:10,036 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:32:10,037 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:32:10,047 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:10,051 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:26,087 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.4%
+2025-11-12 05:32:26,089 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:32:26,100 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:26,102 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:32,092 | INFO | Metrics snapshot: CPU=1.6%, MEM=15.4%
+2025-11-12 05:32:32,094 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:32:32,103 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:32,106 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:38,096 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.4%
+2025-11-12 05:32:38,097 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:32:38,108 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:38,110 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:49,657 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:32:49,660 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:32:49,674 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:49,676 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:32:55,669 | INFO | Metrics snapshot: CPU=1.6%, MEM=15.4%
+2025-11-12 05:32:55,670 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:32:55,681 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:32:55,683 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:01,675 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:33:01,679 | INFO | GET /metrics → 200 (0.506s)
+2025-11-12 05:33:01,694 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:01,698 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:07,660 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.4%
+2025-11-12 05:33:07,661 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:33:07,671 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:07,675 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:13,662 | INFO | Metrics snapshot: CPU=3.4%, MEM=15.4%
+2025-11-12 05:33:13,664 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:33:13,675 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:13,677 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:24,309 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.4%
+2025-11-12 05:33:24,310 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:33:24,812 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:33:24,814 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:33:24,869 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:24,872 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:30,394 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:33:30,395 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:33:30,405 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:30,408 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:36,658 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:33:36,659 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:33:36,673 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:36,677 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:42,661 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.3%
+2025-11-12 05:33:42,663 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:33:42,673 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:42,677 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:48,670 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.3%
+2025-11-12 05:33:48,672 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:33:48,685 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:33:48,688 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:33:54,664 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.3%
+2025-11-12 05:33:54,666 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:33:54,685 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:33:54,689 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:00,665 | INFO | Metrics snapshot: CPU=3.2%, MEM=15.3%
+2025-11-12 05:34:00,666 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:34:00,676 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:00,679 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:06,666 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.3%
+2025-11-12 05:34:06,668 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:34:06,681 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:34:06,684 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:12,677 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.3%
+2025-11-12 05:34:12,678 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:34:12,688 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:12,691 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:18,664 | INFO | Metrics snapshot: CPU=2.4%, MEM=15.3%
+2025-11-12 05:34:18,665 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:34:18,676 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:18,678 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:24,664 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.3%
+2025-11-12 05:34:24,666 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:34:24,677 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:24,681 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:30,666 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.3%
+2025-11-12 05:34:30,667 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:34:30,677 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:30,680 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:53,667 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.3%
+2025-11-12 05:34:53,668 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:34:53,678 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:53,681 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:34:54,666 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:34:54,666 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:34:54,677 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:34:54,680 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:35:53,667 | INFO | Metrics snapshot: CPU=4.0%, MEM=15.3%
+2025-11-12 05:35:53,668 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:35:53,679 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:35:53,682 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:35:54,661 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.3%
+2025-11-12 05:35:54,662 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:35:54,671 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:35:54,675 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:36:53,679 | INFO | Metrics snapshot: CPU=3.6%, MEM=15.4%
+2025-11-12 05:36:53,681 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:36:53,693 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:36:53,696 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:36:54,666 | INFO | Metrics snapshot: CPU=1.6%, MEM=15.4%
+2025-11-12 05:36:54,667 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:36:54,678 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:36:54,680 | INFO | GET /live_tracking/ → 200 (0.0s)
+2025-11-12 05:37:53,665 | INFO | Metrics snapshot: CPU=3.6%, MEM=15.4%
+2025-11-12 05:37:53,667 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:37:53,679 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:37:53,683 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:37:54,666 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.4%
+2025-11-12 05:37:54,667 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:37:54,677 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:37:54,680 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:38:53,660 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.4%
+2025-11-12 05:38:53,661 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:38:53,672 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:38:53,674 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:38:54,665 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.4%
+2025-11-12 05:38:54,666 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:38:54,679 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:38:54,682 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:39:53,662 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:39:53,663 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:39:53,673 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:39:53,675 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:39:54,677 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.4%
+2025-11-12 05:39:54,679 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:39:54,689 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:39:54,691 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:40:53,669 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:40:53,670 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:40:53,681 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:40:53,683 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:40:54,668 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.4%
+2025-11-12 05:40:54,669 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:40:54,680 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:40:54,683 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:41:53,714 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.3%
+2025-11-12 05:41:53,715 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:41:53,725 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:41:53,729 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:41:54,663 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.3%
+2025-11-12 05:41:54,665 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:41:54,676 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:41:54,679 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:42:56,118 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.3%
+2025-11-12 05:42:56,621 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.3%
+2025-11-12 05:42:56,622 | INFO | GET /metrics → 200 (1.006s)
+2025-11-12 05:42:56,624 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:42:56,673 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:42:56,676 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:43:53,664 | INFO | Metrics snapshot: CPU=3.7%, MEM=15.3%
+2025-11-12 05:43:53,665 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:43:53,680 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:43:53,684 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:43:54,662 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:43:54,663 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:43:54,674 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:43:54,676 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:44:53,667 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:44:53,668 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:44:53,678 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:44:53,680 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:44:54,662 | INFO | Metrics snapshot: CPU=3.7%, MEM=15.4%
+2025-11-12 05:44:54,663 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:44:54,674 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:44:54,677 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:45:38,303 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:45:38,304 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:45:38,316 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:45:38,320 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:45:41,117 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.4%
+2025-11-12 05:45:41,119 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:45:42,351 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.4%
+2025-11-12 05:45:42,352 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:45:43,021 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.4%
+2025-11-12 05:45:43,022 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:45:43,845 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.4%
+2025-11-12 05:45:43,847 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:47:33,992 | INFO | Metrics snapshot: CPU=3.7%, MEM=15.4%
+2025-11-12 05:47:33,994 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:47:35,085 | INFO | Metrics snapshot: CPU=2.6%, MEM=15.4%
+2025-11-12 05:47:35,086 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:51:41,900 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.2%
+2025-11-12 05:51:41,902 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:51:42,838 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.2%
+2025-11-12 05:51:42,839 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:51:52,397 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.2%
+2025-11-12 05:51:52,399 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:51:56,424 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.2%
+2025-11-12 05:51:56,425 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:51:58,001 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.2%
+2025-11-12 05:51:58,002 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:51:58,012 | INFO | Received 5 orders for prediction.
+2025-11-12 05:51:58,013 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2025-11-12 05:51:58,034 | INFO | ✅ Predicted 5 rows in 0.008s
+2025-11-12 05:51:58,035 | INFO | ✅ Prediction successful for 5 records.
+2025-11-12 05:51:58,037 | INFO | POST /predict_delivery_time → 200 (0.028s)
+2025-11-12 05:52:09,568 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.7%
+2025-11-12 05:52:09,569 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:09,578 | INFO | Planning 5 routes using method=greedy, drivers=3.
+2025-11-12 05:52:09,587 | INFO | ✅ Predicted 5 rows in 0.001s
+2025-11-12 05:52:09,591 | INFO | ✅ Route optimization completed.
+2025-11-12 05:52:09,592 | INFO | POST /plan_routes → 200 (0.016s)
+2025-11-12 05:52:10,451 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.7%
+2025-11-12 05:52:10,452 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:52:15,968 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.7%
+2025-11-12 05:52:15,969 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:16,985 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.7%
+2025-11-12 05:52:16,985 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:18,027 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.7%
+2025-11-12 05:52:18,028 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:18,530 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.7%
+2025-11-12 05:52:18,531 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:19,836 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.8%
+2025-11-12 05:52:19,837 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:20,339 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.8%
+2025-11-12 05:52:20,340 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:20,842 | INFO | Metrics snapshot: CPU=3.6%, MEM=15.8%
+2025-11-12 05:52:20,844 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:21,347 | INFO | Metrics snapshot: CPU=2.2%, MEM=15.8%
+2025-11-12 05:52:21,348 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:21,850 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.8%
+2025-11-12 05:52:21,851 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:32,170 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.7%
+2025-11-12 05:52:32,171 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:34,968 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.7%
+2025-11-12 05:52:34,969 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:35,472 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.7%
+2025-11-12 05:52:35,474 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:52:35,977 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.7%
+2025-11-12 05:52:35,978 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:36,688 | INFO | Metrics snapshot: CPU=2.1%, MEM=15.7%
+2025-11-12 05:52:36,689 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:39,454 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.7%
+2025-11-12 05:52:39,455 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:39,481 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:39,484 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:40,547 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.7%
+2025-11-12 05:52:40,548 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:40,573 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:40,578 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:41,350 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.7%
+2025-11-12 05:52:41,351 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:41,381 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:41,385 | INFO | GET /live_tracking/ → 200 (0.002s)
+2025-11-12 05:52:42,201 | INFO | Metrics snapshot: CPU=1.5%, MEM=15.7%
+2025-11-12 05:52:42,202 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:42,224 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:42,227 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:43,021 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.7%
+2025-11-12 05:52:43,023 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:43,046 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:43,048 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:43,838 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.7%
+2025-11-12 05:52:43,840 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:52:43,863 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:43,865 | INFO | GET /live_tracking/ → 200 (0.0s)
+2025-11-12 05:52:44,637 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.7%
+2025-11-12 05:52:44,638 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:44,662 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:44,665 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:45,440 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.7%
+2025-11-12 05:52:45,441 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:45,468 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:45,472 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:46,205 | INFO | Metrics snapshot: CPU=2.5%, MEM=15.7%
+2025-11-12 05:52:46,206 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:46,709 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.7%
+2025-11-12 05:52:46,710 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:46,786 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:46,789 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:47,583 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.7%
+2025-11-12 05:52:47,584 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:47,613 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:47,616 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:48,391 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.7%
+2025-11-12 05:52:48,392 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:48,412 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:48,415 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:49,193 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.7%
+2025-11-12 05:52:49,194 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:49,217 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:49,222 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:50,049 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.7%
+2025-11-12 05:52:50,050 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:50,077 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:50,080 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:50,886 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.7%
+2025-11-12 05:52:50,887 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:50,909 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:50,912 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:51,707 | INFO | Metrics snapshot: CPU=1.8%, MEM=15.7%
+2025-11-12 05:52:51,708 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:52,210 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.7%
+2025-11-12 05:52:52,211 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:52,289 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:52,293 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:53,154 | INFO | Metrics snapshot: CPU=2.0%, MEM=15.7%
+2025-11-12 05:52:53,155 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:53,176 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:53,178 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:53,966 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.7%
+2025-11-12 05:52:53,968 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:53,992 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:53,994 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:54,749 | INFO | Metrics snapshot: CPU=2.3%, MEM=15.7%
+2025-11-12 05:52:54,750 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:54,772 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:54,774 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:55,538 | INFO | Metrics snapshot: CPU=2.9%, MEM=15.7%
+2025-11-12 05:52:55,539 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:55,560 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:55,562 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:56,328 | INFO | Metrics snapshot: CPU=1.2%, MEM=15.7%
+2025-11-12 05:52:56,330 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:56,353 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:56,356 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:57,158 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.7%
+2025-11-12 05:52:57,159 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:57,180 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:57,182 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:57,953 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.7%
+2025-11-12 05:52:57,954 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:58,457 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.7%
+2025-11-12 05:52:58,458 | INFO | GET /metrics → 200 (0.503s)
+2025-11-12 05:52:58,543 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:58,547 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:52:59,329 | INFO | Metrics snapshot: CPU=1.3%, MEM=15.7%
+2025-11-12 05:52:59,331 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:52:59,355 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:52:59,358 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:53:00,180 | INFO | Metrics snapshot: CPU=0.3%, MEM=15.7%
+2025-11-12 05:53:00,181 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:53:00,207 | INFO | GET /live_tracking → 307 (0.001s)
+2025-11-12 05:53:00,210 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:53:00,992 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.7%
+2025-11-12 05:53:00,994 | INFO | GET /metrics → 200 (0.504s)
+2025-11-12 05:53:01,017 | INFO | GET /live_tracking → 307 (0.0s)
+2025-11-12 05:53:01,019 | INFO | GET /live_tracking/ → 200 (0.001s)
+2025-11-12 05:53:01,597 | INFO | Metrics snapshot: CPU=1.0%, MEM=15.8%
+2025-11-12 05:53:01,598 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:53:02,403 | INFO | Metrics snapshot: CPU=0.2%, MEM=15.8%
+2025-11-12 05:53:02,405 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:53:07,646 | INFO | Metrics snapshot: CPU=0.7%, MEM=15.8%
+2025-11-12 05:53:07,647 | INFO | GET /metrics → 200 (0.502s)
+2025-11-12 05:53:07,711 | INFO | Running SHAP explainability for 5 samples...
+2025-11-12 05:53:07,719 | INFO | ✅ Predicted 5 rows in 0.002s
+2025-11-12 05:53:07,920 | INFO | 🧠 SHAP TreeExplainer initialized.
+2025-11-12 05:53:07,931 | INFO | ✅ SHAP explanation generated successfully.
+2025-11-12 05:53:07,933 | INFO | POST /predict_explain → 200 (0.223s)
