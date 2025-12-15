@@ -11,10 +11,11 @@ Features:
 ✅ ML-aware greedy assignment (priority by predicted delay + distance)
 ✅ Unified planner interface (plan_routes) for FastAPI use
 ✅ Dynamic traffic/time-weighted penalty support
+✅ Graceful fallback to greedy when OR-Tools is unavailable or fails
 
 Author: Vivek Marri
 Project: IntelliLog-AI
-Version: 2.1.0
+Version: 2.2.0
 """
 
 from __future__ import annotations
@@ -128,7 +129,8 @@ def ortools_vrp(
 
     # Capacities
     if capacities and demands:
-        demand_callback = lambda from_index: demands[manager.IndexToNode(from_index)]
+        def demand_callback(from_index):
+            return demands[manager.IndexToNode(from_index)]
         demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
         routing.AddDimensionWithVehicleCapacity(
             demand_callback_index, 0, capacities, True, "Capacity"
@@ -138,8 +140,8 @@ def ortools_vrp(
     if time_windows:
         routing.AddDimension(
             transit_index,
-            300,  # allow waiting time (5 min buffer)
-            36000,  # max 10 hours per route
+            300,     # waiting slack (e.g., 5 minutes)
+            36000,   # max 10 hours per route
             False,
             "Time"
         )
@@ -214,10 +216,11 @@ def plan_routes(
     """
     High-level planner: integrates ML predictions + VRP optimization.
     Adds optional capacity/time-window handling for OR-Tools.
+    Gracefully falls back to greedy when OR-Tools is unavailable or fails.
     """
     df = pd.DataFrame(orders)
     if df.empty:
-        return {"routes": [], "debug": "no orders"}
+        return {"routes": [], "method": method, "n_orders": 0, "debug": "no orders"}
 
     points = list(zip(df["lat"].astype(float), df["lon"].astype(float)))
     distance_matrix = build_distance_matrix(points)
@@ -227,13 +230,13 @@ def plan_routes(
         try:
             preds = model_predictor(df)
         except Exception as e:
-            logger.exception("Model predictor failed — using zero delays.")
+            logger.exception("Model predictor failed — using zero delays: %s", e)
             preds = [0.0] * len(df)
 
     # ------------------ Greedy Heuristic ------------------
     if method == "greedy":
         routes = greedy_vrp(df, preds=preds, drivers=drivers)
-        avg_load = np.mean([r["load"] for r in routes])
+        avg_load = np.mean([r["load"] for r in routes]) if routes else 0.0
         return {
             "routes": routes,
             "method": "greedy",
@@ -243,38 +246,89 @@ def plan_routes(
 
     # ------------------ OR-Tools Solver -------------------
     elif method == "ortools":
+        # If OR-Tools not installed, fallback instead of crashing
         if not _ORTOOLS_AVAILABLE:
-            raise RuntimeError("OR-Tools not available. Install ortools to use this solver.")
+            logger.warning("OR-Tools not available. Falling back to greedy heuristic.")
+            routes = greedy_vrp(df, preds=preds, drivers=drivers)
+            avg_load = np.mean([r["load"] for r in routes]) if routes else 0.0
+            return {
+                "routes": routes,
+                "method": "greedy_fallback",
+                "n_orders": len(df),
+                "debug": {
+                    "avg_load": float(avg_load),
+                    "solver": "Greedy Heuristic (fallback: OR-Tools not installed)",
+                },
+            }
 
-        # Add dummy capacities and time windows
-        capacities = [15] * drivers
-        demands = [random.randint(1, 3) for _ in range(len(df))]
-        base_time = random.randint(0, 100)
-        time_windows = [(base_time, base_time + 3600 + random.randint(0, 600)) for _ in range(len(df))]
+        try:
+            # Example capacities and time windows — can be wired to business logic
+            capacities = [15] * drivers
+            demands = [random.randint(1, 3) for _ in range(len(df))]
+            base_time = random.randint(0, 100)
+            time_windows = [
+                (base_time, base_time + 3600 + random.randint(0, 600))
+                for _ in range(len(df))
+            ]
 
-        routes_nodes = ortools_vrp(
-            distance_matrix,
-            num_vehicles=drivers,
-            depot=0,
-            capacities=capacities,
-            demands=demands,
-            time_windows=time_windows,
-            time_limit_sec=ortools_time_limit,
-        )
+            routes_nodes = ortools_vrp(
+                distance_matrix,
+                num_vehicles=drivers,
+                depot=0,
+                capacities=capacities,
+                demands=demands,
+                time_windows=time_windows,
+                time_limit_sec=ortools_time_limit,
+            )
 
-        routes_out = []
-        for i, nodes in enumerate(routes_nodes):
-            order_ids = [df.iloc[idx]["order_id"] for idx in nodes if idx < len(df)]
-            total_distance = float(sum(df.iloc[idx]["distance_km"] for idx in nodes if idx < len(df)))
-            routes_out.append({"id": i, "route": order_ids, "load": total_distance})
+            # If OR-Tools returns no routes, also fallback
+            if not routes_nodes:
+                logger.warning("OR-Tools VRP returned no routes. Falling back to greedy heuristic.")
+                routes = greedy_vrp(df, preds=preds, drivers=drivers)
+                avg_load = np.mean([r["load"] for r in routes]) if routes else 0.0
+                return {
+                    "routes": routes,
+                    "method": "greedy_fallback",
+                    "n_orders": len(df),
+                    "debug": {
+                        "avg_load": float(avg_load),
+                        "solver": "Greedy Heuristic (fallback: OR-Tools no solution)",
+                    },
+                }
 
-        avg_load = np.mean([r["load"] for r in routes_out]) if routes_out else 0.0
-        return {
-            "routes": routes_out,
-            "method": "ortools",
-            "n_orders": len(df),
-            "debug": {"avg_load": float(avg_load), "solver": "OR-Tools VRP"},
-        }
+            routes_out = []
+            for i, nodes in enumerate(routes_nodes):
+                # Node indices correspond to rows in df (depot is index 0 here)
+                order_ids = [df.iloc[idx]["order_id"] for idx in nodes if idx < len(df)]
+                total_distance = float(
+                    sum(df.iloc[idx]["distance_km"] for idx in nodes if idx < len(df))
+                )
+                routes_out.append({"id": i, "route": order_ids, "load": total_distance})
+
+            avg_load = np.mean([r["load"] for r in routes_out]) if routes_out else 0.0
+            return {
+                "routes": routes_out,
+                "method": "ortools",
+                "n_orders": len(df),
+                "debug": {"avg_load": float(avg_load), "solver": "OR-Tools VRP"},
+            }
+
+        except Exception as e:
+            # Any crash in OR-Tools → fallback to greedy
+            logger.exception("OR-Tools VRP crashed. Falling back to greedy heuristic: %s", e)
+            routes = greedy_vrp(df, preds=preds, drivers=drivers)
+            avg_load = np.mean([r["load"] for r in routes]) if routes else 0.0
+            return {
+                "routes": routes,
+                "method": "greedy_fallback",
+                "n_orders": len(df),
+                "debug": {
+                    "avg_load": float(avg_load),
+                    "solver": "Greedy Heuristic (fallback: OR-Tools exception)",
+                    "error": str(e),
+                },
+            }
+        
 
     else:
         raise ValueError(f"Unknown method: {method}")
@@ -286,8 +340,14 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     sample_orders = [
-        {"order_id": f"O{i}", "lat": 12.9 + i * 0.01, "lon": 77.6 + i * 0.01,
-         "distance_km": round(2 + i * 1.5, 2), "traffic": "medium", "weather": "clear"}
+        {
+            "order_id": f"O{i}",
+            "lat": 12.9 + i * 0.01,
+            "lon": 77.6 + i * 0.01,
+            "distance_km": round(2 + i * 1.5, 2),
+            "traffic": "medium",
+            "weather": "clear",
+        }
         for i in range(6)
     ]
 
@@ -303,4 +363,4 @@ if __name__ == "__main__":
         out2 = plan_routes(sample_orders, drivers=2, method="ortools")
         print(out2["routes"])
     else:
-        print("\n⚠️ OR-Tools not installed — skipping advanced solver.")
+        print("\n⚠️ OR-Tools not installed — skipping advanced solver (greedy will be used as fallback in app).")
