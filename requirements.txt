@@ -38,3 +38,4 @@ geopy
 
 pydantic
 python-multipart
+psutil
