@@ -28,6 +28,7 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
+
 # -----------------------------------------------------------
 # PATH & IMPORTS
 # -----------------------------------------------------------
@@ -36,6 +37,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 from src.optimization.vrp_solver import plan_routes
 from src.api.services.ml_engine import ModelEngine
 from src.api.live_tracking import router as live_tracking_router  # Live tracking module
+# -----------------------------------------------------------
+# ROUTERS
+# -----------------------------------------------------------
+from src.api.routes.health import router as health_router
+from src.api.live_tracking import router as live_tracking_router
 
 # -----------------------------------------------------------
 # CONFIGURATION
@@ -58,6 +64,11 @@ app = FastAPI(
     ),
     version="3.2.0",
 )
+# -----------------------------------------------------------
+# ROUTERS
+# -----------------------------------------------------------
+app.include_router(health_router)
+app.include_router(live_tracking_router)
 
 # -----------------------------------------------------------
 # CORS CONFIGURATION
