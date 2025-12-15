@@ -1,33 +1,23 @@
 # =============================
-# IntelliLog-AI: Production Dockerfile (v3.3)
-# Author: Vivek Marri
+# IntelliLog-AI: Streamlit Dashboard Dockerfile
 # =============================
 
-# ---- Base Python Environment ----
-FROM python:3.10-slim AS base
+FROM python:3.10-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependencies first for Docker caching
+# Install dependencies
 COPY requirements.txt .
-
-# Install dependencies efficiently
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire project
+# Copy app code
 COPY . .
 
-# Common environment variables
+# Environment variables
 ENV PYTHONUNBUFFERED=1
-ENV MODEL_PATH=/app/models/xgb_delivery_time_model.pkl
 
-# Expose both ports (FastAPI + Streamlit)
+# EXPOSE is optional (Render ignores but ok)
 EXPOSE 8501
 
-# =============================
-# Stage 2: Streamlit Dashboard
-# =============================
-FROM base AS dashboard
-ENV API_URL=http://api:8000
-CMD ["streamlit", "run", "src/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Use Render's dynamic PORT
+CMD ["sh", "-c", "streamlit run src/dashboard/app.py --server.port=${PORT:-8501} --server.address=0.0.0.0"]
