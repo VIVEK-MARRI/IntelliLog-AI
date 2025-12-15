@@ -51,6 +51,7 @@ import folium
 from streamlit_folium import st_folium
 from PIL import Image, ImageDraw, ImageFont
 from streamlit_autorefresh import st_autorefresh
+import geopy.distance
 
 # ----------------------------------------------------------------
 # CONFIG
@@ -137,6 +138,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------------------
+# SESSION STATE & DEFAULTS
+# ----------------------------------------------------------------
+defaults = {
+    "df_preds": None,
+    "routes": [],
+    "live_positions": [],
+    "telemetry": [],
+    "live_running": False,
+    "fleet_paused": False,
+    "last_shap_data": None,
+    "fleet_map_key": 0,  # Key for stable map re-renders
+}
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
+# ----------------------------------------------------------------
 # SIDEBAR
 # ----------------------------------------------------------------
 st.sidebar.header("⚙️ Configuration Panel")
@@ -146,6 +164,9 @@ st.sidebar.markdown(
 )
 
 source = st.sidebar.radio("📦 Input Source", ["Simulate Orders", "Upload CSV"])
+
+# Determine if we have a dataframe (df) to work with
+df = pd.DataFrame() 
 
 if source == "Upload CSV":
     uploaded = st.sidebar.file_uploader("📁 Upload orders CSV file", type=["csv"])
@@ -159,14 +180,13 @@ if source == "Upload CSV":
             st.sidebar.success(f"✅ Loaded {len(df)} records successfully.")
         except Exception as e:
             st.sidebar.error(f"❌ Failed to read CSV: {e}")
-            st.stop()
+            df = pd.DataFrame() # Ensure df is empty on failure
     elif st.session_state["uploaded_df"] is not None:
         df = st.session_state["uploaded_df"]
         st.sidebar.success(f"✅ Loaded cached dataset ({len(df)} records).")
     else:
         st.sidebar.info("📄 Please upload a valid CSV file to continue.")
-        st.stop()
-
+        # df remains empty
 else:
     # Small demo dataset (for quick testing)
     df = pd.DataFrame([
@@ -183,6 +203,12 @@ else:
     ])
     st.sidebar.success("✅ Using simulated demo orders (8 orders generated).")
 
+# Stop the app execution if no data is loaded
+if df.empty:
+    if source == "Upload CSV":
+        st.stop() # Only stop if upload is selected and no data is present
+
+# Auto-refresh slider must be defined regardless of input source
 refresh_sec = st.sidebar.slider("🔁 Auto-refresh Interval (seconds)", 3, 30, 6)
 
 st.sidebar.markdown("""
@@ -196,21 +222,6 @@ st.sidebar.markdown("""
 - `order_type`
 """)
 
-# ----------------------------------------------------------------
-# SESSION STATE
-# ----------------------------------------------------------------
-defaults = {
-    "df_preds": None,
-    "routes": [],
-    "live_positions": [],
-    "telemetry": [],
-    "live_running": False,
-    "fleet_paused": False,
-    "last_shap_data": None,
-}
-for k, v in defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
 
 # ----------------------------------------------------------------
 # UTILITIES
@@ -284,6 +295,10 @@ def osrm_route_geometry(coord_pairs: List[Tuple[float, float]]) -> List[Tuple[fl
 # Utility: map order_id sequence to lat/lon list preserving order
 def orderid_sequence_to_coords(order_seq: List[str], orders_df: pd.DataFrame) -> List[Tuple[float, float]]:
     coords = []
+    # Check if orders_df is not empty before setting index
+    if orders_df.empty:
+        return []
+        
     order_lookup = orders_df.set_index("order_id")[["lat", "lon"]].to_dict(orient="index")
     for oid in order_seq:
         if oid in order_lookup:
@@ -293,6 +308,9 @@ def orderid_sequence_to_coords(order_seq: List[str], orders_df: pd.DataFrame) ->
 
 # Defensive formatting of API routes payloads
 def normalize_routes_response(routes_raw: Any, orders_df: pd.DataFrame) -> List[Dict[str, Any]]:
+    if orders_df.empty:
+        return []
+
     routes_out = []
     try:
         if isinstance(routes_raw, dict):
@@ -321,12 +339,22 @@ def normalize_routes_response(routes_raw: Any, orders_df: pd.DataFrame) -> List[
         }]
     return routes_out
 
+def route_distance_km(wp):
+    """Approximate total travel distance (km) for waypoints list."""
+    if len(wp) < 2:
+        return 0
+    try:
+        return sum(geopy.distance.distance(wp[i], wp[i+1]).km for i in range(len(wp)-1))
+    except Exception:
+        return 0
+
 # ----------------------------------------------------------------
 # API HEALTH CHECK
 # ----------------------------------------------------------------
 with st.expander("📊 API Health Status", expanded=False):
     res = safe_api_get("/metrics")
-    st_autorefresh(interval=60000, key="api_health_refresh")
+    # This refresh is acceptable as it only runs once per minute for a non-critical component
+    st_autorefresh(interval=60000, key="api_health_refresh") 
     if not res:
         st.error("❌ API offline or unreachable.")
     elif res.status_code == 200:
@@ -369,18 +397,19 @@ with tab1:
                 # Ensure non-empty results
                 if preds.empty:
                     st.warning("⚠️ Prediction API returned empty results.")
-                    st.stop()
+                    # Use continue/break/return in a function, or reset state in a script
+                    # For stability, we'll continue execution but with a warning.
+                else:
+                    # Add timestamp for later analytics
+                    preds["timestamp"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # Add timestamp for later analytics
-                preds["timestamp"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+                    st.session_state["df_preds"] = preds
+                    st.success("✅ Predictions generated successfully!")
+                    st.dataframe(preds, use_container_width=True)
 
-                st.session_state["df_preds"] = preds
-                st.success("✅ Predictions generated successfully!")
-                st.dataframe(preds, use_container_width=True)
-
-                # Quick stats
-                st.markdown("#### 📈 Summary Statistics")
-                st.dataframe(preds.describe().T, use_container_width=True)
+                    # Quick stats
+                    st.markdown("#### 📈 Summary Statistics")
+                    st.dataframe(preds.describe().T, use_container_width=True)
 
             except Exception as e:
                 st.error(f"Prediction API returned malformed payload: {e}")
@@ -400,17 +429,6 @@ with tab1:
 # ----------------------------------------------------------------
 # TAB 2 — ROUTE OPTIMIZATION (Enhanced v3.3.3)
 # ----------------------------------------------------------------
-import geopy.distance
-
-def route_distance_km(wp):
-    """Approximate total travel distance (km) for waypoints list."""
-    if len(wp) < 2:
-        return 0
-    try:
-        return sum(geopy.distance.distance(wp[i], wp[i+1]).km for i in range(len(wp)-1))
-    except Exception:
-        return 0
-
 with tab2:
     st.subheader("🧭 Route Optimization & Visualization")
 
@@ -442,23 +460,16 @@ with tab2:
                 st.success(f"✅ {len(normalized)} optimized routes received from API!")
             except Exception as e:
                 st.error(f"Malformed route response: {e}")
-                st.session_state["routes"] = [
-                    {
-                        "driver": i,
-                        "route_ids": [],
-                        "waypoints": list(df[["lat", "lon"]].itertuples(index=False, name=None)),
-                        "load": len(df)
-                    }
-                    for i in range(min(int(drivers), len(df)))
-                ]
+                st.session_state["routes"] = [] # Clear routes on error
         else:
             st.warning("⚠️ API unavailable. Generating mock routes locally (fallback mode).")
 
             # Simple greedy fallback routing
             order_ids = df["order_id"].tolist()
             chunks = [[] for _ in range(int(drivers))]
-            for i, oid in enumerate(order_ids):
-                chunks[i % int(drivers)].append(oid)
+            if order_ids:
+                for i, oid in enumerate(order_ids):
+                    chunks[i % int(drivers)].append(oid)
 
             normalized = []
             for i, ch in enumerate(chunks):
@@ -477,7 +488,7 @@ with tab2:
     # ----------------------------------------------------------------
     routes = st.session_state.get("routes", [])
 
-    if routes:
+    if routes and not df.empty:
         st.subheader("📍 Optimized Route Map (with OSRM road geometry when available)")
 
         # Folium Map Initialization
@@ -549,8 +560,8 @@ with tab2:
             })
 
         # Display route map
-        st_folium(m, width=950, height=550)
-
+        st_folium(m, width=950, height=550, key="optimized_route_map") # Stable key
+        
         # Display Route Summary Table
         if route_summary:
             st.markdown("#### 🚛 Route Summary Overview")
@@ -570,6 +581,7 @@ with tab3:
     if c1.button("▶️ Start Fleet"):
         st.session_state["live_running"] = True
         st.session_state["fleet_paused"] = False
+        st.session_state["fleet_map_key"] += 1 # Increment map key to force map redraw on start
     if c2.button("⏸️ Pause"):
         st.session_state["fleet_paused"] = True
     if c3.button("🔄 Resume"):
@@ -590,11 +602,12 @@ with tab3:
     else:
         st.markdown("🔴 **Fleet Status:** Stopped")
 
-    # Request live positions
+    # Request live positions / Auto-refresh block
     if running and not paused:
-        _ = st_autorefresh(interval=refresh_sec * 1000, key="fleet_refresh_v3", limit=1000)
-        if not running:
-            st_autorefresh(interval=0, key="fleet_refresh_stop")
+        # AGGRESSIVE REFRESH IS ONLY HERE WHEN RUNNING
+        st_autorefresh(interval=refresh_sec * 1000, key="fleet_refresh_v3", limit=1000) 
+        
+        # Logic to fetch data
         res = safe_api_get(f"/live_tracking?drivers={int(drivers)}", timeout=6)
         if res and res.status_code == 200:
             try:
@@ -612,6 +625,12 @@ with tab3:
             st.session_state["live_positions"] = simulate_live_positions(int(drivers))
         st.session_state["last_update"] = datetime.now().strftime("%H:%M:%S")
 
+    # Ensure autorefresh is stopped when not running/paused (otherwise the key persists the refresh)
+    if not (running and not paused):
+        # A workaround to stop a running autorefresh by setting its interval to 0 (Streamlit feature)
+        # Note: In most recent Streamlit versions, simply removing the st_autorefresh call from the script flow when not needed is sufficient.
+        pass
+        
     live = st.session_state.get("live_positions", [])
 
     # Fleet Overview
@@ -631,7 +650,9 @@ with tab3:
                 st.metric("Speed (km/h)", drv.get("speed_kmph", "N/A"))
                 st.metric("ETA (min)", drv.get("eta_min", "N/A"))
             with c3:
-                eff = max(0, min(100, 100 - abs(drv.get("eta_min", 20) - 20) * 2))
+                # Efficiency calculation uses mock ETA of 20min as target
+                eta_val = drv.get("eta_min", 20)
+                eff = max(0, min(100, 100 - abs(eta_val - 20) * 2)) 
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=eff,
@@ -639,7 +660,7 @@ with tab3:
                     gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#1f77b4"}}
                 ))
                 fig.update_layout(height=120, margin=dict(t=8, b=8, l=8, r=8))
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"driver_gauge_{did}")
     else:
         st.info("No active drivers. Start fleet to begin tracking.")
 
@@ -647,7 +668,11 @@ with tab3:
     # Fleet Map + Heatmap Visualization
     # ----------------------------------------------------------------
     st.markdown("### 🗺️ Fleet Map & Movement History")
-    m = folium.Map(location=[df["lat"].mean(), df["lon"].mean()], zoom_start=12)
+    # Use a safe fallback if df is empty (e.g., if app was launched without data and using simulated)
+    map_lat = df["lat"].mean() if not df.empty else 12.97
+    map_lon = df["lon"].mean() if not df.empty else 77.59
+    
+    m = folium.Map(location=[map_lat, map_lon], zoom_start=12)
 
     # Add live driver markers
     for drv in live:
@@ -676,13 +701,12 @@ with tab3:
         except Exception:
             st.info("No heatmap data available yet (history endpoint not active).")
 
-    # Force refresh map on every live update
-    st_folium(m, width=950, height=520, key=f"fleet_map_{random.randint(0,10000)}")
+    # Display map with a stable key that increments only when forced (e.g., on 'Start Fleet')
+    st_folium(m, width=950, height=520, key=f"fleet_map_{st.session_state['fleet_map_key']}")
 
     # Timestamp
     if st.session_state.get("last_update"):
         st.caption(f"⏱️ Last Updated: {st.session_state['last_update']}")
-
 
 
 # ----------------------------------------------------------------
@@ -701,75 +725,10 @@ with tab4:
                 data = res.json().get("explanation", {})
                 vals = np.array(data.get("shap_values", []))
                 feats = data.get("feature_names", [])
-                st.session_state["last_shap_data"] = (feats, vals)
-
-                if vals.size:
-                    # -----------------------------
-                    # Global SHAP Importance (Top 10)
-                    # -----------------------------
-                    imp = np.mean(np.abs(vals), axis=0)
-                    imp_df = pd.DataFrame({"Feature": feats, "Importance": imp})
-                    imp_df = imp_df.sort_values("Importance", ascending=False).head(10)
-                    fig = px.bar(
-                        imp_df,
-                        x="Importance",
-                        y="Feature",
-                        orientation="h",
-                        title="🌍 Top 10 Features by Mean |SHAP| Importance",
-                        color="Importance",
-                        color_continuous_scale="Blues"
-                    )
-                    fig.update_layout(yaxis={'categoryorder': 'total ascending'})
-                    st.plotly_chart(fig, use_container_width=True)
-
-                    # -----------------------------
-                    # Global SHAP Summary Plot
-                    # -----------------------------
-                    st.markdown("#### 🎯 Global SHAP Summary Distribution")
-                    shap_df = pd.DataFrame(vals, columns=feats)
-                    fig_summary = px.box(
-                        shap_df.melt(var_name="Feature", value_name="SHAP Value"),
-                        x="Feature",
-                        y="SHAP Value",
-                        color="Feature",
-                        title="SHAP Value Distribution per Feature",
-                        points="all"
-                    )
-                    fig_summary.update_layout(showlegend=False)
-                    st.plotly_chart(fig_summary, use_container_width=True)
-
-                    # -----------------------------
-                    # Local SHAP Breakdown (Interactive)
-                    # -----------------------------
-                    st.markdown("#### 🔍 Local Instance Explanation")
-                    instance_idx = st.number_input(
-                        "Select Instance Index",
-                        0, vals.shape[0]-1, 0,
-                        help="Choose which order’s SHAP values to inspect"
-                    )
-                    local_vals = vals[int(instance_idx)]
-                    local_df = pd.DataFrame({
-                        "Feature": feats,
-                        "SHAP Value": local_vals
-                    }).sort_values("SHAP Value", ascending=False)
-
-                    fig_local = px.bar(
-                        local_df,
-                        x="SHAP Value",
-                        y="Feature",
-                        orientation="h",
-                        color="SHAP Value",
-                        color_continuous_scale="RdYlGn",
-                        title=f"Local SHAP Explanation — Instance {instance_idx}"
-                    )
-                    fig_local.update_layout(yaxis={'categoryorder': 'total ascending'})
-                    st.plotly_chart(fig_local, use_container_width=True)
-
-                    st.dataframe(
-                        local_df.style.background_gradient(cmap="RdYlGn").format(precision=4),
-                        use_container_width=True
-                    )
-
+                
+                if vals.size > 0:
+                    st.session_state["last_shap_data"] = (feats, vals)
+                    st.success("✅ SHAP data received successfully.")
                 else:
                     st.warning("⚠️ No SHAP values found in the API response.")
 
@@ -777,6 +736,79 @@ with tab4:
                 st.error(f"❌ Error while parsing explainability response: {e}")
         else:
             st.warning("⚠️ Explainability API unavailable. Ensure model + SHAP are correctly installed on the server.")
+
+    # Display SHAP results if available
+    if st.session_state["last_shap_data"]:
+        feats, vals = st.session_state["last_shap_data"]
+        
+        # -----------------------------
+        # Global SHAP Importance (Top 10)
+        # -----------------------------
+        imp = np.mean(np.abs(vals), axis=0)
+        imp_df = pd.DataFrame({"Feature": feats, "Importance": imp})
+        imp_df = imp_df.sort_values("Importance", ascending=False).head(10)
+        fig = px.bar(
+            imp_df,
+            x="Importance",
+            y="Feature",
+            orientation="h",
+            title="🌍 Top 10 Features by Mean |SHAP| Importance",
+            color="Importance",
+            color_continuous_scale="Blues"
+        )
+        fig.update_layout(yaxis={'categoryorder': 'total ascending'})
+        st.plotly_chart(fig, use_container_width=True, key="shap_global_bar")
+
+        # -----------------------------
+        # Global SHAP Summary Plot
+        # -----------------------------
+        st.markdown("#### 🎯 Global SHAP Summary Distribution")
+        shap_df = pd.DataFrame(vals, columns=feats)
+        fig_summary = px.box(
+            shap_df.melt(var_name="Feature", value_name="SHAP Value"),
+            x="Feature",
+            y="SHAP Value",
+            color="Feature",
+            title="SHAP Value Distribution per Feature",
+            points="all"
+        )
+        fig_summary.update_layout(showlegend=False)
+        st.plotly_chart(fig_summary, use_container_width=True, key="shap_global_box")
+
+        # -----------------------------
+        # Local SHAP Breakdown (Interactive)
+        # -----------------------------
+        st.markdown("#### 🔍 Local Instance Explanation")
+        instance_idx = st.number_input(
+            "Select Instance Index",
+            0, vals.shape[0]-1, 0,
+            help="Choose which order’s SHAP values to inspect"
+        )
+        local_vals = vals[int(instance_idx)]
+        local_df = pd.DataFrame({
+            "Feature": feats,
+            "SHAP Value": local_vals
+        }).sort_values("SHAP Value", ascending=False)
+
+        fig_local = px.bar(
+            local_df,
+            x="SHAP Value",
+            y="Feature",
+            orientation="h",
+            color="SHAP Value",
+            color_continuous_scale="RdYlGn",
+            title=f"Local SHAP Explanation — Instance {instance_idx}"
+        )
+        fig_local.update_layout(yaxis={'categoryorder': 'total ascending'})
+        st.plotly_chart(fig_local, use_container_width=True, key="shap_local_bar")
+
+        st.dataframe(
+            local_df.style.background_gradient(cmap="RdYlGn").format(precision=4),
+            use_container_width=True
+        )
+    else:
+        st.info("Run the prediction and explainability modules to generate SHAP visualizations.")
+
 
 # ----------------------------------------------------------------
 # TAB 5 — ANALYTICS (Enhanced v3.3.3)
@@ -818,7 +850,7 @@ with tab5:
                 color_discrete_sequence=["#1f77b4"]
             )
             fig.update_layout(xaxis_title="Predicted Delivery Time (min)", yaxis_title="Count")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="analyt_hist")
 
         with c2:
             if "distance_km" in preds.columns:
@@ -831,7 +863,7 @@ with tab5:
                     color_discrete_sequence=["#ff7f0e"]
                 )
                 fig2.update_layout(xaxis_title="Distance (km)", yaxis_title="Predicted Time (min)")
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, use_container_width=True, key="analyt_scatter")
 
         st.markdown("---")
 
@@ -858,7 +890,7 @@ with tab5:
                 color_discrete_sequence=px.colors.qualitative.Bold
             )
             fig.update_traces(textinfo="percent+label")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="analyt_pie")
 
         st.markdown("---")
 
@@ -875,7 +907,7 @@ with tab5:
                 color_continuous_scale="RdBu_r",
                 title="Feature Correlation Matrix"
             )
-            st.plotly_chart(fig_corr, use_container_width=True)
+            st.plotly_chart(fig_corr, use_container_width=True, key="analyt_corr")
         else:
             st.info("Not enough numeric features to compute correlations.")
 
@@ -895,7 +927,7 @@ with tab5:
                 color_discrete_sequence=px.colors.qualitative.Set2
             )
             fig3.update_layout(xaxis_title="Order Type", yaxis_title="Predicted Delivery Time (min)")
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(fig3, use_container_width=True, key="analyt_box")
 
         st.markdown("---")
 
@@ -904,7 +936,10 @@ with tab5:
         # ------------------------------------------------------------
         if "timestamp" in preds.columns:
             st.markdown("#### ⏳ Delivery Time Trend Over Time")
-            preds["timestamp"] = pd.to_datetime(preds["timestamp"])
+            # Ensure timestamp is datetime type for plotting
+            if not pd.api.types.is_datetime64_any_dtype(preds["timestamp"]):
+                preds["timestamp"] = pd.to_datetime(preds["timestamp"])
+                
             fig4 = px.line(
                 preds,
                 x="timestamp",
@@ -913,7 +948,7 @@ with tab5:
                 markers=True,
                 color_discrete_sequence=["#2ca02c"]
             )
-            st.plotly_chart(fig4, use_container_width=True)
+            st.plotly_chart(fig4, use_container_width=True, key="analyt_line")
 
     else:
         st.info("No predictions available yet. Please run the prediction module first.")
@@ -922,4 +957,4 @@ with tab5:
 # FOOTER
 # ----------------------------------------------------------------
 st.markdown("---")
-st.caption("Developed by Vivek Marri • IntelliLog-AI v3.3.1 © 2025 — AI-Powered Fleet Dashboard")
+st.caption("Developed by Vivek Marri • IntelliLog-AI v3.3.3 © 2025 — AI-Powered Fleet Dashboard")
