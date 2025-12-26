@@ -8,7 +8,13 @@
 [![OR-Tools](https://img.shields.io/badge/Optimizer-Google%20OR--Tools-4285F4.svg)](https://developers.google.com/optimization)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Live demo: https://intellilog-ai-dashboard.onrender.com/
+<p align="center">
+  <a href="https://intellilog-ai-dashboard.onrender.com/" target="_blank">
+    <img src="https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel" />
+  </a>
+</p>
+
+
 
 ---
 
