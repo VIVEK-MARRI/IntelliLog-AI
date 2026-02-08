@@ -11,8 +11,8 @@ The system follows a layered architecture pattern, separating concerns between t
 ```mermaid
 graph TD
     User[User / Client] -->|HTTPS| CDN[CDN / Load Balancer]
-    CDN -->|Static Assets| FE[Frontend (React + Vite)]
-    CDN -->|API Requests| API[Backend API (FastAPI)]
+    CDN -->|Static Assets| FE[Frontend - React + Vite]
+    CDN -->|API Requests| API[Backend API - FastAPI]
     
     subgraph "Backend Services"
         API -->|Auth & User Mgmt| Auth[Auth Service]
@@ -22,12 +22,12 @@ graph TD
         SVC -->|Read/Write| DB[(PostgreSQL)]
         SVC -->|Cache/Queue| Redis[(Redis)]
         
-        Worker -->|ML Inference| ML[ML Models (XGBoost)]
+        Worker -->|ML Inference| ML[ML Models - XGBoost]
         Worker -->|Optimization| OR[OR-Tools Engine]
     end
     
     subgraph "External Integrations"
-        Maps[Map Services (OSRM/Google Maps)]
+        Maps[Map Services - OSRM and Google Maps]
     end
     
     SVC --> Maps
@@ -138,7 +138,7 @@ erDiagram
         uuid id PK
         string status
         float total_distance
-        json geometry
+        string geometry
         uuid driver_id FK
         uuid tenant_id FK
     }
