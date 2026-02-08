@@ -190,130 +190,310 @@
 
 ## 🏗️ System Architecture
 
-### Executive Architecture Overview
+### 1. High-Level Architecture
 
-The system implements a **layered microservices-ready architecture** with clear separation of concerns, designed for high availability and scalability.
+IntelliLog-AI follows a **layered architecture pattern** that separates concerns between client presentation, API services, business logic, and data persistence layers. This design enables independent scaling, maintainability, and microservices-ready extensibility.
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                       PRESENTATION LAYER                            │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │    React 18 Frontend (TypeScript + Vite + Tailwind CSS)      │  │
-│  │  ┌─ Route Optimizer  ┌─ Fleet Control  ┌─ Analytics Hub      │  │
-│  │  └─ Order Manager    └─ Settings       └─ Support            │  │
-│  └──────────────┬───────────────────────────────────────────────┘  │
-└─────────────────┼─────────────────────────────────────────────────┘
-                  │ HTTPS/REST API + WebSocket
-                  ▼
-┌────────────────────────────────────────────────────────────────────┐
-│                      API GATEWAY LAYER                              │
-│            Nginx (Load Balancing, Static Files, SSL/TLS)               │
-└────────────┬─────────────────────────────────────────────────────┘
-             │
-   ┌─────────┼─────────┐
-   │         │         │
-   ▼         ▼         ▼
-┌───────┐ ┌────────┐ ┌──────────┐
-│ AUTH  │ │ CORE   │ │ WORKERS  │
-│SYSTEM │ │SERVICES│ │(Async)   │
-├───────┤ ├────────┤ ├──────────┤
-│JWT    │ │Orders  │ │ML Engine │
-│OAuth2 │ │Drivers │ │VRP Solve │
-│RBAC   │ │Routes  │ │Reports   │
-└───┬───┘ │ETA Svc │ └────┬─────┘
-    │     └────┬───┘      │
-    └─────────┼──────────┘
-              │
-    ┌─────────┼─────────┐
-    │         │         │
-    ▼         ▼         ▼
-┌────────┐ ┌─────┐  ┌───────────┐
-│Postgre │ │Redis│  │ ML Models │
-│  SQL   │ │Cache│  │ (XGBoost) │
-│Database│ │Queue│  │ OR-Tools  │
-└────────┘ └─────┘  └───────────┘
+```mermaid
+graph TD
+    User[User / Client] -->|HTTPS| CDN[CDN / Load Balancer]
+    CDN -->|Static Assets| FE[Frontend<br/>React 18 + TypeScript]
+    CDN -->|API Requests| API[Backend API<br/>FastAPI]
+    
+    subgraph "Backend Services"
+        API -->|Auth & User Mgmt| Auth[Auth Service<br/>JWT + OAuth2]
+        API -->|Business Logic| SVC[Core Services<br/>Orders, Drivers, Routes]
+        API -->|Async Tasks| Worker[Celery Workers<br/>Async Processing]
+        
+        SVC -->|Read/Write| DB[(PostgreSQL<br/>Primary Database)]
+        SVC -->|Cache/Queue| Redis[(Redis<br/>Cache & Broker)]
+        
+        Worker -->|ML Inference| ML[XGBoost Models<br/>ETA Prediction]
+        Worker -->|Optimization| OR[OR-Tools Engine<br/>VRP Solver]
+    end
+    
+    subgraph "External Integrations"
+        Maps[Map Services<br/>OSRM/Google Maps]
+    end
+    
+    SVC --> Maps
+    
+    style User fill:#f9f,stroke:#333,stroke-width:2px
+    style FE fill:#bbf,stroke:#333,stroke-width:2px
+    style API fill:#bfb,stroke:#333,stroke-width:2px
+    style DB fill:#fbb,stroke:#333,stroke-width:2px
+    style Redis fill:#ffb,stroke:#333,stroke-width:2px
 ```
 
-### Detailed Component Architecture
+### 2. Architectural Layers
 
-#### **Frontend Layer** (`src/frontend/`)
-The presentation tier built with modern React ecosystem.
+#### **Presentation Layer** (`src/frontend/`)
 
-- **React 18** with **TypeScript** for type safety and maintainability
-- **Vite** for ultra-fast development and production builds
-- **Tailwind CSS** + **Shadcn/UI** for consistent, accessible styling
-- **Leaflet** + **React-Leaflet** for interactive map visualizations
-- **Recharts** for business analytics visualization
-- **Axios** for HTTP client library
-- **React Router** for navigation and routing
+The frontend is a modern Single Page Application (SPA) built with industry-leading technologies:
 
-#### **API Gateway**
-The reverse proxy and load balancing layer.
+- **React 18** — Latest React features with hooks and concurrent rendering
+- **TypeScript** — Type-safe development with compile-time error detection
+- **Vite** — Ultra-fast build tool with Hot Module Replacement (HMR)
+- **Tailwind CSS + Shadcn/UI** — Utility-first styling with accessible component library
+- **Leaflet + React-Leaflet** — Interactive mapping for route visualization
+- **Recharts** — Professional data visualization for analytics
+- **Axios** — Promise-based HTTP client for API communication
+- **React Router** — Client-side routing and navigation
 
-- **Nginx** reverse proxy for request routing
-- Load balancing across multiple backend instances
+**Key Pages:**
+- Route Optimizer — Upload orders and visualize optimized routes
+- Fleet Control — Real-time driver tracking and status management
+- Analytics Management — KPI dashboards and trend analysis
+- Order Management — CRUD operations and bulk operations
+- Settings — Configuration and user management
+
+#### **API Gateway Layer**
+
+**Nginx** serves as the reverse proxy and load balancer:
+- Request routing to backend services
 - Static file serving with gzip compression
 - SSL/TLS termination for encrypted connections
-- Request rate limiting and DDoS protection
+- Load balancing across multiple backend instances
+- Rate limiting and DDoS protection
+- Automatic service discovery
 
-#### **Backend Services** (`src/backend/app/`)
+#### **Backend Application Layer** (`src/backend/app/`)
 
-**FastAPI Application** — Main REST API server
-```
-/api/v1/
-  ├── auth/              → Authentication & user management
-  ├── tenants/           → Multi-tenancy operations
-  ├── orders/            → Order CRUD & batch operations
-  ├── drivers/           → Driver & fleet management
-  ├── routes/            → Route optimization endpoints
-  └── analytics/         → Performance metrics & KPIs
-```
+**FastAPI Application** — High-performance async REST API
+- **Routers** (`/api/v1/`):
+  - `/auth` — User authentication, registration, token refresh
+  - `/tenants` — Multi-tenant administration
+  - `/orders` — Order ingestion, CRUD operations, bulk uploads
+  - `/drivers` — Fleet management and driver operations
+  - `/routes` — Route optimization and retrieval
+  - `/analytics` — KPI metrics and performance analytics
 
 **Service Layer** — Business logic encapsulation
-- `eta_service.py` — ETA prediction with XGBoost models
-- `optimization_service.py` — VRP solving with OR-Tools
-- `auth_service.py` — User authentication & authorization
+- **`eta_service.py`** — ETA prediction using XGBoost models
+- **`optimization_service.py`** — Route optimization using OR-Tools
+- **`auth_service.py`** — User authentication and authorization
 
-**Middleware & Utilities**
-- CORS handling for frontend integration
-- Structured logging and tracing
-- Request/response serialization
-- Error handling and validation
+**Core Components:**
+- **Middleware** — CORS, request logging, error handling
+- **Dependencies** — Database session management, authentication verification
+- **Schemas** — Pydantic models for request/response validation
 
 #### **Data Persistence Layer**
 
-**PostgreSQL** — Primary relational database
-- ACID compliance for data integrity
-- Multi-tenant schema with tenant-based partitioning
-- Full-text search capabilities
-- JSON field support for flexible data storage
-- Connection pooling via SQLAlchemy
-- Indexes on frequently queried columns
+**PostgreSQL Database** — Primary data store
+- ACID-compliant transactions for data integrity
+- Multi-tenant schema design with tenant-level isolation
+- UUID primary keys for security across distributions
+- JSONB field support for flexible data structures
+- B-tree indexes on frequently queried columns
+- Connection pooling via SQLAlchemy async engine
 
-**Redis** — In-memory data store
-- Celery task queue broker
-- Session and user cache
+**Database Schema:**
+```
+TENANT (Single sign-up, manages all other entities)
+├── USER (Team members with RBAC roles)
+├── DRIVER (Fleet vehicles and personnel)
+├── ORDER (Individual delivery orders)
+└── ROUTE (Optimized delivery routes)
+```
+
+**Redis Cache & Task Broker:**
+- Celery task queue for distributed processing
+- Session caching for authentication
 - Rate limiting counters
-- Real-time data streaming
+- Real-time data streaming for live updates
 
-#### **ML & Optimization Engine**
+#### **ML & Optimization Layer**
 
-**XGBoost Models**
-- Pre-trained models for delivery time prediction
-- Features: distance, traffic, weather, order type, location
-- Output: Predicted delivery time in minutes ± confidence interval
+**XGBoost Models** for ETA Prediction
+- Trained on historical delivery data
+- Features: distance, traffic conditions, weather, order type, location
+- Output: Delivery time estimate with confidence interval
+- Model versioning for A/B testing
 
-**Google OR-Tools**
-- Vehicle Routing Problem solver
-- Multi-driver routing algorithms
-- Time window constraint handling
-- Vehicle capacity constraint management
-- Custom cost function support
+**Google OR-Tools** for Route Optimization
+- Vehicle Routing Problem (VRP) solver with genetic algorithms
+- Constraint handling:
+  - Vehicle capacity (weight/volume)
+  - Time window constraints for delivery
+  - Driver shift limitations
+  - Custom cost functions
 
 #### **Async Task Queue** (`src/backend/worker/`)
 
 **Celery** for distributed task processing
-- Long-running operations (batch predictions, optimization)
+- Background job execution (batch predictions, optimization)
+- Scheduled tasks (model retraining, reports)
+- Result backend with Redis
+- Automatic retry logic with exponential backoff
+- Task monitoring and error tracking
+
+### 3. Data Flow Patterns
+
+**Order Ingestion Flow:**
+```
+CSV Upload/API Request 
+  → Frontend Validation
+  → Backend Parse & Validate (Pydantic)
+  → PostgreSQL Storage
+  → Celery Task Queue
+  → Feature Engineering
+  → ML Model Predictions
+  → Database Update
+  → Frontend Notification
+```
+
+**Route Optimization Flow:**
+```
+User Triggers Optimization
+  → Backend Collects:
+    - Pending Orders
+    - Available Drivers
+    - Vehicle Constraints
+  → Celery Worker Process
+  → OR-Tools VRP Solver
+  → Generate Optimized Routes
+  → Cache in Redis
+  → Frontend Map Visualization
+  → Driver Notifications
+```
+
+**Real-Time Updates Flow:**
+```
+Driver Location Update
+  → WebSocket Message
+  → Backend Update Driver Position
+  → Cache Update
+  → Broadcast to Connected Clients
+  → Frontend Map Refresh
+```
+
+### 4. Database Schema Design
+
+The database is architected with **multi-tenancy as a first-class concept**. All entities maintain a `tenant_id` foreign key to ensure complete data isolation.
+
+```mermaid
+erDiagram
+    TENANT ||--o{ USER : "has"
+    TENANT ||--o{ DRIVER : "employs"
+    TENANT ||--o{ ORDER : "manages"
+    TENANT ||--o{ ROUTE : "controls"
+    
+    DRIVER ||--o{ ROUTE : "assigned_to"
+    ROUTE ||--o{ ORDER : "contains"
+    
+    TENANT {
+        uuid id PK
+        string name
+        string slug
+        string plan
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    USER {
+        uuid id PK
+        string email UK
+        string password_hash
+        string full_name
+        string role "Admin|Manager|Dispatcher"
+        boolean is_active
+        uuid tenant_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    DRIVER {
+        uuid id PK
+        string name
+        string phone
+        string vehicle_type
+        float vehicle_capacity "kg"
+        string status "Active|Off|Break"
+        uuid tenant_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ORDER {
+        uuid id PK
+        string order_number UK
+        string delivery_address
+        float weight "kg"
+        float latitude
+        float longitude
+        timestamp time_window_start
+        timestamp time_window_end
+        string status "Pending|Assigned|Completed"
+        string order_type "normal|express|fragile"
+        uuid route_id FK
+        uuid tenant_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ROUTE {
+        uuid id PK
+        string status "Planning|Active|Completed"
+        float total_distance "km"
+        float total_duration "minutes"
+        json geometry "GeoJSON"
+        uuid driver_id FK
+        uuid tenant_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+```
+
+**Database Design Patterns:**
+- **Tenant Isolation** — All queries filtered by `tenant_id` at service layer
+- **UUID Primary Keys** — Secure, distributed key generation
+- **Soft Deletes** — Audit trail capability with `deleted_at` timestamp
+- **Indexing** — B-tree indexes on FK columns and frequently queried fields
+- **Timestamps** — `created_at`, `updated_at` for audit logging
+
+### 5. Security Architecture
+
+**Authentication & Authorization:**
+- **JWT-based Stateless Authentication** — Short-lived access tokens (30 min)
+- **OAuth2 Support** — Third-party integration ready
+- **Role-Based Access Control (RBAC)** — Three roles: Admin, Manager, Dispatcher
+- **Password Security** — bcrypt hashing with salt
+- **Token Refresh** — Refresh tokens (7 days) for extended sessions
+
+**Data Protection:**
+- **Multi-Tenant Isolation** — Logical separation at service layer
+- **Input Validation** — Strict Pydantic schema validation
+- **SQL Injection Prevention** — Parameterized queries with SQLAlchemy ORM
+- **HTTPS/TLS** — All API communications encrypted
+- **CORS Configuration** — Restricted cross-origin requests
+
+**Compliance:**
+- **ACID Compliance** — PostgreSQL ensures data integrity
+- **Audit Logging** — All mutations logged with user and timestamp
+- **Data Retention** — Soft deletes preserve historical data
+- **Rate Limiting** — Nginx level rate limiting to prevent abuse
+
+### 6. Deployment & DevOps
+
+**Docker Containerization:**
+- **Multi-stage Builds** — Optimized production images
+- **Container Registry** — ECR/Docker Hub ready
+- **Health Checks** — Service readiness endpoints
+
+**Docker Compose Orchestration:**
+- **Service Coordination** — All services spin up together
+- **Environment Configuration** — `.env` file management
+- **Volume Management** — Data persistence across restarts
+- **Network Isolation** — Internal service communication
+
+**Logging & Monitoring:**
+- **Structured Logging** — JSON-formatted logs for aggregation
+- **Log Levels** — DEBUG, INFO, WARNING, ERROR, CRITICAL
+- **Correlation IDs** — Request tracing across services
+- **Metrics Endpoint** — Prometheus-compatible `/metrics`
+
+---
 - Scheduled jobs (model retraining, report generation)
 - Result backend stored in Redis/Database
 - Automatic retry logic
@@ -902,7 +1082,7 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 **License**: MIT — See [LICENSE](LICENSE) file
 
 **Author**: Vivek Marri  
-**Email**: vivekmarriofficial@gmail.com  
+**Email**: marrivivek26@gmail.com  
 **GitHub**: [@VIVEK-MARRI](https://github.com/VIVEK-MARRI)  
 **Repository**: [IntelliLog-AI](https://github.com/VIVEK-MARRI/IntelliLog-AI)
 
