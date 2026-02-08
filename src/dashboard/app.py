@@ -1,4 +1,4 @@
-"""
+﻿"""
 src/dashboard/app.py
 
 🚚 IntelliLog-AI — Intelligent Logistics & Delivery Optimization Dashboard (v3.3.3 Pro)
@@ -149,6 +149,7 @@ defaults = {
     "fleet_paused": False,
     "last_shap_data": None,
     "fleet_map_key": 0,  # Key for stable map re-renders
+    "fleet_refresh_tick": 0,  # Increment to force map refresh when needed
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -207,6 +208,13 @@ else:
 if df.empty:
     if source == "Upload CSV":
         st.stop() # Only stop if upload is selected and no data is present
+
+# Validate required columns to prevent downstream errors
+required_cols = {"order_id", "lat", "lon", "distance_km", "traffic", "weather", "order_type"}
+missing_cols = required_cols - set(df.columns)
+if missing_cols:
+    st.error(f"❌ Missing required columns: {sorted(missing_cols)}")
+    st.stop()
 
 # Auto-refresh slider must be defined regardless of input source
 refresh_sec = st.sidebar.slider("🔁 Auto-refresh Interval (seconds)", 3, 30, 6)
@@ -576,6 +584,15 @@ with tab2:
 with tab3:
     st.subheader("🚦 Fleet Control & Telemetry")
 
+    fleet_drivers = st.number_input(
+        "Number of Fleet Drivers",
+        min_value=1,
+        max_value=20,
+        value=3,
+        key="fleet_drivers",
+        help="Number of drivers to simulate for live fleet tracking"
+    )
+
     # Fleet Control Buttons
     c1, c2, c3, c4 = st.columns(4)
     if c1.button("▶️ Start Fleet"):
@@ -608,7 +625,7 @@ with tab3:
         st_autorefresh(interval=refresh_sec * 1000, key="fleet_refresh_v3", limit=1000) 
         
         # Logic to fetch data
-        res = safe_api_get(f"/live_tracking?drivers={int(drivers)}", timeout=6)
+        res = safe_api_get(f"/live_tracking?drivers={int(fleet_drivers)}", timeout=6)
         if res and res.status_code == 200:
             try:
                 live = res.json().get("drivers", [])
@@ -619,17 +636,17 @@ with tab3:
                 st.session_state["live_positions"] = live
             except Exception:
                 st.warning("Malformed live-tracking response. Using simulator.")
-                st.session_state["live_positions"] = simulate_live_positions(int(drivers))
+                st.session_state["live_positions"] = simulate_live_positions(int(fleet_drivers))
         else:
             st.warning("Live-tracking API unavailable — using simulator.")
-            st.session_state["live_positions"] = simulate_live_positions(int(drivers))
+            st.session_state["live_positions"] = simulate_live_positions(int(fleet_drivers))
         st.session_state["last_update"] = datetime.now().strftime("%H:%M:%S")
+        st.session_state["fleet_refresh_tick"] += 1
 
     # Ensure autorefresh is stopped when not running/paused (otherwise the key persists the refresh)
     if not (running and not paused):
-        # A workaround to stop a running autorefresh by setting its interval to 0 (Streamlit feature)
-        # Note: In most recent Streamlit versions, simply removing the st_autorefresh call from the script flow when not needed is sufficient.
-        pass
+        # A workaround to stop a running autorefresh by setting its interval to 0
+        st_autorefresh(interval=0, key="fleet_refresh_v3")
         
     live = st.session_state.get("live_positions", [])
 
@@ -702,7 +719,12 @@ with tab3:
             st.info("No heatmap data available yet (history endpoint not active).")
 
     # Display map with a stable key that increments only when forced (e.g., on 'Start Fleet')
-    st_folium(m, width=950, height=520, key=f"fleet_map_{st.session_state['fleet_map_key']}")
+    st_folium(
+        m,
+        width=950,
+        height=520,
+        key=f"fleet_map_{st.session_state['fleet_map_key']}_{st.session_state['fleet_refresh_tick']}"
+    )
 
     # Timestamp
     if st.session_state.get("last_update"):

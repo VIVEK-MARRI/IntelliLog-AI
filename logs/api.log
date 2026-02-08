@@ -10148,3 +10148,1084 @@ AttributeError: 'Index' object has no attribute 'to_string'. Did you mean: 'to_s
 2025-12-10 13:36:25,535 | INFO | Metrics snapshot: CPU=1.0%, MEM=16.1%
 2025-12-10 13:36:25,535 | INFO | GET /metrics → 200 (0.502s)
 2025-12-10 13:36:25,702 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:06:53,774 | INFO | Metrics snapshot: CPU=2.0%, MEM=29.6%
+2026-02-02 19:06:53,776 | INFO | GET /metrics → 200 (0.505s)
+2026-02-02 19:06:54,279 | INFO | Metrics snapshot: CPU=1.0%, MEM=29.6%
+2026-02-02 19:06:54,281 | INFO | GET /metrics → 200 (0.503s)
+2026-02-02 19:06:54,314 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-02 19:06:54,315 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-02 19:06:55,654 | INFO | Metrics snapshot: CPU=2.8%, MEM=29.6%
+2026-02-02 19:06:55,655 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:06:56,157 | INFO | Metrics snapshot: CPU=1.5%, MEM=29.6%
+2026-02-02 19:06:56,158 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:06:56,181 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:06:56,184 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:06:57,519 | INFO | Metrics snapshot: CPU=0.5%, MEM=29.7%
+2026-02-02 19:06:57,520 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:06:57,530 | INFO | Received 8 orders for prediction.
+2026-02-02 19:06:57,531 | INFO | Features: order_id, lat, lon, distance_km, traffic, weather, order_type, order_time
+2026-02-02 19:06:57,549 | INFO | ✅ Predicted 8 rows in 0.007s
+2026-02-02 19:06:57,550 | INFO | ✅ Prediction successful for 8 records.
+2026-02-02 19:06:57,553 | INFO | POST /predict_delivery_time → 200 (0.025s)
+2026-02-02 19:06:57,578 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:07:03,840 | INFO | Metrics snapshot: CPU=1.8%, MEM=31.0%
+2026-02-02 19:07:03,840 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:07:03,850 | INFO | Planning 8 routes using method=greedy, drivers=3.
+2026-02-02 19:07:03,857 | INFO | ✅ Predicted 8 rows in 0.001s
+2026-02-02 19:07:03,860 | INFO | ✅ Route optimization completed.
+2026-02-02 19:07:03,861 | INFO | POST /plan_routes → 200 (0.014s)
+2026-02-02 19:07:08,415 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:07:09,384 | INFO | Metrics snapshot: CPU=2.9%, MEM=31.0%
+2026-02-02 19:07:09,385 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:07:09,456 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:07:12,592 | INFO | Metrics snapshot: CPU=2.5%, MEM=31.0%
+2026-02-02 19:07:12,593 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:07:12,655 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:07:13,585 | INFO | Metrics snapshot: CPU=1.3%, MEM=31.0%
+2026-02-02 19:07:13,587 | INFO | GET /metrics → 200 (0.503s)
+2026-02-02 19:07:13,641 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:07:22,457 | INFO | Metrics snapshot: CPU=2.1%, MEM=31.1%
+2026-02-02 19:07:22,458 | INFO | GET /metrics → 200 (0.502s)
+2026-02-02 19:07:22,524 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-02 19:07:30,552 | INFO | Metrics snapshot: CPU=1.8%, MEM=31.1%
+2026-02-02 19:07:30,554 | INFO | GET /metrics → 200 (0.503s)
+2026-02-02 19:07:30,606 | INFO | GET /live_tracking → 307 (0.0s)
+2026-02-02 19:07:37,282 | INFO | Metrics snapshot: CPU=3.1%, MEM=31.2%
+2026-02-02 19:07:37,283 | INFO | GET /metrics → 200 (0.503s)
+2026-02-02 19:07:37,362 | INFO | GET /live_tracking → 307 (0.0s)
+2026-02-03 06:13:32,197 | INFO | Metrics snapshot: CPU=0.5%, MEM=14.5%
+2026-02-03 06:13:32,202 | INFO | GET /metrics → 200 (0.506s)
+2026-02-03 06:13:32,220 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-03 06:17:14,315 | INFO | Metrics snapshot: CPU=9.7%, MEM=18.9%
+2026-02-03 06:17:14,316 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:17:14,357 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:17:43,742 | INFO | Metrics snapshot: CPU=10.4%, MEM=19.3%
+2026-02-03 06:17:43,743 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:35,485 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.0%
+2026-02-03 06:21:35,487 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:35,503 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:36,227 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.0%
+2026-02-03 06:21:36,228 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:36,246 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:37,102 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.0%
+2026-02-03 06:21:37,103 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:37,130 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:38,090 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.0%
+2026-02-03 06:21:38,091 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:38,593 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.0%
+2026-02-03 06:21:38,595 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:39,191 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.0%
+2026-02-03 06:21:39,193 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:39,211 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:40,094 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.0%
+2026-02-03 06:21:40,095 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:40,598 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.0%
+2026-02-03 06:21:40,599 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:41,191 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.0%
+2026-02-03 06:21:41,192 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:41,208 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:42,103 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.0%
+2026-02-03 06:21:42,104 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:42,607 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.0%
+2026-02-03 06:21:42,608 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:43,197 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.0%
+2026-02-03 06:21:43,198 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:43,222 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:44,134 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.0%
+2026-02-03 06:21:44,135 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:44,157 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:45,144 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.0%
+2026-02-03 06:21:45,146 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:45,162 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:46,125 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.0%
+2026-02-03 06:21:46,126 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:46,145 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:47,103 | INFO | Metrics snapshot: CPU=8.5%, MEM=20.1%
+2026-02-03 06:21:47,103 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:47,605 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.1%
+2026-02-03 06:21:47,606 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:48,193 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.0%
+2026-02-03 06:21:48,194 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:48,209 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:49,147 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.1%
+2026-02-03 06:21:49,148 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:49,164 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:50,154 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.1%
+2026-02-03 06:21:50,155 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:50,168 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:51,106 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.1%
+2026-02-03 06:21:51,106 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:51,121 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:52,103 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.0%
+2026-02-03 06:21:52,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:52,605 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.0%
+2026-02-03 06:21:52,606 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:53,201 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.0%
+2026-02-03 06:21:53,202 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:53,217 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:54,138 | INFO | Metrics snapshot: CPU=12.9%, MEM=20.1%
+2026-02-03 06:21:54,138 | INFO | GET /metrics → 200 (0.5s)
+2026-02-03 06:21:54,154 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:55,096 | INFO | Metrics snapshot: CPU=12.3%, MEM=20.1%
+2026-02-03 06:21:55,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:55,599 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.1%
+2026-02-03 06:21:55,600 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:55,647 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:56,235 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.1%
+2026-02-03 06:21:56,236 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:56,254 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:57,114 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.1%
+2026-02-03 06:21:57,115 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:57,617 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.1%
+2026-02-03 06:21:57,618 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:21:58,212 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.1%
+2026-02-03 06:21:58,213 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:58,230 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:21:59,103 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.1%
+2026-02-03 06:21:59,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:21:59,606 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.1%
+2026-02-03 06:21:59,607 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:00,192 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.1%
+2026-02-03 06:22:00,193 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:00,210 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:01,098 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.1%
+2026-02-03 06:22:01,099 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:01,121 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:02,096 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.1%
+2026-02-03 06:22:02,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:02,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:03,155 | INFO | Metrics snapshot: CPU=10.6%, MEM=20.0%
+2026-02-03 06:22:03,157 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:03,171 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:04,124 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.0%
+2026-02-03 06:22:04,125 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:04,143 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:05,165 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.0%
+2026-02-03 06:22:05,166 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:05,184 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:06,093 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.1%
+2026-02-03 06:22:06,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:06,596 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.1%
+2026-02-03 06:22:06,597 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:06,647 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:07,234 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.1%
+2026-02-03 06:22:07,236 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:07,268 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:08,092 | INFO | Metrics snapshot: CPU=12.3%, MEM=20.1%
+2026-02-03 06:22:08,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:08,112 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:09,143 | INFO | Metrics snapshot: CPU=10.6%, MEM=20.1%
+2026-02-03 06:22:09,144 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:09,161 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:10,100 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.1%
+2026-02-03 06:22:10,101 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:10,604 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.1%
+2026-02-03 06:22:10,606 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:10,656 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:11,199 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.1%
+2026-02-03 06:22:11,200 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:11,215 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:12,144 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.1%
+2026-02-03 06:22:12,146 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:12,177 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:13,114 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.1%
+2026-02-03 06:22:13,115 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:13,132 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-03 06:22:14,094 | INFO | Metrics snapshot: CPU=11.9%, MEM=20.0%
+2026-02-03 06:22:14,095 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:14,597 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.0%
+2026-02-03 06:22:14,598 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:15,169 | INFO | Metrics snapshot: CPU=12.5%, MEM=20.0%
+2026-02-03 06:22:15,171 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:15,673 | INFO | Metrics snapshot: CPU=12.0%, MEM=20.0%
+2026-02-03 06:22:15,674 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:16,176 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.0%
+2026-02-03 06:22:16,178 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:16,179 | INFO | GET /live_tracking/history → 200 (1.008s)
+2026-02-03 06:22:16,260 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:17,098 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.1%
+2026-02-03 06:22:17,100 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:17,602 | INFO | Metrics snapshot: CPU=8.5%, MEM=20.1%
+2026-02-03 06:22:17,604 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:18,188 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.1%
+2026-02-03 06:22:18,188 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:18,206 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:19,132 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.1%
+2026-02-03 06:22:19,133 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:19,151 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:20,093 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.1%
+2026-02-03 06:22:20,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:20,110 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:21,107 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.1%
+2026-02-03 06:22:21,108 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:21,122 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:22,138 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.1%
+2026-02-03 06:22:22,139 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:22,154 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:23,132 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.1%
+2026-02-03 06:22:23,133 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:23,148 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:24,099 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.1%
+2026-02-03 06:22:24,099 | INFO | GET /metrics → 200 (0.5s)
+2026-02-03 06:22:24,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:25,102 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.1%
+2026-02-03 06:22:25,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:25,121 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:26,091 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.1%
+2026-02-03 06:22:26,092 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:26,594 | INFO | Metrics snapshot: CPU=12.8%, MEM=20.1%
+2026-02-03 06:22:26,596 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:27,179 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.1%
+2026-02-03 06:22:27,180 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:27,195 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:28,097 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.1%
+2026-02-03 06:22:28,098 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:28,600 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.1%
+2026-02-03 06:22:28,602 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:29,183 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.1%
+2026-02-03 06:22:29,184 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:29,200 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:30,126 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.1%
+2026-02-03 06:22:30,128 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:30,147 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:31,099 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.1%
+2026-02-03 06:22:31,101 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:31,117 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:32,096 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.1%
+2026-02-03 06:22:32,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:32,599 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.1%
+2026-02-03 06:22:32,601 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:32,656 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:33,266 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.1%
+2026-02-03 06:22:33,267 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:33,287 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:34,119 | INFO | Metrics snapshot: CPU=11.9%, MEM=20.1%
+2026-02-03 06:22:34,120 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:34,622 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.1%
+2026-02-03 06:22:34,623 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:35,221 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.1%
+2026-02-03 06:22:35,222 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:35,239 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:36,123 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.1%
+2026-02-03 06:22:36,124 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:36,626 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.1%
+2026-02-03 06:22:36,627 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:36,718 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:37,262 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.1%
+2026-02-03 06:22:37,263 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:37,279 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:38,092 | INFO | Metrics snapshot: CPU=9.7%, MEM=20.1%
+2026-02-03 06:22:38,093 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:38,108 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:39,127 | INFO | Metrics snapshot: CPU=12.0%, MEM=20.1%
+2026-02-03 06:22:39,128 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:39,143 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:40,121 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.1%
+2026-02-03 06:22:40,122 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:40,141 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:41,097 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.2%
+2026-02-03 06:22:41,098 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:41,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:42,131 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.2%
+2026-02-03 06:22:42,131 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:42,148 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:43,092 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.2%
+2026-02-03 06:22:43,094 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:43,118 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:44,103 | INFO | Metrics snapshot: CPU=13.5%, MEM=20.1%
+2026-02-03 06:22:44,105 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:44,607 | INFO | Metrics snapshot: CPU=12.4%, MEM=20.1%
+2026-02-03 06:22:44,608 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:45,185 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.2%
+2026-02-03 06:22:45,186 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:45,200 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:46,105 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.2%
+2026-02-03 06:22:46,106 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:46,123 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:47,101 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.2%
+2026-02-03 06:22:47,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:47,119 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:48,144 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.2%
+2026-02-03 06:22:48,145 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:48,161 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:49,091 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.2%
+2026-02-03 06:22:49,092 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:49,594 | INFO | Metrics snapshot: CPU=13.1%, MEM=20.2%
+2026-02-03 06:22:49,596 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:50,188 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.2%
+2026-02-03 06:22:50,189 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:50,216 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:51,115 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.2%
+2026-02-03 06:22:51,116 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:51,618 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.2%
+2026-02-03 06:22:51,619 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:52,195 | INFO | Metrics snapshot: CPU=12.4%, MEM=20.2%
+2026-02-03 06:22:52,196 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:52,210 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:53,136 | INFO | Metrics snapshot: CPU=11.5%, MEM=20.2%
+2026-02-03 06:22:53,137 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:53,153 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:54,102 | INFO | Metrics snapshot: CPU=12.2%, MEM=20.2%
+2026-02-03 06:22:54,104 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:22:54,606 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.2%
+2026-02-03 06:22:54,607 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:22:55,109 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.2%
+2026-02-03 06:22:55,110 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:55,157 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:56,091 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.2%
+2026-02-03 06:22:56,092 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:56,124 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:57,133 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.2%
+2026-02-03 06:22:57,135 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:57,166 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:58,099 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.2%
+2026-02-03 06:22:58,100 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:58,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:22:59,097 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.2%
+2026-02-03 06:22:59,099 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:22:59,601 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.2%
+2026-02-03 06:22:59,602 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:00,180 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.2%
+2026-02-03 06:23:00,181 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:00,196 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:01,091 | INFO | Metrics snapshot: CPU=9.4%, MEM=20.2%
+2026-02-03 06:23:01,093 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:23:01,110 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:02,103 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.2%
+2026-02-03 06:23:02,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:02,119 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:03,099 | INFO | Metrics snapshot: CPU=12.0%, MEM=20.2%
+2026-02-03 06:23:03,100 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:03,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:04,098 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.2%
+2026-02-03 06:23:04,099 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:04,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:05,128 | INFO | Metrics snapshot: CPU=13.2%, MEM=20.3%
+2026-02-03 06:23:05,129 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:05,145 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:06,104 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.3%
+2026-02-03 06:23:06,105 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:06,121 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:07,107 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.3%
+2026-02-03 06:23:07,108 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:07,610 | INFO | Metrics snapshot: CPU=12.4%, MEM=20.3%
+2026-02-03 06:23:07,611 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:08,192 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.3%
+2026-02-03 06:23:08,194 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:08,217 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:09,095 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.3%
+2026-02-03 06:23:09,096 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:09,113 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:10,095 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.3%
+2026-02-03 06:23:10,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:10,599 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.3%
+2026-02-03 06:23:10,603 | INFO | GET /metrics → 200 (0.505s)
+2026-02-03 06:23:11,187 | INFO | Metrics snapshot: CPU=11.5%, MEM=20.3%
+2026-02-03 06:23:11,188 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:11,207 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:12,091 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.3%
+2026-02-03 06:23:12,092 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:12,594 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.3%
+2026-02-03 06:23:12,597 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:23:12,660 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:13,207 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.3%
+2026-02-03 06:23:13,208 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:13,223 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:14,116 | INFO | Metrics snapshot: CPU=12.1%, MEM=20.3%
+2026-02-03 06:23:14,117 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:14,134 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:15,149 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.3%
+2026-02-03 06:23:15,150 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:15,165 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:16,118 | INFO | Metrics snapshot: CPU=12.4%, MEM=20.4%
+2026-02-03 06:23:16,120 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:16,622 | INFO | Metrics snapshot: CPU=8.9%, MEM=20.4%
+2026-02-03 06:23:16,624 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:23:17,209 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.4%
+2026-02-03 06:23:17,210 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:17,223 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:18,093 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.4%
+2026-02-03 06:23:18,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:18,108 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:19,175 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.4%
+2026-02-03 06:23:19,175 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:19,190 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:20,103 | INFO | Metrics snapshot: CPU=9.1%, MEM=20.4%
+2026-02-03 06:23:20,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:20,606 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.4%
+2026-02-03 06:23:20,607 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:21,198 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.4%
+2026-02-03 06:23:21,201 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:23:21,228 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:22,134 | INFO | Metrics snapshot: CPU=9.4%, MEM=20.4%
+2026-02-03 06:23:22,135 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:22,151 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:23,135 | INFO | Metrics snapshot: CPU=12.8%, MEM=20.4%
+2026-02-03 06:23:23,137 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:23,152 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:24,116 | INFO | Metrics snapshot: CPU=12.8%, MEM=20.4%
+2026-02-03 06:23:24,117 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:23:24,135 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:25,106 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.4%
+2026-02-03 06:23:25,107 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:25,122 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:26,122 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.4%
+2026-02-03 06:23:26,123 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:26,626 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.4%
+2026-02-03 06:23:26,628 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:23:27,207 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.4%
+2026-02-03 06:23:27,208 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:27,230 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:28,113 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.4%
+2026-02-03 06:23:28,114 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:28,616 | INFO | Metrics snapshot: CPU=11.5%, MEM=20.4%
+2026-02-03 06:23:28,618 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:28,692 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:29,241 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.4%
+2026-02-03 06:23:29,242 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:29,261 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:30,107 | INFO | Metrics snapshot: CPU=12.3%, MEM=20.4%
+2026-02-03 06:23:30,108 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:30,138 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:31,140 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.4%
+2026-02-03 06:23:31,141 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:31,158 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:32,101 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.4%
+2026-02-03 06:23:32,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:32,603 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.4%
+2026-02-03 06:23:32,606 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:32,667 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:33,224 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.4%
+2026-02-03 06:23:33,225 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:33,242 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:34,098 | INFO | Metrics snapshot: CPU=12.4%, MEM=20.4%
+2026-02-03 06:23:34,099 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:34,121 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:35,140 | INFO | Metrics snapshot: CPU=11.5%, MEM=20.4%
+2026-02-03 06:23:35,141 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:35,156 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:36,102 | INFO | Metrics snapshot: CPU=12.2%, MEM=20.4%
+2026-02-03 06:23:36,103 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:36,132 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-03 06:23:37,105 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.4%
+2026-02-03 06:23:37,106 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:37,123 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:38,090 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.4%
+2026-02-03 06:23:38,090 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:38,592 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.4%
+2026-02-03 06:23:38,594 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:38,648 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:39,191 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.5%
+2026-02-03 06:23:39,192 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:39,207 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:40,098 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.4%
+2026-02-03 06:23:40,099 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:40,601 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.4%
+2026-02-03 06:23:40,603 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:41,197 | INFO | Metrics snapshot: CPU=9.7%, MEM=20.5%
+2026-02-03 06:23:41,198 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:41,214 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:42,095 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.5%
+2026-02-03 06:23:42,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:42,114 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:43,153 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.5%
+2026-02-03 06:23:43,154 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:43,169 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:44,106 | INFO | Metrics snapshot: CPU=12.6%, MEM=20.5%
+2026-02-03 06:23:44,107 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:44,608 | INFO | Metrics snapshot: CPU=10.3%, MEM=20.5%
+2026-02-03 06:23:44,610 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:45,230 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.5%
+2026-02-03 06:23:45,231 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:45,248 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:46,104 | INFO | Metrics snapshot: CPU=11.6%, MEM=20.5%
+2026-02-03 06:23:46,105 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:46,607 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.5%
+2026-02-03 06:23:46,609 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:46,661 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:47,242 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.5%
+2026-02-03 06:23:47,242 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:23:47,261 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:48,093 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.5%
+2026-02-03 06:23:48,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:48,597 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.5%
+2026-02-03 06:23:48,598 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:49,206 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.5%
+2026-02-03 06:23:49,206 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:49,225 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:50,106 | INFO | Metrics snapshot: CPU=8.4%, MEM=20.5%
+2026-02-03 06:23:50,107 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:50,123 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:51,129 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.5%
+2026-02-03 06:23:51,131 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:51,145 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:52,105 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.5%
+2026-02-03 06:23:52,106 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:52,123 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:53,139 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.5%
+2026-02-03 06:23:53,141 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:53,157 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:54,135 | INFO | Metrics snapshot: CPU=13.1%, MEM=20.5%
+2026-02-03 06:23:54,137 | INFO | GET /metrics → 200 (0.5s)
+2026-02-03 06:23:54,153 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:55,096 | INFO | Metrics snapshot: CPU=9.7%, MEM=20.5%
+2026-02-03 06:23:55,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:55,113 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:56,133 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.5%
+2026-02-03 06:23:56,134 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:56,151 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:57,100 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.5%
+2026-02-03 06:23:57,101 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:57,118 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:58,109 | INFO | Metrics snapshot: CPU=10.6%, MEM=20.5%
+2026-02-03 06:23:58,110 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:58,612 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.5%
+2026-02-03 06:23:58,613 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:23:58,660 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:23:59,200 | INFO | Metrics snapshot: CPU=10.0%, MEM=20.5%
+2026-02-03 06:23:59,201 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:23:59,221 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:00,099 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.5%
+2026-02-03 06:24:00,100 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:00,601 | INFO | Metrics snapshot: CPU=12.4%, MEM=20.5%
+2026-02-03 06:24:00,603 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:01,194 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.5%
+2026-02-03 06:24:01,196 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:01,212 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:02,142 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.5%
+2026-02-03 06:24:02,143 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:02,161 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:03,101 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.5%
+2026-02-03 06:24:03,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:03,604 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.5%
+2026-02-03 06:24:03,605 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:04,212 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.5%
+2026-02-03 06:24:04,213 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:04,230 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:05,130 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.5%
+2026-02-03 06:24:05,131 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:05,146 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:06,090 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.5%
+2026-02-03 06:24:06,091 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:06,593 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.5%
+2026-02-03 06:24:06,593 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:06,642 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:07,227 | INFO | Metrics snapshot: CPU=9.7%, MEM=20.5%
+2026-02-03 06:24:07,228 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:07,245 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:08,101 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.5%
+2026-02-03 06:24:08,102 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:08,605 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.5%
+2026-02-03 06:24:08,606 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:09,211 | INFO | Metrics snapshot: CPU=10.3%, MEM=20.5%
+2026-02-03 06:24:09,212 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:09,240 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:10,115 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.5%
+2026-02-03 06:24:10,116 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:10,617 | INFO | Metrics snapshot: CPU=9.4%, MEM=20.5%
+2026-02-03 06:24:10,619 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:11,203 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.6%
+2026-02-03 06:24:11,204 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:11,219 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:12,106 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.5%
+2026-02-03 06:24:12,108 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:12,610 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.5%
+2026-02-03 06:24:12,611 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:12,669 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:13,177 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.5%
+2026-02-03 06:24:13,178 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:13,193 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:14,128 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.5%
+2026-02-03 06:24:14,130 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:14,146 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:15,090 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.5%
+2026-02-03 06:24:15,091 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:15,593 | INFO | Metrics snapshot: CPU=8.5%, MEM=20.5%
+2026-02-03 06:24:15,596 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:15,649 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:16,238 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.5%
+2026-02-03 06:24:16,239 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:16,254 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:17,100 | INFO | Metrics snapshot: CPU=13.0%, MEM=20.5%
+2026-02-03 06:24:17,101 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:17,603 | INFO | Metrics snapshot: CPU=10.3%, MEM=20.5%
+2026-02-03 06:24:17,604 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:18,254 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.5%
+2026-02-03 06:24:18,255 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:18,272 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:19,170 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.5%
+2026-02-03 06:24:19,171 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:19,186 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:20,143 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.6%
+2026-02-03 06:24:20,144 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:20,158 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:21,121 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.5%
+2026-02-03 06:24:21,122 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:21,624 | INFO | Metrics snapshot: CPU=8.9%, MEM=20.6%
+2026-02-03 06:24:21,625 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:22,206 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.6%
+2026-02-03 06:24:22,210 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:24:22,229 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:23,099 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.6%
+2026-02-03 06:24:23,100 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:23,115 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:24,095 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.6%
+2026-02-03 06:24:24,096 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:24,599 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.6%
+2026-02-03 06:24:24,601 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:24:25,183 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.6%
+2026-02-03 06:24:25,183 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:25,199 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:26,125 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.6%
+2026-02-03 06:24:26,126 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:26,142 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:27,101 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.6%
+2026-02-03 06:24:27,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:27,605 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.6%
+2026-02-03 06:24:27,606 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:27,655 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:28,230 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.6%
+2026-02-03 06:24:28,231 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:28,247 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:29,101 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.6%
+2026-02-03 06:24:29,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:29,604 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.6%
+2026-02-03 06:24:29,607 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:24:30,189 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.6%
+2026-02-03 06:24:30,190 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:30,203 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:31,133 | INFO | Metrics snapshot: CPU=12.1%, MEM=20.6%
+2026-02-03 06:24:31,134 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:31,150 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:32,135 | INFO | Metrics snapshot: CPU=12.5%, MEM=20.6%
+2026-02-03 06:24:32,136 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:32,152 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:33,096 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.6%
+2026-02-03 06:24:33,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:33,599 | INFO | Metrics snapshot: CPU=9.1%, MEM=20.6%
+2026-02-03 06:24:33,601 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:33,649 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:34,231 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.6%
+2026-02-03 06:24:34,232 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:34,258 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:35,095 | INFO | Metrics snapshot: CPU=10.6%, MEM=20.6%
+2026-02-03 06:24:35,096 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:35,598 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.6%
+2026-02-03 06:24:35,599 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:35,649 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:36,192 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.6%
+2026-02-03 06:24:36,193 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:36,208 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:37,124 | INFO | Metrics snapshot: CPU=10.3%, MEM=20.6%
+2026-02-03 06:24:37,124 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:37,626 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.6%
+2026-02-03 06:24:37,627 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:38,210 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.6%
+2026-02-03 06:24:38,211 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:38,228 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:39,133 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.6%
+2026-02-03 06:24:39,134 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:39,150 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:40,149 | INFO | Metrics snapshot: CPU=9.1%, MEM=20.6%
+2026-02-03 06:24:40,150 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:40,165 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:41,099 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.6%
+2026-02-03 06:24:41,100 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:41,602 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.6%
+2026-02-03 06:24:41,603 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:41,649 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:42,239 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.6%
+2026-02-03 06:24:42,240 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:42,255 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:43,095 | INFO | Metrics snapshot: CPU=11.0%, MEM=20.6%
+2026-02-03 06:24:43,096 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:43,598 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.6%
+2026-02-03 06:24:43,599 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:43,656 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:44,199 | INFO | Metrics snapshot: CPU=11.6%, MEM=20.6%
+2026-02-03 06:24:44,200 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:44,214 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:45,121 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.6%
+2026-02-03 06:24:45,124 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:24:45,139 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:46,137 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.6%
+2026-02-03 06:24:46,138 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:46,153 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:47,095 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.6%
+2026-02-03 06:24:47,096 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:47,598 | INFO | Metrics snapshot: CPU=12.3%, MEM=20.6%
+2026-02-03 06:24:47,599 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:47,646 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:48,204 | INFO | Metrics snapshot: CPU=11.0%, MEM=20.6%
+2026-02-03 06:24:48,205 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:48,219 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:49,098 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.6%
+2026-02-03 06:24:49,099 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:49,601 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.7%
+2026-02-03 06:24:49,602 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:50,181 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.7%
+2026-02-03 06:24:50,182 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:50,198 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:51,097 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.7%
+2026-02-03 06:24:51,098 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:51,600 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.7%
+2026-02-03 06:24:51,602 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:51,658 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:52,234 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.7%
+2026-02-03 06:24:52,235 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:52,252 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:53,136 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.7%
+2026-02-03 06:24:53,137 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:53,154 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:54,150 | INFO | Metrics snapshot: CPU=11.6%, MEM=20.7%
+2026-02-03 06:24:54,152 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:24:54,169 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:55,094 | INFO | Metrics snapshot: CPU=11.9%, MEM=20.7%
+2026-02-03 06:24:55,095 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:55,597 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.7%
+2026-02-03 06:24:55,598 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:55,648 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:56,230 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.7%
+2026-02-03 06:24:56,231 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:56,248 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:57,088 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.7%
+2026-02-03 06:24:57,090 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:24:57,592 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.7%
+2026-02-03 06:24:57,593 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:57,644 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:58,216 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.7%
+2026-02-03 06:24:58,217 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:58,232 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:24:59,104 | INFO | Metrics snapshot: CPU=8.8%, MEM=20.7%
+2026-02-03 06:24:59,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:24:59,120 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:00,138 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.7%
+2026-02-03 06:25:00,139 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:00,156 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:01,091 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.7%
+2026-02-03 06:25:01,092 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:01,107 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:02,088 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.7%
+2026-02-03 06:25:02,089 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:02,591 | INFO | Metrics snapshot: CPU=10.9%, MEM=20.7%
+2026-02-03 06:25:02,592 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:02,644 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:03,217 | INFO | Metrics snapshot: CPU=11.3%, MEM=20.7%
+2026-02-03 06:25:03,218 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:03,234 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:04,101 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.7%
+2026-02-03 06:25:04,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:04,116 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:05,091 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.7%
+2026-02-03 06:25:05,092 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:05,109 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:06,093 | INFO | Metrics snapshot: CPU=10.6%, MEM=20.7%
+2026-02-03 06:25:06,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:06,596 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.7%
+2026-02-03 06:25:06,597 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:06,654 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:07,242 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.7%
+2026-02-03 06:25:07,244 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:07,259 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:08,097 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.7%
+2026-02-03 06:25:08,098 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:08,600 | INFO | Metrics snapshot: CPU=14.2%, MEM=20.8%
+2026-02-03 06:25:08,601 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:08,653 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:09,232 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.8%
+2026-02-03 06:25:09,233 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:09,248 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:10,093 | INFO | Metrics snapshot: CPU=9.3%, MEM=20.8%
+2026-02-03 06:25:10,094 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:10,109 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:11,104 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.8%
+2026-02-03 06:25:11,105 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:11,120 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:12,103 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.8%
+2026-02-03 06:25:12,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:12,606 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.8%
+2026-02-03 06:25:12,607 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:13,165 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.8%
+2026-02-03 06:25:13,176 | INFO | GET /metrics → 200 (0.512s)
+2026-02-03 06:25:13,192 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:14,098 | INFO | Metrics snapshot: CPU=10.6%, MEM=20.8%
+2026-02-03 06:25:14,100 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:14,602 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.8%
+2026-02-03 06:25:14,603 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:15,189 | INFO | Metrics snapshot: CPU=13.3%, MEM=20.8%
+2026-02-03 06:25:15,190 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:15,204 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:16,134 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.8%
+2026-02-03 06:25:16,135 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:16,149 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:17,093 | INFO | Metrics snapshot: CPU=8.9%, MEM=20.8%
+2026-02-03 06:25:17,095 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:17,112 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:18,089 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.8%
+2026-02-03 06:25:18,091 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:18,594 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.8%
+2026-02-03 06:25:18,595 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:18,653 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:19,239 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.8%
+2026-02-03 06:25:19,240 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:19,257 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:20,101 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.8%
+2026-02-03 06:25:20,102 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:20,135 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:21,132 | INFO | Metrics snapshot: CPU=11.4%, MEM=20.8%
+2026-02-03 06:25:21,133 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:21,150 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:22,090 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.8%
+2026-02-03 06:25:22,091 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:22,113 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:23,110 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.8%
+2026-02-03 06:25:23,111 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:23,612 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.8%
+2026-02-03 06:25:23,615 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:23,673 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:24,228 | INFO | Metrics snapshot: CPU=12.0%, MEM=20.9%
+2026-02-03 06:25:24,229 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:25:24,246 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:25,142 | INFO | Metrics snapshot: CPU=10.4%, MEM=20.9%
+2026-02-03 06:25:25,143 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:25,158 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:26,124 | INFO | Metrics snapshot: CPU=12.1%, MEM=20.9%
+2026-02-03 06:25:26,125 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:26,144 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:27,121 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.9%
+2026-02-03 06:25:27,122 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:27,624 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.9%
+2026-02-03 06:25:27,625 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:27,670 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:28,270 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.9%
+2026-02-03 06:25:28,271 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:28,285 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:29,161 | INFO | Metrics snapshot: CPU=10.7%, MEM=20.9%
+2026-02-03 06:25:29,162 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:29,181 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:30,102 | INFO | Metrics snapshot: CPU=8.7%, MEM=20.9%
+2026-02-03 06:25:30,103 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:30,605 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.9%
+2026-02-03 06:25:30,606 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:31,228 | INFO | Metrics snapshot: CPU=9.0%, MEM=20.9%
+2026-02-03 06:25:31,229 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:31,245 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:32,148 | INFO | Metrics snapshot: CPU=9.8%, MEM=20.9%
+2026-02-03 06:25:32,149 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:32,163 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:33,135 | INFO | Metrics snapshot: CPU=11.5%, MEM=20.9%
+2026-02-03 06:25:33,136 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:33,152 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:34,090 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.9%
+2026-02-03 06:25:34,091 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:34,593 | INFO | Metrics snapshot: CPU=9.2%, MEM=20.9%
+2026-02-03 06:25:34,594 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:34,645 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:35,192 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.9%
+2026-02-03 06:25:35,193 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:35,209 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:36,137 | INFO | Metrics snapshot: CPU=11.1%, MEM=21.0%
+2026-02-03 06:25:36,137 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:36,151 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:37,100 | INFO | Metrics snapshot: CPU=10.3%, MEM=21.0%
+2026-02-03 06:25:37,101 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:37,603 | INFO | Metrics snapshot: CPU=10.2%, MEM=21.0%
+2026-02-03 06:25:37,604 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:38,240 | INFO | Metrics snapshot: CPU=11.2%, MEM=21.0%
+2026-02-03 06:25:38,241 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:38,264 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:39,153 | INFO | Metrics snapshot: CPU=10.0%, MEM=21.0%
+2026-02-03 06:25:39,154 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:39,168 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:40,106 | INFO | Metrics snapshot: CPU=9.5%, MEM=21.0%
+2026-02-03 06:25:40,108 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:25:40,610 | INFO | Metrics snapshot: CPU=10.2%, MEM=21.0%
+2026-02-03 06:25:40,612 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:41,206 | INFO | Metrics snapshot: CPU=9.9%, MEM=21.0%
+2026-02-03 06:25:41,207 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:41,225 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:42,139 | INFO | Metrics snapshot: CPU=9.6%, MEM=21.0%
+2026-02-03 06:25:42,140 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:42,155 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:43,136 | INFO | Metrics snapshot: CPU=8.9%, MEM=21.0%
+2026-02-03 06:25:43,137 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:43,152 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:44,114 | INFO | Metrics snapshot: CPU=12.1%, MEM=21.0%
+2026-02-03 06:25:44,115 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:44,132 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:45,105 | INFO | Metrics snapshot: CPU=12.0%, MEM=21.0%
+2026-02-03 06:25:45,106 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:45,134 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:46,119 | INFO | Metrics snapshot: CPU=11.0%, MEM=21.0%
+2026-02-03 06:25:46,120 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:46,622 | INFO | Metrics snapshot: CPU=9.3%, MEM=21.0%
+2026-02-03 06:25:46,624 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:46,677 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:47,252 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.9%
+2026-02-03 06:25:47,253 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:47,270 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:48,105 | INFO | Metrics snapshot: CPU=9.9%, MEM=20.9%
+2026-02-03 06:25:48,106 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:48,121 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:49,141 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.9%
+2026-02-03 06:25:49,142 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:49,158 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:50,130 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.9%
+2026-02-03 06:25:50,131 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:50,148 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:51,106 | INFO | Metrics snapshot: CPU=11.7%, MEM=21.0%
+2026-02-03 06:25:51,108 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:25:51,611 | INFO | Metrics snapshot: CPU=10.9%, MEM=21.0%
+2026-02-03 06:25:51,612 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:52,196 | INFO | Metrics snapshot: CPU=8.8%, MEM=21.0%
+2026-02-03 06:25:52,197 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:52,212 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:53,140 | INFO | Metrics snapshot: CPU=9.5%, MEM=20.9%
+2026-02-03 06:25:53,141 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:53,156 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:54,091 | INFO | Metrics snapshot: CPU=11.2%, MEM=20.9%
+2026-02-03 06:25:54,092 | INFO | GET /metrics → 200 (0.5s)
+2026-02-03 06:25:54,593 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.9%
+2026-02-03 06:25:54,597 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:25:55,195 | INFO | Metrics snapshot: CPU=10.8%, MEM=20.9%
+2026-02-03 06:25:55,196 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:55,214 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:56,095 | INFO | Metrics snapshot: CPU=10.1%, MEM=20.9%
+2026-02-03 06:25:56,096 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:56,598 | INFO | Metrics snapshot: CPU=11.7%, MEM=20.9%
+2026-02-03 06:25:56,600 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:25:57,204 | INFO | Metrics snapshot: CPU=9.9%, MEM=21.0%
+2026-02-03 06:25:57,205 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:57,220 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:58,173 | INFO | Metrics snapshot: CPU=10.2%, MEM=20.9%
+2026-02-03 06:25:58,174 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:58,189 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:25:59,137 | INFO | Metrics snapshot: CPU=8.9%, MEM=21.0%
+2026-02-03 06:25:59,138 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:25:59,153 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:00,092 | INFO | Metrics snapshot: CPU=9.4%, MEM=21.0%
+2026-02-03 06:26:00,093 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:00,108 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:01,135 | INFO | Metrics snapshot: CPU=9.9%, MEM=21.0%
+2026-02-03 06:26:01,136 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:01,154 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:02,109 | INFO | Metrics snapshot: CPU=9.8%, MEM=21.0%
+2026-02-03 06:26:02,110 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:02,128 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:03,133 | INFO | Metrics snapshot: CPU=11.6%, MEM=21.0%
+2026-02-03 06:26:03,133 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:03,148 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:04,138 | INFO | Metrics snapshot: CPU=12.6%, MEM=21.0%
+2026-02-03 06:26:04,138 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:04,172 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:05,145 | INFO | Metrics snapshot: CPU=10.9%, MEM=21.0%
+2026-02-03 06:26:05,146 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:05,165 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-03 06:26:06,104 | INFO | Metrics snapshot: CPU=10.9%, MEM=21.0%
+2026-02-03 06:26:06,105 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:06,607 | INFO | Metrics snapshot: CPU=9.6%, MEM=21.0%
+2026-02-03 06:26:06,609 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:26:06,677 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:07,226 | INFO | Metrics snapshot: CPU=11.1%, MEM=20.9%
+2026-02-03 06:26:07,227 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:07,246 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:26:08,118 | INFO | Metrics snapshot: CPU=9.6%, MEM=20.9%
+2026-02-03 06:26:08,119 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:08,621 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.9%
+2026-02-03 06:26:08,622 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:09,201 | INFO | Metrics snapshot: CPU=10.5%, MEM=20.9%
+2026-02-03 06:26:09,202 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:26:09,217 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:00,632 | INFO | Metrics snapshot: CPU=0.5%, MEM=15.2%
+2026-02-03 06:27:00,633 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:01,134 | INFO | Metrics snapshot: CPU=0.8%, MEM=15.2%
+2026-02-03 06:27:01,136 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:01,154 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:01,161 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:03,083 | INFO | Metrics snapshot: CPU=12.0%, MEM=15.9%
+2026-02-03 06:27:03,085 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:27:03,589 | INFO | Metrics snapshot: CPU=11.0%, MEM=15.9%
+2026-02-03 06:27:04,092 | INFO | Metrics snapshot: CPU=11.3%, MEM=15.9%
+2026-02-03 06:27:04,093 | INFO | GET /metrics → 200 (1.006s)
+2026-02-03 06:27:04,595 | INFO | Metrics snapshot: CPU=9.8%, MEM=15.9%
+2026-02-03 06:27:04,597 | INFO | GET /metrics → 200 (1.007s)
+2026-02-03 06:27:04,598 | INFO | GET /metrics → 200 (0.505s)
+2026-02-03 06:27:05,100 | INFO | Metrics snapshot: CPU=10.1%, MEM=15.9%
+2026-02-03 06:27:05,103 | INFO | GET /metrics → 200 (0.505s)
+2026-02-03 06:27:05,606 | INFO | Metrics snapshot: CPU=10.3%, MEM=15.9%
+2026-02-03 06:27:06,108 | INFO | Metrics snapshot: CPU=9.0%, MEM=15.8%
+2026-02-03 06:27:06,109 | INFO | GET /metrics → 200 (1.006s)
+2026-02-03 06:27:06,110 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:06,612 | INFO | Metrics snapshot: CPU=9.2%, MEM=15.8%
+2026-02-03 06:27:06,614 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:27:07,117 | INFO | Metrics snapshot: CPU=10.4%, MEM=15.8%
+2026-02-03 06:27:07,118 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:07,620 | INFO | Metrics snapshot: CPU=11.1%, MEM=15.8%
+2026-02-03 06:27:07,623 | INFO | GET /metrics → 200 (0.505s)
+2026-02-03 06:27:08,125 | INFO | Metrics snapshot: CPU=10.6%, MEM=15.8%
+2026-02-03 06:27:08,126 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:08,629 | INFO | Metrics snapshot: CPU=10.7%, MEM=15.7%
+2026-02-03 06:27:08,631 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:09,133 | INFO | Metrics snapshot: CPU=10.9%, MEM=15.7%
+2026-02-03 06:27:09,135 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:09,201 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:10,154 | INFO | Metrics snapshot: CPU=10.1%, MEM=15.6%
+2026-02-03 06:27:10,155 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:10,197 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:11,103 | INFO | Metrics snapshot: CPU=10.1%, MEM=15.6%
+2026-02-03 06:27:11,104 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:11,130 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:12,159 | INFO | Metrics snapshot: CPU=12.3%, MEM=15.6%
+2026-02-03 06:27:12,160 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:12,179 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:13,096 | INFO | Metrics snapshot: CPU=12.4%, MEM=15.6%
+2026-02-03 06:27:13,097 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:13,114 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:14,157 | INFO | Metrics snapshot: CPU=3.1%, MEM=15.6%
+2026-02-03 06:27:14,158 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:14,660 | INFO | Metrics snapshot: CPU=1.7%, MEM=15.6%
+2026-02-03 06:27:14,662 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:14,677 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:15,228 | INFO | Metrics snapshot: CPU=6.8%, MEM=15.6%
+2026-02-03 06:27:15,229 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:15,731 | INFO | Metrics snapshot: CPU=11.5%, MEM=15.6%
+2026-02-03 06:27:15,733 | INFO | GET /metrics → 200 (0.504s)
+2026-02-03 06:27:16,236 | INFO | Metrics snapshot: CPU=10.9%, MEM=15.6%
+2026-02-03 06:27:16,238 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:16,308 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:17,110 | INFO | Metrics snapshot: CPU=11.5%, MEM=15.6%
+2026-02-03 06:27:17,111 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:27:17,137 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:18,161 | INFO | Metrics snapshot: CPU=11.2%, MEM=15.6%
+2026-02-03 06:27:18,162 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:18,188 | INFO | GET /live_tracking/history → 200 (0.002s)
+2026-02-03 06:27:19,139 | INFO | Metrics snapshot: CPU=10.9%, MEM=15.6%
+2026-02-03 06:27:19,140 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:19,160 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:20,106 | INFO | Metrics snapshot: CPU=11.6%, MEM=15.6%
+2026-02-03 06:27:20,107 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:20,609 | INFO | Metrics snapshot: CPU=10.8%, MEM=15.6%
+2026-02-03 06:27:20,611 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:21,224 | INFO | Metrics snapshot: CPU=15.2%, MEM=15.6%
+2026-02-03 06:27:21,225 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:21,246 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:22,100 | INFO | Metrics snapshot: CPU=10.8%, MEM=15.6%
+2026-02-03 06:27:22,101 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:22,126 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:23,180 | INFO | Metrics snapshot: CPU=10.0%, MEM=15.6%
+2026-02-03 06:27:23,181 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:23,224 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:24,100 | INFO | Metrics snapshot: CPU=11.2%, MEM=15.6%
+2026-02-03 06:27:24,101 | INFO | GET /metrics → 200 (0.501s)
+2026-02-03 06:27:24,118 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:25,107 | INFO | Metrics snapshot: CPU=11.1%, MEM=15.6%
+2026-02-03 06:27:25,109 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:25,611 | INFO | Metrics snapshot: CPU=11.6%, MEM=15.6%
+2026-02-03 06:27:25,612 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:26,217 | INFO | Metrics snapshot: CPU=10.5%, MEM=15.7%
+2026-02-03 06:27:26,218 | INFO | GET /metrics → 200 (0.502s)
+2026-02-03 06:27:26,241 | INFO | GET /live_tracking/history → 200 (0.001s)
+2026-02-03 06:27:27,110 | INFO | Metrics snapshot: CPU=12.6%, MEM=15.7%
+2026-02-03 06:27:27,112 | INFO | GET /metrics → 200 (0.503s)
+2026-02-03 06:27:27,614 | INFO | Metrics snapshot: CPU=11.6%, MEM=15.7%
+2026-02-03 06:27:27,616 | INFO | GET /metrics → 200 (0.504s)

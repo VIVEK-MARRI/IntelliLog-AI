@@ -41,7 +41,6 @@ from src.api.live_tracking import router as live_tracking_router  # Live trackin
 # ROUTERS
 # -----------------------------------------------------------
 from src.api.routes.health import router as health_router
-from src.api.live_tracking import router as live_tracking_router
 
 # -----------------------------------------------------------
 # CONFIGURATION
@@ -227,11 +226,6 @@ async def plan_routes_endpoint(req: RoutePlanRequest):
     except Exception as e:
         logger.exception("❌ Route planning error:")
         raise HTTPException(status_code=500, detail=str(e))
-
-# -----------------------------------------------------------
-# REGISTER LIVE TRACKING ROUTER
-# -----------------------------------------------------------
-app.include_router(live_tracking_router)
 
 # -----------------------------------------------------------
 # SYSTEM HEALTH & METRICS
