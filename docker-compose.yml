@@ -6,32 +6,90 @@ services:
       context: .
       target: api
     container_name: intellog_api
-    command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn src.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/intellog
+      - REDIS_URL=redis://redis:6379/0
       - MODEL_PATH=/app/models/xgb_delivery_time_model.pkl
       - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
       - ./models:/app/models
       - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
     restart: unless-stopped
 
-  dashboard:
+  worker:
     build:
       context: .
-      target: dashboard
-    container_name: intellog_dashboard
-    command: streamlit run src/dashboard/app.py --server.port=8501 --server.address=0.0.0.0
-    ports:
-      - "8501:8501"
-    depends_on:
-      - api
+      target: api
+    container_name: intellog_worker
+    command: celery -A src.backend.worker.celery_app worker --loglevel=info
     environment:
-      - API_URL=http://api:8000
-      - STREAMLIT_SERVER_HEADLESS=true
-      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/intellog
+      - REDIS_URL=redis://redis:6379/0
+      - MODEL_PATH=/app/models/xgb_delivery_time_model.pkl
+      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
+      - ./models:/app/models
+    depends_on:
+      - db
+      - redis
     restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    container_name: intellog_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # dashboard:
+  #   build:
+  #     context: .
+  #     target: dashboard
+  #   container_name: intellog_dashboard
+  #   command: streamlit run src/dashboard/app.py --server.port=8501 --server.address=0.0.0.0
+  #   ports:
+  #     - "8501:8501"
+  #   depends_on:
+  #     - api
+  #   environment:
+  #     - API_URL=http://api:8000
+  #     - STREAMLIT_SERVER_HEADLESS=true
+  #     - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+  #   volumes:
+  #     - .:/app
+  #   restart: unless-stopped
+
+  db:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: intellog_db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=intellog
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: intellog_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
