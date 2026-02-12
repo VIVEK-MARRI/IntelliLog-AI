@@ -68,18 +68,27 @@
 
 ## ✨ Key Features
 
-- **AI/ML ETA prediction** using XGBoost with versioned models
-- **Route optimization** with OR-Tools (capacity, time windows, multi-driver)
-- **Real-time fleet visibility** with interactive maps and KPI dashboards
-- **Multi-tenant security** with JWT + RBAC and strict data isolation
-- **Async processing** via Celery workers and Redis
-- **Cloud-ready** Docker-first deployment and scalable architecture
+- **Top-tier ML system** with experiment tracking, drift detection, A/B testing
+- **ETA prediction** (XGBoost) with SHAP explainability, confidence scoring, OOD detection
+- **Route optimization** (OR-Tools) with multi-tenant constraints
+- **Continuous learning** from real feedback, weekly retraining, automatic drift alerts
+- **Production-ready** monitoring: Prometheus metrics, Grafana dashboards, PagerDuty alerts
+- **5-minute dev setup** (no auth needed yet), Docker Compose, Kubernetes-ready
+- **Data governance**: DVC pipelines, MLflow tracking, full lineage & reproducibility
+- **Enterprise scale** with feature store (Redis), batch inference, real-time prediction servers
 
 ---
 
 ## 🏗️ System Architecture
 
 IntelliLog-AI uses a layered, service-oriented architecture that separates frontend presentation, API services, and async ML/optimization workloads. This keeps the system scalable and easy to evolve.
+
+Your system is optimized for **ML excellence**:
+- Feature store (Redis) for fast, reproducible feature retrieval
+- Model registry (MLflow) with versioning and lineage
+- Real-time prediction servers with caching
+- Background training pipeline with DVC orchestration
+- Continuous drift detection and A/B testing
 
 ```mermaid
 graph TD
@@ -93,25 +102,32 @@ graph TD
         API -->|Async Tasks| Worker[Celery Workers<br/>Async Processing]
         
         SVC -->|Read/Write| DB[(PostgreSQL<br/>Primary Database)]
-        SVC -->|Cache/Queue| Redis[(Redis<br/>Cache & Broker)]
+        SVC -->|Cache/Query| Store[Feature Store<br/>Redis]
+        SVC -->|Queue| Redis[(Redis<br/>Broker)]
         
         Worker -->|ML Inference| ML[XGBoost Models<br/>ETA Prediction]
+        Worker -->|Training| Train[DVC Pipeline<br/>Weekly Retraining]
         Worker -->|Optimization| OR[OR-Tools Engine<br/>VRP Solver]
     end
     
-    subgraph "External Integrations"
-        Maps[Map Services<br/>OSRM/Google Maps]
+    subgraph "Monitoring"
+        Metrics[Prometheus<br/>Metrics]
+        Drift[Drift Detector<br/>KS + MMD]
+        AB[A/B Test<br/>Framework]
     end
     
-    SVC --> Maps
+    SVC --> Metrics
+    Train --> Drift
+    Drift --> AB
 ```
 
 - **Core services** handle orders, drivers, routes, and analytics
-- **Async workers** run ETA inference and VRP optimization
-- **PostgreSQL + Redis** provide durable storage and fast caching
-- **Multi-tenant security** enforced at the service layer
+- **Async workers** run ETA inference, training, and VRP optimization
+- **Feature store** enables reproducible, fast predictions
+- **Continuous learning** from real feedback with automatic drift alerts
+- **ML governance** via MLflow tracking, DVC pipelines, and A/B testing
 
-For detailed diagrams, schemas, and security design, see [docs/architecture.md](docs/architecture.md).
+For ultra-detailed ML system design, see [ML_SYSTEM.md](docs/ML_SYSTEM.md), [LEARNING_SYSTEM.md](docs/LEARNING_SYSTEM.md), and [MLOPS_DEPLOYMENT.md](docs/MLOPS_DEPLOYMENT.md).
 
 ### Database Design
 
@@ -196,82 +212,56 @@ ROUTE OPTIMIZATION FLOW:
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (5 Minutes)
 
-### Prerequisites
-
-- **Docker & Docker Compose** (v2.0+)
-- **Git** (for cloning repository)
-- **Optional for local dev**: Python 3.10+, Node.js 18+
-
-### Option 1: Docker Compose (Recommended)
-
-**Fastest way to get started — everything in one command!**
+### One-Command Setup
 
 ```bash
-# 1. Clone the repository
+# Clone and initialize everything
 git clone https://github.com/VIVEK-MARRI/IntelliLog-AI.git
 cd IntelliLog-AI
+./scripts/dev_bootstrap.sh
 
-# 2. Start all services (builds images on first run)
-docker compose up -d --build
-
-# 3. Wait for services to be ready (~30-60 seconds)
-docker compose logs -f
-
-# 4. Access the application
-#    Frontend:  http://localhost:3000
-#    API Docs:  http://localhost:8000/docs
-#    ReDoc:     http://localhost:8000/redoc
-#    API:       http://localhost:8000
-
-# 5. Seed test data (optional)
-docker compose exec backend python scripts/seed_db.py
-
-# 6. Stop services when done
-docker compose down
+# Services start automatically
+# Frontend:  http://localhost:5173
+# API:       http://localhost:8000
+# Docs:      http://localhost:8000/docs
 ```
 
-### Option 2: Local Development Setup
+**What it does:**
+- Creates Python venv
+- Installs dependencies
+- Initializes PostgreSQL database
+- Downloads pre-trained ML models
+- Seeds 1,000 sample deliveries
+- Prints start commands
 
-#### Backend Setup
+---
+
+### Without Bootstrap Script
+
+**Option A: Docker Compose** (recommended for production-like env)
 
 ```bash
-# Create virtual environment
+docker compose up --build
+```
+
+**Option B: Local Python** (fastest for ML development)
+
+```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
-
-# Set up database
 alembic upgrade head
-
-# Seed with test data
 python scripts/seed_db.py
 
-# Start FastAPI server
-uvicorn src.backend.app.main:app --reload --port 8000
-```
+# Terminal 1: Backend
+uvicorn src.backend.app.main:app --reload
 
-#### Frontend Setup
+# Terminal 2: Frontend
+cd src/frontend && npm run dev
 
-```bash
-cd src/frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Access at http://localhost:5173
-```
-
-#### Celery Worker (for async tasks)
-
-```bash
-# In a separate terminal
+# Terminal 3: Worker
 celery -A src.backend.worker.celery_app worker --loglevel=info
 ```
 
@@ -420,9 +410,26 @@ Environment variables and cloud deployment guidance: [docs/deployment.md](docs/d
 
 ## 📚 Additional Resources
 
-- **[Architecture Documentation](docs/architecture.md)** — Deep technical architecture
-- **[API Reference](docs/api.md)** — Complete API documentation
-- **[Deployment Guide](docs/deployment.md)** — Production deployment
+### ML System Design (Top 1%)
+- **[ML_QUICK_START.md](docs/ML_QUICK_START.md)** — 5-minute guide from zero to first prediction
+- **[ML_SYSTEM.md](docs/ML_SYSTEM.md)** — Production ML architecture, feature store, model registry, explainability
+- **[LEARNING_SYSTEM.md](docs/LEARNING_SYSTEM.md)** — Continuous learning pipeline, drift detection, A/B testing
+- **[MLOPS_DEPLOYMENT.md](docs/MLOPS_DEPLOYMENT.md)** — Deployment stages, CI/CD, monitoring, runbooks
+
+### Real-World Readiness
+- **[REAL_WORLD_ASSESSMENT.md](docs/REAL_WORLD_ASSESSMENT.md)** — Honest assessment of what works now vs what needs implementation
+- **Real-world use cases**: $2-5M annual savings potential (100-driver fleet)
+- **Production timeline**: 8-12 weeks to full deployment
+
+### Business & Go-To-Market
+- **[BUSINESS_STRATEGY.md](docs/BUSINESS_STRATEGY.md)** — Pricing models ($2K-$30K/month), sales playbook, TAM analysis, 90-day to first customer
+- **Customer profiles**: Who buys (regional logistics, 3PLs, couriers) vs who won't (Uber/Amazon)
+- **Revenue potential**: $600K Year 1 → $2-3M Year 2 → $5-10M+ Year 3
+
+### Technical References
+- **[architecture.md](docs/architecture.md)** — System architecture overview
+- **[API Reference](docs/api.md)** — REST API endpoints (add auth later)
+- **[CONTRIBUTING](CONTRIBUTING.md)** — Development guidelines
 - **[Contributing Guide](CONTRIBUTING.md)** — Contribution guidelines
 
 ---

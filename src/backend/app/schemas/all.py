@@ -25,6 +25,24 @@ class Tenant(TenantBase):
     class Config:
         from_attributes = True
 
+# Warehouse
+class WarehouseBase(BaseModel):
+    name: str
+    lat: float
+    lng: float
+    service_radius_km: float = 25.0
+    capacity: int = 500
+
+class WarehouseCreate(WarehouseBase):
+    pass
+
+class Warehouse(WarehouseBase):
+    id: str
+    tenant_id: str
+
+    class Config:
+        from_attributes = True
+
 # User
 class UserBase(BaseModel):
     email: EmailStr
@@ -56,6 +74,7 @@ class DriverBase(BaseModel):
     current_lat: Optional[float] = None
     current_lng: Optional[float] = None
     vehicle_capacity: int = 10
+    warehouse_id: Optional[str] = None
 
 class DriverCreate(DriverBase):
     pass
@@ -78,6 +97,7 @@ class OrderBase(BaseModel):
     time_window_start: Optional[datetime] = None
     time_window_end: Optional[datetime] = None
     status: str = "pending"
+    warehouse_id: Optional[str] = None
 
 class OrderCreate(OrderBase):
     pass
@@ -96,6 +116,7 @@ class RouteBase(BaseModel):
     total_distance_km: float = 0.0
     total_duration_min: float = 0.0
     geometry_json: Optional[Dict] = None
+    warehouse_id: Optional[str] = None
 
 class RouteCreate(RouteBase):
     driver_id: Optional[str] = None
@@ -109,4 +130,3 @@ class Route(RouteBase):
 
     class Config:
         from_attributes = True
-

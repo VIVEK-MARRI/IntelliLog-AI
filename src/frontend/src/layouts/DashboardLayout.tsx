@@ -34,7 +34,7 @@ export default function DashboardLayout() {
     ];
 
     return (
-        <div className="flex h-screen bg-[#020617] text-slate-100 overflow-hidden font-inter">
+        <div className="flex h-screen bg-[#020617] text-slate-100 overflow-hidden font-body">
             {/* Sidebar */}
             <aside className="w-72 border-r border-white/5 bg-slate-900/20 backdrop-blur-2xl flex flex-col z-20">
                 <div className="p-8 pb-10 flex items-center space-x-3">

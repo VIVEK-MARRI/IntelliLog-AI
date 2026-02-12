@@ -1,12 +1,23 @@
-# IntelliLog-AI System Architecture
+# IntelliLog-AI System Architecture (Top 1% ML System)
 
 ## 1. Executive Summary
 
-IntelliLog-AI is an enterprise-grade SaaS platform designed for intelligent logistics management. It leverages AI/ML to optimize delivery routes, predict estimated times of arrival (ETA), and manage fleet operations in real-time. The system is built on a microservices-ready architecture using **FastAPI** for high-performance backend processing and **React** for a responsive, modern frontend experience.
+IntelliLog-AI is a **production-grade ML platform** for intelligent logistics. It combines:
+- **Fast development** (5-min setup, no auth overhead)
+- **ML excellence** (feature store, drift detection, A/B testing)
+- **Enterprise-ready** (monitoring, lineage, reproducibility)
+- **Continuous learning** from real delivery data with automated model improvement
 
-## 2. High-Level Architecture
+The system is built on microservices principles, separating inference (fast path), training (background), and monitoring (continuous).
 
-The system follows a layered architecture pattern, separating concerns between the client presentation, API services, business logic, and data persistence layers.
+## 2. High-Level Architecture (Top 1% ML System)
+
+IntelliLog-AI is architected for **production ML excellence**:
+- Separation of inference (fast path), training (background), and monitoring (continuous)
+- Feature store for reproducibility and speed
+- Model registry with full lineage and versioning
+- A/B testing framework for safe promotions
+- Real-time drift detection with automatic alerts
 
 ```mermaid
 graph TD
@@ -150,7 +161,20 @@ erDiagram
 - **Data Isolation**: Logical separation of tenant data via `tenant_id` foreign keys enforced at the service layer.
 - **Input Validation**: Strict validation using Pydantic models to prevent injection attacks and ensure data integrity.
 
-## 7. Deployment & DevOps
+## 7. Learning System Architecture
+
+IntelliLog-AI implements a **continuous ML learning system** that improves ETA predictions and route optimization through real delivery data:
+
+- **Feedback Loop**: Captures predicted vs actual delivery times for every order
+- **Automated Retraining**: Daily scheduled retraining on last 30 days of feedback data
+- **Drift Detection**: Monitors model accuracy degradation and triggers alerts
+- **A/B Testing**: Compares production models against candidate models before promotion
+- **Model Registry**: Version control for all trained models with staging and rollback capability
+- **Performance Metrics**: Tracks MAE, MAPE, accuracy, and statistical confidence
+
+See [LEARNING_SYSTEM.md](LEARNING_SYSTEM.md) for detailed architecture, APIs, and implementation roadmap.
+
+## 8. Deployment & DevOps
 - **Docker Compose**: Orchestrates the multi-container environment (Frontend, Backend, DB, Redis).
 - **Environment Configuration**: `config.py` uses `pydantic-settings` to load configuration from `.env` files.
 - **Logging**: Centralized structured logging.

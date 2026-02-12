@@ -13,18 +13,20 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@types/leaflet": "^1.9.21",
     "axios": "^1.6.7",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "framer-motion": "^11.0.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",
+    "maplibre-gl": "^5.17.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-is": "^19.2.4",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^6.22.3",
     "recharts": "^3.7.0",
-    "tailwind-merge": "^2.2.1"
+    "tailwind-merge": "^2.6.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

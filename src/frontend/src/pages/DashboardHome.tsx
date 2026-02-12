@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '../components/ui/card';
-import { Truck, Package, Activity, Play, ArrowUpRight, TrendingUp, Layers, Zap } from 'lucide-react';
+import { Truck, Package, Activity, Play, ArrowUpRight, TrendingUp, Layers, Zap, Gauge } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { motion } from 'framer-motion';
 import LogisticsMap from '../components/LogisticsMap';
@@ -13,6 +13,8 @@ export default function DashboardHome() {
         routes: [] as any[]
     });
     const [loading, setLoading] = useState(true);
+    const [rerouteStatus, setRerouteStatus] = useState({ active: false, lastTime: null as Date | null });
+    const [unassignedCount, setUnassignedCount] = useState(0);
 
     const fetchData = async () => {
         try {
@@ -26,6 +28,16 @@ export default function DashboardHome() {
                 orders: ordersRes.data,
                 routes: routesRes.data
             });
+            
+            // Count unassigned orders
+            const unassigned = ordersRes.data.filter((o: any) => o.status === 'pending').length;
+            setUnassignedCount(unassigned);
+            
+            // Check for active routes (indicating recent reroute)
+            const activeRoutes = routesRes.data.filter((r: any) => r.status === 'active' || r.status === 'planned').length;
+            if (activeRoutes > 0) {
+                setRerouteStatus({ active: true, lastTime: new Date() });
+            }
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
         } finally {
@@ -141,6 +153,35 @@ export default function DashboardHome() {
             {/* Map & Optimization Section */}
             <div className="grid gap-8 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Reroute Status Card */}
+                    {rerouteStatus.active && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between"
+                        >
+                            <div className="flex items-center space-x-3">
+                                <div className="relative w-3 h-3 rounded-full bg-cyan-500">
+                                    <div className="absolute inset-0 rounded-full bg-cyan-500 animate-pulse" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-cyan-400">AI Rerouting System Active</p>
+                                    <p className="text-xs text-cyan-300/80">
+                                        {rerouteStatus.lastTime ? `Last update: ${rerouteStatus.lastTime.toLocaleTimeString()}` : 'Processing...'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                {unassignedCount > 0 && (
+                                    <div className="px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                                        <p className="text-xs font-bold text-orange-400">{unassignedCount} Pending</p>
+                                    </div>
+                                )}
+                                <Gauge className="h-5 w-5 text-cyan-400" />
+                            </div>
+                        </motion.div>
+                    )}
+                    
                     <div className="relative rounded-[2.5rem] overflow-hidden glass-card h-[600px] border-white/10">
                         <div className="absolute top-6 left-6 z-10 flex items-center space-x-3 bg-slate-950/80 backdrop-blur-xl border border-white/10 p-2 rounded-2xl shadow-2xl">
                             <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />

@@ -1,5 +1,6 @@
 from src.backend.app.db.base import SessionLocal
-from src.backend.app.db.models import Tenant, Driver, Order, User
+from src.backend.app.db.models import Tenant, Driver, Order, User, Warehouse
+from src.backend.app.services.warehouse_service import assign_order_to_warehouse
 from src.backend.app.core.config import settings
 import uuid
 
@@ -28,7 +29,7 @@ def seed_data():
             user = User(
                 id=str(uuid.uuid4()),
                 email="admin@intellog.ai",
-                hashed_password="hashed_password_here", # In actual app, use pwd_context.hash
+                hashed_password="hashed_password_here",
                 full_name="System Admin",
                 role="admin",
                 tenant_id=tenant.id
@@ -36,11 +37,64 @@ def seed_data():
             db.add(user)
             print(f"Created user: {user.email}")
 
-        # 3. Create Drivers
+        # 3. Create Warehouses (Hyderabad + Bangalore)
+        warehouses_data = [
+            {
+                "id": "wh-hyd-central",
+                "name": "Hyderabad Central Hub",
+                "lat": 17.3850,
+                "lng": 78.4867,
+                "service_radius_km": 30.0,
+                "capacity": 500,
+            },
+            {
+                "id": "wh-hyd-hitec",
+                "name": "HITEC City DC",
+                "lat": 17.4435,
+                "lng": 78.3772,
+                "service_radius_km": 25.0,
+                "capacity": 400,
+            },
+            {
+                "id": "wh-blr-whitefield",
+                "name": "Bangalore Whitefield Hub",
+                "lat": 12.9698,
+                "lng": 77.7500,
+                "service_radius_km": 30.0,
+                "capacity": 500,
+            },
+        ]
+
+        created_warehouses = {}
+        for wh_data in warehouses_data:
+            wh = db.query(Warehouse).filter(Warehouse.id == wh_data["id"]).first()
+            if not wh:
+                wh = Warehouse(**wh_data, tenant_id=tenant.id)
+                db.add(wh)
+                print(f"Created warehouse: {wh.name}")
+            else:
+                print(f"Warehouse already exists: {wh.name}")
+            created_warehouses[wh_data["id"]] = wh_data
+
+        db.commit()
+
+        # 4. Create Drivers (assigned to warehouses)
         drivers_data = [
-            {"name": "Robert Miller", "phone": "+1-555-0101", "status": "available", "lat": 40.7128, "lng": -74.0060, "capacity": 15},
-            {"name": "Sarah Wilson", "phone": "+1-555-0102", "status": "busy", "lat": 40.7306, "lng": -73.9352, "capacity": 20},
-            {"name": "Michael Chen", "phone": "+1-555-0103", "status": "available", "lat": 40.7580, "lng": -73.9855, "capacity": 12},
+            # Hyderabad Central Hub drivers
+            {"name": "Ravi Kumar", "phone": "+91-9876543101", "status": "available",
+             "lat": 17.3850, "lng": 78.4867, "capacity": 15, "warehouse_id": "wh-hyd-central"},
+            {"name": "Suresh Reddy", "phone": "+91-9876543102", "status": "busy",
+             "lat": 17.3950, "lng": 78.4750, "capacity": 20, "warehouse_id": "wh-hyd-central"},
+            # HITEC City DC drivers
+            {"name": "Priya Sharma", "phone": "+91-9876543103", "status": "available",
+             "lat": 17.4435, "lng": 78.3772, "capacity": 12, "warehouse_id": "wh-hyd-hitec"},
+            {"name": "Arun Patel", "phone": "+91-9876543104", "status": "available",
+             "lat": 17.4500, "lng": 78.3850, "capacity": 18, "warehouse_id": "wh-hyd-hitec"},
+            # Bangalore Whitefield Hub drivers
+            {"name": "Karthik Nair", "phone": "+91-9876543105", "status": "available",
+             "lat": 12.9698, "lng": 77.7500, "capacity": 15, "warehouse_id": "wh-blr-whitefield"},
+            {"name": "Deepa Menon", "phone": "+91-9876543106", "status": "busy",
+             "lat": 12.9750, "lng": 77.7400, "capacity": 20, "warehouse_id": "wh-blr-whitefield"},
         ]
 
         for d in drivers_data:
@@ -54,21 +108,55 @@ def seed_data():
                     current_lat=d["lat"],
                     current_lng=d["lng"],
                     vehicle_capacity=d["capacity"],
+                    warehouse_id=d["warehouse_id"],
                     tenant_id=tenant.id
                 )
                 db.add(driver)
-                print(f"Created driver: {driver.name}")
+                print(f"Created driver: {driver.name} @ {d['warehouse_id']}")
 
-        # 4. Create Orders
-        orders_data = [
-            {"num": "ORD-2024-001", "cust": "Walmart Supercenter", "addr": "7770 West Hwy 50, Salida, CO", "lat": 40.7588, "lng": -73.9851, "weight": 5.5},
-            {"num": "ORD-2024-002", "cust": "Target Express", "addr": "255 Greenwich St, New York, NY", "lat": 40.7614, "lng": -73.9776, "weight": 2.1},
-            {"num": "ORD-2024-003", "cust": "Whole Foods Market", "addr": "10 Columbus Cir, New York, NY", "lat": 40.7681, "lng": -73.9819, "weight": 3.8},
-            {"num": "ORD-2024-004", "cust": "CVS Pharmacy", "addr": "200 W End Ave, New York, NY", "lat": 40.7762, "lng": -73.9831, "weight": 1.2},
-            {"num": "ORD-2024-005", "cust": "Best Buy", "addr": "529 5th Ave, New York, NY", "lat": 40.7549, "lng": -73.9808, "weight": 8.0},
+        db.commit()
+
+        # 5. Create Orders (Hyderabad locations)
+        hyderabad_orders = [
+            {"num": "ORD-HYD-001", "cust": "Charminar Store", "addr": "Charminar, Hyderabad",
+             "lat": 17.3616, "lng": 78.4747, "weight": 5.5},
+            {"num": "ORD-HYD-002", "cust": "Tank Bund Office", "addr": "Tank Bund Rd, Hyderabad",
+             "lat": 17.4239, "lng": 78.4738, "weight": 2.1},
+            {"num": "ORD-HYD-003", "cust": "Gachibowli TechPark", "addr": "Gachibowli, Hyderabad",
+             "lat": 17.4401, "lng": 78.3489, "weight": 3.8},
+            {"num": "ORD-HYD-004", "cust": "Banjara Hills Residence", "addr": "Banjara Hills, Hyderabad",
+             "lat": 17.4156, "lng": 78.4347, "weight": 1.2},
+            {"num": "ORD-HYD-005", "cust": "Kukatpally Mall", "addr": "Kukatpally, Hyderabad",
+             "lat": 17.4849, "lng": 78.3942, "weight": 8.0},
+            {"num": "ORD-HYD-006", "cust": "LB Nagar Shop", "addr": "LB Nagar, Hyderabad",
+             "lat": 17.3457, "lng": 78.5522, "weight": 4.1},
+            {"num": "ORD-HYD-007", "cust": "Madhapur Hub", "addr": "Madhapur, Hyderabad",
+             "lat": 17.4400, "lng": 78.3918, "weight": 2.5},
+            {"num": "ORD-HYD-008", "cust": "Secunderabad Station", "addr": "Secunderabad, Hyderabad",
+             "lat": 17.4344, "lng": 78.5013, "weight": 6.2},
+            {"num": "ORD-HYD-009", "cust": "Ameerpet Center", "addr": "Ameerpet, Hyderabad",
+             "lat": 17.4375, "lng": 78.4483, "weight": 3.3},
         ]
 
-        for o in orders_data:
+        # Bangalore orders
+        bangalore_orders = [
+            {"num": "ORD-BLR-001", "cust": "MG Road Showroom", "addr": "MG Road, Bangalore",
+             "lat": 12.9716, "lng": 77.6198, "weight": 3.0},
+            {"num": "ORD-BLR-002", "cust": "Koramangala Office", "addr": "Koramangala, Bangalore",
+             "lat": 12.9279, "lng": 77.6271, "weight": 4.5},
+            {"num": "ORD-BLR-003", "cust": "Electronic City Hub", "addr": "Electronic City, Bangalore",
+             "lat": 12.8440, "lng": 77.6778, "weight": 7.2},
+            {"num": "ORD-BLR-004", "cust": "Indiranagar Cafe", "addr": "Indiranagar, Bangalore",
+             "lat": 12.9719, "lng": 77.6412, "weight": 1.8},
+            {"num": "ORD-BLR-005", "cust": "Marathahalli Tech", "addr": "Marathahalli, Bangalore",
+             "lat": 12.9591, "lng": 77.6974, "weight": 5.5},
+            {"num": "ORD-BLR-006", "cust": "HSR Layout Home", "addr": "HSR Layout, Bangalore",
+             "lat": 12.9116, "lng": 77.6389, "weight": 2.8},
+        ]
+
+        all_orders = hyderabad_orders + bangalore_orders
+
+        for o in all_orders:
             order = db.query(Order).filter(Order.order_number == o["num"]).first()
             if not order:
                 order = Order(
@@ -82,58 +170,10 @@ def seed_data():
                     status="pending",
                     tenant_id=tenant.id
                 )
+                # Auto-assign to nearest warehouse
+                assign_order_to_warehouse(db, order)
                 db.add(order)
-                print(f"Created order: {order.order_number}")
-
-        # 5. Add NEW PENDING orders for optimization testing
-        test_orders = [
-            {"num": "ORD-TEST-001", "cust": "Hudson Yards", "addr": "20 Hudson Yards, NY", "lat": 40.7538, "lng": -74.0022, "weight": 4.1},
-            {"num": "ORD-TEST-002", "cust": "Bryant Park", "addr": "42nd St, New York, NY", "lat": 40.7536, "lng": -73.9832, "weight": 2.5},
-            {"num": "ORD-TEST-003", "cust": "Grand Central", "addr": "89 E 42nd St, NY", "lat": 40.7527, "lng": -73.9772, "weight": 6.2},
-            {"num": "ORD-TEST-004", "cust": "Flatiron Building", "addr": "175 5th Ave, NY", "lat": 40.7411, "lng": -73.9897, "weight": 3.3},
-        ]
-
-        for o in test_orders:
-            order = db.query(Order).filter(Order.order_number == o["num"]).first()
-            if not order:
-                order = Order(
-                    id=str(uuid.uuid4()),
-                    order_number=o["num"],
-                    customer_name=o["cust"],
-                    delivery_address=o["addr"],
-                    lat=o["lat"],
-                    lng=o["lng"],
-                    weight=o["weight"],
-                    status="pending",
-                    tenant_id=tenant.id
-                )
-                db.add(order)
-                print(f"Created pending test order: {order.order_number}")
-
-        # 6. Add FINAL demo orders for the user to optimize manually
-        demo_orders = [
-            {"num": "DEMO-001", "cust": "Empire State Building", "addr": "20 W 34th St, NY", "lat": 40.7484, "lng": -73.9857, "weight": 2.2},
-            {"num": "DEMO-002", "cust": "Times Square", "addr": "Manhattan, NY 10036", "lat": 40.7580, "lng": -73.9855, "weight": 1.5},
-            {"num": "DEMO-003", "cust": "Rockefeller Center", "addr": "45 Rockefeller Plaza, NY", "lat": 40.7587, "lng": -73.9787, "weight": 3.8},
-            {"num": "DEMO-004", "cust": "Chrysler Building", "addr": "405 Lexington Ave, NY", "lat": 40.7516, "lng": -73.9754, "weight": 5.1},
-        ]
-
-        for o in demo_orders:
-            order = db.query(Order).filter(Order.order_number == o["num"]).first()
-            if not order:
-                order = Order(
-                    id=str(uuid.uuid4()),
-                    order_number=o["num"],
-                    customer_name=o["cust"],
-                    delivery_address=o["addr"],
-                    lat=o["lat"],
-                    lng=o["lng"],
-                    weight=o["weight"],
-                    status="pending",
-                    tenant_id=tenant.id
-                )
-                db.add(order)
-                print(f"Created demo pending order: {order.order_number}")
+                print(f"Created order: {order.order_number} → warehouse: {order.warehouse_id}")
 
         db.commit()
         print("Seeding completed successfully!")
@@ -141,6 +181,8 @@ def seed_data():
     except Exception as e:
         db.rollback()
         print(f"Error during seeding: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         db.close()
 

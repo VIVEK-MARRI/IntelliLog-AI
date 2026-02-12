@@ -1,2 +1,109 @@
-ECHO is on.
-"logs/" 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+*.env
+!.env.example
+
+# Logs
+logs/
+*.log
+celery-beat-schedule
+
+# ML Models & Data
+models/v_*/
+models/latest_version.json
+*.pkl
+*.joblib
+*.h5
+*.pth
+*.onnx
+data/raw/
+data/processed/
+!data/sample_orders.csv
+
+# DVC
+.dvc/
+*.dvc
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Redis
+dump.rdb
+
+# Docker
+docker-compose.override.yml
+
+# Testing
+.tox/
+.coverage.*
+coverage.xml
+*.cover
+
+# Node / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+build/
+dist/
+
+# Secrets & Keys
+secrets/
+secrets.json
+credentials.json
+client_secret.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.pub
+local_settings.py
+instance/
+.secret*

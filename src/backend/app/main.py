@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -10,8 +11,9 @@ setup_logging()
 def create_application() -> FastAPI:
     application = FastAPI(
         title=settings.PROJECT_NAME,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        docs_url=f"{settings.API_V1_STR}/docs",
+        openapi_url="/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
     )
 
     # Set all CORS enabled origins
@@ -47,6 +49,23 @@ def create_application() -> FastAPI:
     def health_check():
         print("Health check endpoint called")
         return {"status": "ok", "project": settings.PROJECT_NAME}
+    
+    # ML System startup event
+    @application.on_event("startup")
+    async def startup_event():
+        """Initialize ML system on application startup"""
+        from src.backend.app.api.api_v1.endpoints.predictions import startup_ml_system
+        from src.backend.app.services.reroute_service import reroute_scheduler
+        await startup_ml_system()
+        # Start dynamic reroute loop
+        application.state.reroute_task = asyncio.create_task(reroute_scheduler())
+
+    @application.on_event("shutdown")
+    async def shutdown_event():
+        """Shutdown background tasks cleanly"""
+        task = getattr(application.state, "reroute_task", None)
+        if task:
+            task.cancel()
 
     return application
 

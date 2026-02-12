@@ -1,0 +1,20 @@
+{
+  "simulation_id": "sim_vrp-stress_20260212_125634",
+  "scenario": "vrp_stress",
+  "start_time": "2026-02-12T12:56:34.759970",
+  "end_time": "2026-02-12T12:56:51.544608",
+  "duration_sec": 16.78463864326477,
+  "total_orders": 0,
+  "total_drivers": 0,
+  "total_warehouses": 0,
+  "optimization_time_ms": 16782.05943107605,
+  "api_latency_p95_ms": 0.0,
+  "api_throughput_rps": 0.0,
+  "max_cpu_percent": 5.6,
+  "max_memory_mb": 199.34765625,
+  "routes_created": 20,
+  "unassigned_orders": 19,
+  "total_distance_km": 0,
+  "error_count": 0,
+  "timeout_count": 0
+}
