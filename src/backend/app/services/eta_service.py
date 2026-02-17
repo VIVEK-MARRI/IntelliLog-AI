@@ -31,41 +31,47 @@ class ETAService:
                 logger.info(f"Loaded ETA model from {self.model_path}")
             except Exception as e:
                 logger.error(f"Failed to load ETA model: {e}")
+                logger.warning("Falling back to heuristic ETA prediction")
         else:
             logger.warning(f"ETA model not found at {self.model_path}. Using fallback heuristic.")
 
     def predict_batch(self, df: pd.DataFrame) -> List[float]:
         """
         Predict ETAs for a batch of orders (DataFrame).
-        Matches the signature expected by vrp_solver.py's model_predictor.
+        
+        Uses learned model if available, otherwise falls back to heuristic:
+        ETA = 5 minutes + 2 minutes per km
+        
+        Args:
+            df: DataFrame with at least 'distance_km' column
+        
+        Returns:
+            List of predicted ETA minutes
         """
         if df.empty:
             return []
             
         # Use simple fallback if model is not loaded
         if not self.model:
-            # Fallback: 5 min + 2 min/km
-            dists = df["distance_km"] if "distance_km" in df.columns else np.zeros(len(df))
-            return (5.0 + dists * 2.0).tolist()
+            return self._predict_fallback(df)
 
         try:
             # Prepare features matching training data
-            # Features: distance_km, weight, hour, day_of_week
-            
             X = df.copy()
             
             # Ensure distance_km exists (vrp_solver usually adds it)
             if "distance_km" not in X.columns:
-                X["distance_km"] = 5.0 # default dummy
+                X["distance_km"] = 5.0  # default fallback
+            else:
+                X["distance_km"] = pd.to_numeric(X["distance_km"], errors='coerce').fillna(5.0)
             
             # Ensure weight exists
             if "weight" not in X.columns:
                 X["weight"] = 1.0
             else:
-                X["weight"] = X["weight"].fillna(1.0)
+                X["weight"] = pd.to_numeric(X["weight"], errors='coerce').fillna(1.0)
                 
             # Time features
-            # If 'created_at' exists, use it. Otherwise use now.
             now = datetime.now()
             
             if "created_at" in X.columns:
@@ -73,12 +79,12 @@ class ETAService:
                 def parse_time(val):
                     if isinstance(val, str):
                         try:
-                            return datetime.fromisoformat(val)
+                            return pd.to_datetime(val)
                         except:
                             pass
                     if isinstance(val, datetime):
-                        return val
-                    return now
+                        return pd.Timestamp(val)
+                    return pd.Timestamp(now)
                 
                 times = X["created_at"].apply(parse_time)
                 X["hour"] = times.dt.hour
@@ -86,18 +92,50 @@ class ETAService:
             else:
                 X["hour"] = now.hour
                 X["day_of_week"] = now.weekday()
-                
+            
+            # Ensure all features are numeric and finite
+            X["distance_km"] = X["distance_km"].clip(lower=0, upper=1000)  # Cap at 1000 km
+            X["weight"] = X["weight"].clip(lower=0, upper=10000)
+            X["hour"] = X["hour"].astype(int)
+            X["day_of_week"] = X["day_of_week"].astype(int)
+            
             # Select exact columns for model
             features = X[["distance_km", "weight", "hour", "day_of_week"]]
             
+            # Ensure no NaN values
+            features = features.fillna(0)
+            
             preds = self.model.predict(features)
-            return preds.tolist()
+            
+            # Sanity checks on predictions
+            predictions = []
+            for pred in preds:
+                # Clip to reasonable range: 1 minute to 24 hours
+                clipped_pred = max(1.0, min(float(pred), 1440.0))
+                predictions.append(clipped_pred)
+            
+            return predictions
 
         except Exception as e:
             logger.error(f"Batch prediction failed: {e}. Using fallback.")
-            # Fallback
-            dists = df["distance_km"] if "distance_km" in df.columns else np.zeros(len(df))
-            return (5.0 + dists * 2.0).tolist()
+            return self._predict_fallback(df)
+
+    def _predict_fallback(self, df: pd.DataFrame) -> List[float]:
+        """
+        Fallback heuristic: 5 min + 2 min per km.
+        Safe and realistic for most deliveries.
+        """
+        dists = df["distance_km"] if "distance_km" in df.columns else np.zeros(len(df))
+        dists = pd.to_numeric(dists, errors='coerce').fillna(5.0)
+        
+        # Heuristic: assume 30 km/h average speed
+        # 5 min base + (distance_km / 30) * 60
+        predictions = (5.0 + (dists / 30.0) * 60.0).tolist()
+        
+        # Sanity check: clip to 1 min - 24 hours
+        predictions = [max(1.0, min(p, 1440.0)) for p in predictions]
+        
+        return predictions
 
     @staticmethod
     def predict_eta(df: pd.DataFrame) -> List[float]:

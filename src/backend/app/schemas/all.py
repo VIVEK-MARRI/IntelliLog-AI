@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 # Token
 class Token(BaseModel):
@@ -9,6 +9,24 @@ class Token(BaseModel):
 
 class TokenPayload(BaseModel):
     sub: Optional[str] = None
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+# Auth Response
+class AuthResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user: Dict
+
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user: Dict
 
 # Tenant
 class TenantBase(BaseModel):
@@ -52,12 +70,24 @@ class UserBase(BaseModel):
     role: str = "user"
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     tenant_id: str
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    full_name: Optional[str]
+    role: str
+    tenant_id: str
+    is_active: bool
+    is_superuser: bool
+    
+    class Config:
+        from_attributes = True
 
 class User(UserBase):
     id: str

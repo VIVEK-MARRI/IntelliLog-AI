@@ -2,6 +2,7 @@ from src.backend.app.db.base import SessionLocal
 from src.backend.app.db.models import Tenant, Driver, Order, User, Warehouse
 from src.backend.app.services.warehouse_service import assign_order_to_warehouse
 from src.backend.app.core.config import settings
+from src.backend.app.core.jwt import get_password_hash
 import uuid
 
 def seed_data():
@@ -19,23 +20,28 @@ def seed_data():
             db.add(tenant)
             db.commit()
             db.refresh(tenant)
-            print(f"Created tenant: {tenant.name}")
+            print(f"✓ Created tenant: {tenant.name}")
         else:
-            print(f"Tenant already exists: {tenant.name}")
+            print(f"✓ Tenant already exists: {tenant.name}")
 
         # 2. Create Default Admin User
-        user = db.query(User).filter(User.email == "admin@intellog.ai").first()
+        user = db.query(User).filter(User.email == "admin@intellilog.ai").first()
         if not user:
             user = User(
                 id=str(uuid.uuid4()),
-                email="admin@intellog.ai",
-                hashed_password="hashed_password_here",
-                full_name="System Admin",
+                email="admin@intellilog.ai",
+                hashed_password=get_password_hash("Admin@123"),
+                full_name="System Administrator",
                 role="admin",
-                tenant_id=tenant.id
+                tenant_id=tenant.id,
+                is_active=True,
+                is_superuser=True
             )
             db.add(user)
-            print(f"Created user: {user.email}")
+            db.commit()
+            print(f"✓ Created admin user: {user.email} (password: Admin@123)")
+        else:
+            print(f"✓ Admin user already exists: {user.email}")
 
         # 3. Create Warehouses (Hyderabad + Bangalore)
         warehouses_data = [
@@ -71,9 +77,9 @@ def seed_data():
             if not wh:
                 wh = Warehouse(**wh_data, tenant_id=tenant.id)
                 db.add(wh)
-                print(f"Created warehouse: {wh.name}")
+                print(f"✓ Created warehouse: {wh.name}")
             else:
-                print(f"Warehouse already exists: {wh.name}")
+                print(f"✓ Warehouse already exists: {wh.name}")
             created_warehouses[wh_data["id"]] = wh_data
 
         db.commit()
@@ -112,7 +118,7 @@ def seed_data():
                     tenant_id=tenant.id
                 )
                 db.add(driver)
-                print(f"Created driver: {driver.name} @ {d['warehouse_id']}")
+                print(f"✓ Created driver: {driver.name}")
 
         db.commit()
 
@@ -173,10 +179,15 @@ def seed_data():
                 # Auto-assign to nearest warehouse
                 assign_order_to_warehouse(db, order)
                 db.add(order)
-                print(f"Created order: {order.order_number} → warehouse: {order.warehouse_id}")
+                print(f"✓ Created order: {order.order_number}")
 
         db.commit()
-        print("Seeding completed successfully!")
+        print("\n✅ Database seeding completed successfully!")
+        print("=" * 60)
+        print("Admin Credentials:")
+        print(f"  Email: admin@intellilog.ai")
+        print(f"  Password: Admin@123")
+        print("=" * 60)
 
     except Exception as e:
         db.rollback()

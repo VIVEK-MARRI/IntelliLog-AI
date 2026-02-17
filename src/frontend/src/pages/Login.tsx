@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('admin@intellilog.ai');
-    const [password, setPassword] = useState('password');
+    const [password, setPassword] = useState('Admin@123');
     const { login } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
@@ -21,10 +21,12 @@ export default function LoginPage() {
         setError('');
         try {
             await login(email, password);
-            navigate('/dashboard');
+            // Small delay to ensure state updates before navigation
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 100);
         } catch (err) {
             setError('Invalid credentials');
-        } finally {
             setIsLoading(false);
         }
     };

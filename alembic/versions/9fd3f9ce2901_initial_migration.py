@@ -30,54 +30,75 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tenants_slug'), 'tenants', ['slug'], unique=True)
+    
+    op.create_table('warehouses',
+    sa.Column('id', sa.String(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('lat', sa.Float(), nullable=False),
+    sa.Column('lng', sa.Float(), nullable=False),
+    sa.Column('service_radius_km', sa.Float(), nullable=True, default=25.0),
+    sa.Column('capacity', sa.Integer(), nullable=True, default=500),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('tenant_id', sa.String(), nullable=False),
+    sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_warehouses_tenant_id'), 'warehouses', ['tenant_id'])
+    
     op.create_table('drivers',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('phone', sa.String(), nullable=True),
-    sa.Column('status', sa.String(), nullable=True),
+    sa.Column('status', sa.String(), nullable=True, default='offline'),
     sa.Column('current_lat', sa.Float(), nullable=True),
     sa.Column('current_lng', sa.Float(), nullable=True),
-    sa.Column('vehicle_capacity', sa.Integer(), nullable=True),
-    sa.Column('tenant_id', sa.String(), nullable=True),
+    sa.Column('vehicle_capacity', sa.Integer(), nullable=True, default=10),
+    sa.Column('tenant_id', sa.String(), nullable=False),
+    sa.Column('warehouse_id', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
+    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_drivers_tenant_id'), 'drivers', ['tenant_id'])
+    op.create_index(op.f('ix_drivers_warehouse_id'), 'drivers', ['warehouse_id'])
+    
     op.create_table('users',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('hashed_password', sa.String(), nullable=False),
     sa.Column('full_name', sa.String(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('is_superuser', sa.Boolean(), nullable=True),
-    sa.Column('role', sa.String(), nullable=True),
-    sa.Column('tenant_id', sa.String(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=True, default=True),
+    sa.Column('is_superuser', sa.Boolean(), nullable=True, default=False),
+    sa.Column('role', sa.String(), nullable=True, default='user'),
+    sa.Column('tenant_id', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
+    op.create_index(op.f('ix_users_tenant_id'), 'users', ['tenant_id'])
+    
     op.create_table('routes',
     sa.Column('id', sa.String(), nullable=False),
-    sa.Column('status', sa.String(), nullable=True),
-    sa.Column('total_distance_km', sa.Float(), nullable=True),
-    sa.Column('total_duration_min', sa.Float(), nullable=True),
+    sa.Column('status', sa.String(), nullable=True, default='planned'),
+    sa.Column('total_distance_km', sa.Float(), nullable=True, default=0.0),
+    sa.Column('total_duration_min', sa.Float(), nullable=True, default=0.0),
     sa.Column('geometry_json', sa.JSON(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('driver_id', sa.String(), nullable=True),
-    sa.Column('tenant_id', sa.String(), nullable=True),
+    sa.Column('tenant_id', sa.String(), nullable=False),
+    sa.Column('warehouse_id', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['driver_id'], ['drivers.id'], ),
     sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
+    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.add_column('orders', sa.Column('order_number', sa.String(), nullable=True))
-    op.add_column('orders', sa.Column('customer_name', sa.String(), nullable=True))
-    op.add_column('orders', sa.Column('delivery_address', sa.String(), nullable=False))
-    op.add_column('orders', sa.Column('lng', sa.Float(), nullable=False))
-    op.add_column('orders', sa.Column('weight', sa.Float(), nullable=True))
-    op.add_column('orders', sa.Column('time_window_start', sa.DateTime(), nullable=True))
-    op.add_column('orders', sa.Column('time_window_end', sa.DateTime(), nullable=True))
-    op.add_column('orders', sa.Column('status', sa.String(), nullable=True))
-    op.add_column('orders', sa.Column('tenant_id', sa.String(), nullable=True))
-    op.add_column('orders', sa.Column('route_id', sa.String(), nullable=True))
+    op.create_index(op.f('ix_routes_tenant_id'), 'routes', ['tenant_id'])
+    op.create_index(op.f('ix_routes_driver_id'), 'routes', ['driver_id'])
+    op.create_index(op.f('ix_routes_warehouse_id'), 'routes', ['warehouse_id'])
+    op.create_index(op.f('ix_routes_status'), 'routes', ['status'])
+    
+    op.create_table('orders',
     op.alter_column('orders', 'id',
                existing_type=sa.INTEGER(),
                type_=sa.String(),

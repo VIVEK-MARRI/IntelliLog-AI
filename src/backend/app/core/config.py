@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # OSRM Routing (road network travel times)
-    OSRM_BASE_URL: str = os.getenv("OSRM_BASE_URL", "http://localhost:5001")
+    OSRM_BASE_URL: str = os.getenv("OSRM_BASE_URL", "http://localhost:5000")
     OSRM_PROFILE: str = os.getenv("OSRM_PROFILE", "driving")
     OSRM_TIMEOUT_SEC: int = int(os.getenv("OSRM_TIMEOUT_SEC", "10"))
     OSRM_MAX_POINTS: int = int(os.getenv("OSRM_MAX_POINTS", "100"))

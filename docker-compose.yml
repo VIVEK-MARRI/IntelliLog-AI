@@ -34,7 +34,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/intellog
       - REDIS_URL=redis://redis:6379/0
       - MODEL_PATH=/app/models/xgb_delivery_time_model.pkl
-      - OSRM_BASE_URL=http://osrm:5001
+      - OSRM_BASE_URL=http://osrm:5000
       - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
