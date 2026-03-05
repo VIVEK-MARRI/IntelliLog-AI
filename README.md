@@ -436,7 +436,7 @@ Environment variables and cloud deployment guidance: [docs/deployment.md](docs/d
 
 <div align="center">
 
-**Made with ❤️ by Vivek Marri**
+**Made with ❤️ by Vivek Marri** .
 
 ⭐ If you find this helpful, please give it a star on GitHub!
 
