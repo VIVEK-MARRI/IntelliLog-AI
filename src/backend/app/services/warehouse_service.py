@@ -76,15 +76,15 @@ def assign_order_to_warehouse(db: Session, order: Order) -> Optional[str]:
         return None
 
 
-def get_warehouse_stats(db: Session, warehouse_id: str) -> Dict[str, Any]:
+def get_warehouse_stats(db: Session, warehouse_id: str, tenant_id: str) -> Dict[str, Any]:
     """Return order and driver counts for a warehouse."""
-    order_count = db.query(Order).filter(Order.warehouse_id == warehouse_id).count()
+    order_count = db.query(Order).filter(Order.warehouse_id == warehouse_id, Order.tenant_id == tenant_id).count()
     pending_count = db.query(Order).filter(
-        Order.warehouse_id == warehouse_id, Order.status == "pending"
+        Order.warehouse_id == warehouse_id, Order.tenant_id == tenant_id, Order.status == "pending"
     ).count()
-    driver_count = db.query(Driver).filter(Driver.warehouse_id == warehouse_id).count()
+    driver_count = db.query(Driver).filter(Driver.warehouse_id == warehouse_id, Driver.tenant_id == tenant_id).count()
     active_drivers = db.query(Driver).filter(
-        Driver.warehouse_id == warehouse_id, Driver.status != "offline"
+        Driver.warehouse_id == warehouse_id, Driver.tenant_id == tenant_id, Driver.status != "offline"
     ).count()
 
     return {

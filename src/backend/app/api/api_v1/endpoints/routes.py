@@ -8,6 +8,7 @@ from src.backend.app.db.base import get_db
 from src.backend.app.db.models import Route, Order, Driver, Warehouse
 from src.backend.app.schemas import all as schemas
 from src.backend.app.api import deps
+from src.backend.app.core.validators import ensure_uuid4
 from src.backend.app.services.optimization_service import OptimizationService
 
 router = APIRouter()
@@ -31,6 +32,7 @@ def read_routes(
     try:
         query = db.query(Route).filter(Route.tenant_id == tenant_id)
         if warehouse_id:
+            ensure_uuid4(warehouse_id, "warehouse_id")
             query = query.filter(Route.warehouse_id == warehouse_id)
         if status:
             query = query.filter(Route.status == status)
@@ -68,6 +70,7 @@ def run_optimization(
         warehouse = None
         warehouse_coords = None
         if warehouse_id:
+            ensure_uuid4(warehouse_id, "warehouse_id")
             warehouse = db.query(Warehouse).filter(
                 Warehouse.id == warehouse_id, Warehouse.tenant_id == tenant_id
             ).first()
@@ -164,6 +167,7 @@ def run_optimization(
                     tenant_id=tenant_id,
                     driver_id=driver.id if driver else None,
                     warehouse_id=warehouse_id,
+                    matrix_type=optimization_result.get("debug", {}).get("matrix_type", "static_fallback"),
                     total_distance_km=float(route_data.get("distance_km", 0.0)),
                     total_duration_min=float(route_data.get("duration_min", 0.0)),
                     status="planned",
@@ -180,7 +184,7 @@ def run_optimization(
 
                 # Update orders with route_id and status
                 for order_id in route_data.get("route", []):
-                    order = db.query(Order).filter(Order.id == order_id).first()
+                    order = db.query(Order).filter(Order.id == order_id, Order.tenant_id == tenant_id).first()
                     if order:
                         order.route_id = route.id
                         order.status = "assigned"

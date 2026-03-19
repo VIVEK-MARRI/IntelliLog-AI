@@ -5,7 +5,7 @@ Provides common interface for all ML models in the system
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 import numpy as np
@@ -46,13 +46,13 @@ class BaseMLModel(ABC):
         self.metadata = {
             "model_name": model_name,
             "version": self.version,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "framework": self._get_framework_name()
         }
     
     def _generate_version(self) -> str:
         """Generate semantic version from timestamp"""
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         return f"v_{timestamp}"
     
     @abstractmethod
@@ -179,7 +179,7 @@ class BaseMLModel(ABC):
         
         # Compute checksum
         self.metadata["checksum"] = self._compute_checksum(save_path)
-        self.metadata["saved_at"] = datetime.utcnow().isoformat()
+        self.metadata["saved_at"] = datetime.now(timezone.utc).isoformat()
         
         # Save metadata
         metadata_path = save_path / "metadata.json"

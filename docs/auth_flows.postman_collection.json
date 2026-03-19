@@ -1,0 +1,131 @@
+{
+  "info": {
+    "name": "IntelliLog-AI Auth & Security Flows",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "JWT token, refresh, API key creation, and authenticated endpoint flows."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "email", "value": "admin@intellilog.ai" },
+    { "key": "password", "value": "Admin@123" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "api_key", "value": "" },
+    { "key": "tenant_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Issue JWT Token",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "token"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('access_token', body.access_token);",
+              "pm.collectionVariables.set('refresh_token', body.refresh_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Refresh Access Token",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/refresh",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "refresh"]
+        }
+      }
+    },
+    {
+      "name": "3. Authenticated Current User",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "4. Create API Key (Admin/Manager)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"celery-worker\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/api-keys",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "api-keys"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('api_key', body.api_key);",
+              "pm.collectionVariables.set('tenant_id', body.tenant_id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. API Key Authenticated Request",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "ApiKey {{api_key}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/status/system",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "status", "system"]
+        }
+      }
+    },
+    {
+      "name": "6. Tenant-Isolated Order Lookup (Expect 404 for wrong tenant)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/orders/00000000-0000-4000-8000-000000000000",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "orders", "00000000-0000-4000-8000-000000000000"]
+        }
+      }
+    }
+  ]
+}

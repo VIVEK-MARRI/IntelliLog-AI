@@ -1,122 +1,109 @@
-"""
-Rate limiting middleware to prevent brute force attacks and abuse.
-"""
+"""Redis-backed per-tenant rate limiting using slowapi."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Optional
-from fastapi import Request, HTTPException, status
-import logging
+from collections import defaultdict, deque
+from urllib.parse import urlparse
 
-logger = logging.getLogger(__name__)
+from limits import parse as parse_limit
+from slowapi import Limiter
+import redis
 
-# In-memory rate limit storage (for production, use Redis)
-class RateLimiter:
-    """
-    Simple in-memory rate limiter.
-    For production, replace with Redis-based rate limiter.
-    """
-    
-    def __init__(self, cleanup_interval: int = 3600):
-        self.requests: Dict[str, list] = {}
-        self.cleanup_interval = cleanup_interval
-        self.last_cleanup = datetime.now()
-    
-    def _cleanup(self):
-        """Remove old entries to prevent memory leak."""
-        now = datetime.now()
-        if (now - self.last_cleanup).seconds > self.cleanup_interval:
-            cutoff = now - timedelta(hours=1)
-            for key in list(self.requests.keys()):
-                self.requests[key] = [
-                    ts for ts in self.requests[key] if ts > cutoff
-                ]
-                if not self.requests[key]:
-                    del self.requests[key]
-            self.last_cleanup = now
-    
-    def is_allowed(
-        self, 
-        key: str, 
-        max_requests: int = 60, 
-        window_seconds: int = 60
-    ) -> tuple[bool, Optional[int]]:
-        """
-        Check if request is allowed.
-        
-        Args:
-            key: Identifier (email, IP, etc.)
-            max_requests: Max requests allowed
-            window_seconds: Time window in seconds
-            
-        Returns:
-            (is_allowed, retry_after_seconds)
-        """
-        self._cleanup()
-        
-        now = datetime.now()
-        cutoff = now - timedelta(seconds=window_seconds)
-        
-        if key not in self.requests:
-            self.requests[key] = []
-        
-        # Remove old requests outside the window
-        self.requests[key] = [ts for ts in self.requests[key] if ts > cutoff]
-        
-        if len(self.requests[key]) < max_requests:
-            self.requests[key].append(now)
-            return True, None
-        else:
-            # Calculate retry after
-            oldest = self.requests[key][0]
-            retry_after = int((oldest + timedelta(seconds=window_seconds) - now).total_seconds()) + 1
-            return False, retry_after
+from src.backend.app.core.config import settings
 
 
-# Global rate limiter instance
-_rate_limiter = RateLimiter()
-
-
-def rate_limit_check(
-    request: Request,
-    key: str,
-    max_requests: int = 60,
-    window_seconds: int = 60
-) -> None:
-    """
-    Check if request exceeds rate limit.
-    
-    Args:
-        request: FastAPI request object
-        key: Identifier for rate limiting
-        max_requests: Max requests allowed in window
-        window_seconds: Time window in seconds
-        
-    Raises:
-        HTTPException: If rate limit exceeded
-    """
-    allowed, retry_after = _rate_limiter.is_allowed(key, max_requests, window_seconds)
-    
-    if not allowed:
-        logger.warning(f"Rate limit exceeded for {key}")
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Rate limit exceeded. Try again after {retry_after} seconds.",
-            headers={"Retry-After": str(retry_after)}
-        )
-
-
-# Rate limit policies for different endpoints
-RATE_LIMIT_POLICIES = {
-    "login": {"max_requests": 5, "window_seconds": 300},      # 5 per 5 minutes
-    "signup": {"max_requests": 3, "window_seconds": 3600},    # 3 per hour
-    "refresh": {"max_requests": 10, "window_seconds": 300},   # 10 per 5 minutes
-    "orders": {"max_requests": 100, "window_seconds": 60},    # 100 per minute
-    "default": {"max_requests": 60, "window_seconds": 60},    # 60 per minute
+ROLE_HOURLY_LIMITS = {
+    "admin": 1000,
+    "manager": 500,
+    "driver": 200,
+    "anonymous": 0,
 }
+BURST_LIMIT = "60/minute"
 
 
-def get_client_ip(request: Request) -> str:
-    """Extract client IP from request."""
-    if request.client:
-        return request.client.host
-    return "unknown"
+@dataclass
+class RateLimitExceededError(Exception):
+    """Raised when a tenant-scoped limit is exceeded."""
+
+    retry_after_seconds: int
+    limit: str
+
+
+def _redis_available() -> bool:
+    """Return True when Redis rate-limit store is reachable."""
+    try:
+        parsed = urlparse(settings.REDIS_URL)
+        client = redis.Redis(
+            host=parsed.hostname or "localhost",
+            port=parsed.port or 6379,
+            db=int((parsed.path or "/0").strip("/") or "0"),
+            socket_connect_timeout=0.2,
+            socket_timeout=0.2,
+            decode_responses=True,
+        )
+        client.ping()
+        return True
+    except Exception:
+        return False
+
+
+_use_redis = _redis_available()
+_storage_uri = settings.REDIS_URL if _use_redis else "memory://"
+
+limiter = Limiter(
+    key_func=lambda request: "unused",
+    storage_uri=_storage_uri,
+)
+
+_fallback_windows = defaultdict(deque)
+
+
+def _fallback_hit(key: str, window_seconds: int, max_requests: int) -> bool:
+    """Fallback in-memory limiter used when Redis is unavailable."""
+    now = datetime.utcnow()
+    cutoff = now - timedelta(seconds=window_seconds)
+    q = _fallback_windows[key]
+    while q and q[0] < cutoff:
+        q.popleft()
+    if len(q) >= max_requests:
+        return False
+    q.append(now)
+    return True
+
+
+def _build_rate_key(tenant_id: str, user_id: str, endpoint: str) -> str:
+    """Build canonical Redis key segment for this principal and endpoint."""
+    return f"rate:{tenant_id}:{user_id}:{endpoint}"
+
+
+def enforce_rate_limit(request, principal) -> None:
+    """Check per-minute burst and per-hour role limit using Redis storage."""
+    role = (principal.role or "anonymous").lower()
+    hourly_quota = ROLE_HOURLY_LIMITS.get(role, 0)
+    if hourly_quota <= 0:
+        raise RateLimitExceededError(retry_after_seconds=3600, limit="0/hour")
+
+    endpoint = request.url.path
+    base_key = _build_rate_key(principal.tenant_id, principal.user_id, endpoint)
+
+    burst_item = parse_limit(BURST_LIMIT)
+    hourly_limit = f"{hourly_quota}/hour"
+    hourly_item = parse_limit(hourly_limit)
+
+    burst_key = f"{base_key}:burst"
+    hour_key = f"{base_key}:hour"
+
+    if _use_redis:
+        if not limiter.limiter.hit(burst_item, burst_key):
+            raise RateLimitExceededError(retry_after_seconds=60, limit=BURST_LIMIT)
+
+        if not limiter.limiter.hit(hourly_item, hour_key):
+            raise RateLimitExceededError(retry_after_seconds=3600, limit=hourly_limit)
+    else:
+        # Local development/test fallback when Redis is not available.
+        if not _fallback_hit(burst_key, window_seconds=60, max_requests=60):
+            raise RateLimitExceededError(retry_after_seconds=60, limit=BURST_LIMIT)
+        if not _fallback_hit(hour_key, window_seconds=3600, max_requests=hourly_quota):
+            raise RateLimitExceededError(retry_after_seconds=3600, limit=hourly_limit)

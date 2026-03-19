@@ -10,8 +10,19 @@ from datetime import datetime
 import json
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import logging
+
+try:
+    import mlflow
+    _HAS_MLFLOW = True
+except Exception:  # pragma: no cover - explicit runtime fallback
+    mlflow = None
+    _HAS_MLFLOW = False
 
 from scripts.train_model_production import ModelTrainer
+from src.backend.app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def retrain_production_model() -> Dict[str, Any]:
@@ -33,10 +44,39 @@ def retrain_production_model() -> Dict[str, Any]:
     )
 
     trainer = ModelTrainer()
-    trainer.train_ensemble(X_train, y_train, X_val, y_val)
-
     version = datetime.now().strftime("%Y%m%d_%H%M%S")
-    version_dir = trainer.save_models(version=version)
+    mlflow_run_id = None
+
+    if _HAS_MLFLOW:
+        mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+        mlflow.set_experiment(settings.MLFLOW_EXPERIMENT_NAME)
+
+        with mlflow.start_run(run_name=f"eta_retrain_{version}") as run:
+            mlflow_run_id = run.info.run_id
+            mlflow.log_params(
+                {
+                    "target_col": target_col,
+                    "n_samples": len(df),
+                    "n_features": len(feature_cols),
+                    "test_size": 0.2,
+                    "random_state": 42,
+                    "feature_columns": ",".join(feature_cols),
+                }
+            )
+
+            trainer.train_ensemble(X_train, y_train, X_val, y_val)
+
+            for model_name, metrics in trainer.metrics.items():
+                for metric_name, metric_value in metrics.items():
+                    if isinstance(metric_value, (int, float)):
+                        mlflow.log_metric(f"{model_name}_{metric_name}", float(metric_value))
+
+            version_dir = trainer.save_models(version=version)
+            mlflow.log_artifacts(version_dir, artifact_path="model_artifacts")
+    else:
+        logger.warning("MLflow is not installed; retraining will proceed without experiment tracking.")
+        trainer.train_ensemble(X_train, y_train, X_val, y_val)
+        version_dir = trainer.save_models(version=version)
 
     latest_version_file = Path("models/latest_version.json")
     if latest_version_file.exists():
@@ -50,6 +90,7 @@ def retrain_production_model() -> Dict[str, Any]:
         "timestamp": datetime.now().isoformat(),
         "metrics": trainer.metrics,
         "models": list(trainer.models.keys()),
+        "mlflow_run_id": mlflow_run_id,
     })
 
     with open(latest_version_file, "w") as f:
@@ -61,4 +102,5 @@ def retrain_production_model() -> Dict[str, Any]:
         "metrics": trainer.metrics,
         "n_samples": len(df),
         "n_features": len(feature_cols),
+        "mlflow_run_id": mlflow_run_id,
     }

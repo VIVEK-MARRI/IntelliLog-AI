@@ -1,6 +1,23 @@
+import re
+import uuid
 from typing import Optional, List, Dict
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+
+HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _validate_uuid4(value: Optional[str], field_name: str) -> Optional[str]:
+    if value is None:
+        return value
+    try:
+        parsed = uuid.UUID(str(value))
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"{field_name} must be a valid UUID4") from exc
+    if parsed.version != 4:
+        raise ValueError(f"{field_name} must be a valid UUID4")
+    return str(parsed)
 
 # Token
 class Token(BaseModel):
@@ -51,6 +68,20 @@ class WarehouseBase(BaseModel):
     service_radius_km: float = 25.0
     capacity: int = 500
 
+    @field_validator("lat")
+    @classmethod
+    def validate_lat(cls, v: float) -> float:
+        if not -90 <= v <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return v
+
+    @field_validator("lng")
+    @classmethod
+    def validate_lng(cls, v: float) -> float:
+        if not -180 <= v <= 180:
+            raise ValueError("Longitude must be between -180 and 180")
+        return v
+
 class WarehouseCreate(WarehouseBase):
     pass
 
@@ -72,6 +103,11 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     tenant_id: str
+
+    @field_validator("tenant_id")
+    @classmethod
+    def validate_tenant_id(cls, v: str) -> str:
+        return _validate_uuid4(v, "tenant_id") or v
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -106,6 +142,29 @@ class DriverBase(BaseModel):
     vehicle_capacity: int = 10
     warehouse_id: Optional[str] = None
 
+    @field_validator("current_lat")
+    @classmethod
+    def validate_current_lat(cls, v: Optional[float]) -> Optional[float]:
+        if v is None:
+            return v
+        if not -90 <= v <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return v
+
+    @field_validator("current_lng")
+    @classmethod
+    def validate_current_lng(cls, v: Optional[float]) -> Optional[float]:
+        if v is None:
+            return v
+        if not -180 <= v <= 180:
+            raise ValueError("Longitude must be between -180 and 180")
+        return v
+
+    @field_validator("warehouse_id")
+    @classmethod
+    def validate_warehouse_id(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_uuid4(v, "warehouse_id")
+
 class DriverCreate(DriverBase):
     pass
 
@@ -129,6 +188,35 @@ class OrderBase(BaseModel):
     status: str = "pending"
     warehouse_id: Optional[str] = None
 
+    @field_validator("delivery_address")
+    @classmethod
+    def sanitize_address(cls, v: str) -> str:
+        stripped = HTML_TAG_RE.sub("", v).strip()
+        if len(stripped) > 500:
+            raise ValueError("delivery_address must be 500 characters or fewer")
+        if not stripped:
+            raise ValueError("delivery_address is required")
+        return stripped
+
+    @field_validator("lat")
+    @classmethod
+    def validate_lat(cls, v: float) -> float:
+        if not -90 <= v <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return v
+
+    @field_validator("lng")
+    @classmethod
+    def validate_lng(cls, v: float) -> float:
+        if not -180 <= v <= 180:
+            raise ValueError("Longitude must be between -180 and 180")
+        return v
+
+    @field_validator("warehouse_id")
+    @classmethod
+    def validate_warehouse_id(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_uuid4(v, "warehouse_id")
+
 class OrderCreate(OrderBase):
     pass
 
@@ -143,6 +231,7 @@ class Order(OrderBase):
 # Route
 class RouteBase(BaseModel):
     status: str = "planned"
+    matrix_type: str = "static_fallback"
     total_distance_km: float = 0.0
     total_duration_min: float = 0.0
     geometry_json: Optional[Dict] = None
@@ -150,6 +239,11 @@ class RouteBase(BaseModel):
 
 class RouteCreate(RouteBase):
     driver_id: Optional[str] = None
+
+    @field_validator("driver_id")
+    @classmethod
+    def validate_driver_id(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_uuid4(v, "driver_id")
 
 class Route(RouteBase):
     id: str

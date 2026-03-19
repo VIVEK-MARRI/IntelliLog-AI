@@ -8,22 +8,17 @@ from typing import Dict, Any, List, Optional
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from scipy.stats import ks_2samp
 
 
-def _ks_statistic(reference: np.ndarray, current: np.ndarray) -> float:
+def _ks_test(reference: np.ndarray, current: np.ndarray) -> Dict[str, float]:
     ref = reference[~np.isnan(reference)]
     cur = current[~np.isnan(current)]
     if ref.size == 0 or cur.size == 0:
-        return 0.0
+        return {"statistic": 0.0, "p_value": 1.0}
 
-    ref = np.sort(ref)
-    cur = np.sort(cur)
-    values = np.unique(np.concatenate([ref, cur]))
-
-    ref_cdf = np.searchsorted(ref, values, side="right") / ref.size
-    cur_cdf = np.searchsorted(cur, values, side="right") / cur.size
-
-    return float(np.max(np.abs(ref_cdf - cur_cdf)))
+    ks_result = ks_2samp(ref, cur, method="auto")
+    return {"statistic": float(ks_result.statistic), "p_value": float(ks_result.pvalue)}
 
 
 def _categorical_tv_distance(reference: pd.Series, current: pd.Series) -> float:
@@ -42,6 +37,8 @@ def compute_drift_report(
     current_df: Optional[pd.DataFrame] = None,
     numeric_cols: Optional[List[str]] = None,
     categorical_cols: Optional[List[str]] = None,
+    ks_alpha: float = 0.05,
+    categorical_threshold: float = 0.2,
 ) -> Dict[str, Any]:
     """Compute drift report using processed training data by default."""
     if reference_df is None or current_df is None:
@@ -57,28 +54,67 @@ def compute_drift_report(
         c for c in reference_df.columns if c not in numeric_cols
     ]
 
-    per_feature = {}
+    per_feature: Dict[str, Dict[str, Any]] = {}
+    numeric_drift_count = 0
+    categorical_drift_count = 0
 
     for col in numeric_cols:
         if col not in current_df.columns:
             continue
-        per_feature[col] = _ks_statistic(reference_df[col].to_numpy(), current_df[col].to_numpy())
+        ks = _ks_test(reference_df[col].to_numpy(), current_df[col].to_numpy())
+        is_drifted = ks["p_value"] < ks_alpha
+        if is_drifted:
+            numeric_drift_count += 1
+        per_feature[col] = {
+            "type": "numeric",
+            "ks_statistic": ks["statistic"],
+            "p_value": ks["p_value"],
+            "is_drifted": is_drifted,
+        }
 
     for col in categorical_cols:
         if col not in current_df.columns:
             continue
-        per_feature[col] = _categorical_tv_distance(reference_df[col], current_df[col])
+        tv_distance = _categorical_tv_distance(reference_df[col], current_df[col])
+        is_drifted = tv_distance >= categorical_threshold
+        if is_drifted:
+            categorical_drift_count += 1
+        per_feature[col] = {
+            "type": "categorical",
+            "tv_distance": tv_distance,
+            "threshold": categorical_threshold,
+            "is_drifted": is_drifted,
+        }
 
-    drift_scores = list(per_feature.values())
+    drift_scores: List[float] = []
+    for feature_result in per_feature.values():
+        if feature_result["type"] == "numeric":
+            drift_scores.append(float(feature_result["ks_statistic"]))
+        else:
+            drift_scores.append(float(feature_result["tv_distance"]))
+
     overall = float(np.mean(drift_scores)) if drift_scores else 0.0
+    drifted_feature_count = numeric_drift_count + categorical_drift_count
 
     return {
         "overall_drift_score": overall,
         "per_feature": per_feature,
+        "ks_alpha": ks_alpha,
+        "categorical_threshold": categorical_threshold,
+        "numeric_drift_count": numeric_drift_count,
+        "categorical_drift_count": categorical_drift_count,
+        "drifted_feature_count": drifted_feature_count,
         "reference_samples": len(reference_df),
         "current_samples": len(current_df),
     }
 
 
-def should_retrain(drift_score: float, threshold: float) -> bool:
-    return drift_score >= threshold
+def should_retrain(
+    drift_report: Dict[str, Any],
+    threshold: float,
+    min_drifted_features: int = 1,
+) -> bool:
+    """Decide retraining using score threshold and number of drifted features."""
+    drift_score = float(drift_report.get("overall_drift_score", 0.0))
+    drifted_feature_count = int(drift_report.get("drifted_feature_count", 0))
+    return drift_score >= threshold or drifted_feature_count >= min_drifted_features

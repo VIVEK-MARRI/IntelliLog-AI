@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from src.backend.app.db.models import Warehouse, Order, Driver
 from src.backend.app.schemas import all as schemas
 from src.backend.app.api import deps
+from src.backend.app.core.validators import ensure_uuid4
 from src.backend.app.services.warehouse_service import get_warehouse_stats
 
 router = APIRouter()
@@ -56,6 +57,7 @@ def get_warehouse(
     tenant_id: str = Depends(deps.get_current_tenant),
 ) -> Any:
     """Get warehouse by ID."""
+    ensure_uuid4(warehouse_id, "warehouse_id")
     wh = (
         db.query(Warehouse)
         .filter(Warehouse.id == warehouse_id, Warehouse.tenant_id == tenant_id)
@@ -73,6 +75,7 @@ def warehouse_stats(
     tenant_id: str = Depends(deps.get_current_tenant),
 ) -> Any:
     """Get warehouse statistics (order/driver counts)."""
+    ensure_uuid4(warehouse_id, "warehouse_id")
     wh = (
         db.query(Warehouse)
         .filter(Warehouse.id == warehouse_id, Warehouse.tenant_id == tenant_id)
@@ -80,7 +83,7 @@ def warehouse_stats(
     )
     if not wh:
         raise HTTPException(status_code=404, detail="Warehouse not found")
-    return get_warehouse_stats(db, warehouse_id)
+    return get_warehouse_stats(db, warehouse_id, tenant_id)
 
 
 @router.get("/{warehouse_id}/orders", response_model=List[schemas.Order])
@@ -91,6 +94,7 @@ def warehouse_orders(
     status: str = None,
 ) -> Any:
     """List orders assigned to a warehouse."""
+    ensure_uuid4(warehouse_id, "warehouse_id")
     query = db.query(Order).filter(
         Order.warehouse_id == warehouse_id,
         Order.tenant_id == tenant_id,
@@ -107,6 +111,7 @@ def warehouse_drivers(
     tenant_id: str = Depends(deps.get_current_tenant),
 ) -> Any:
     """List drivers assigned to a warehouse."""
+    ensure_uuid4(warehouse_id, "warehouse_id")
     return (
         db.query(Driver)
         .filter(Driver.warehouse_id == warehouse_id, Driver.tenant_id == tenant_id)

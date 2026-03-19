@@ -255,7 +255,7 @@ def get_feature_store(redis_url: Optional[str] = None) -> FeatureStore:
     
     if _feature_store_instance is None:
         from src.backend.app.core.config import settings
-        url = redis_url or getattr(settings, 'REDIS_URL', 'redis://localhost:6379/0')
+        url = redis_url or getattr(settings, 'REDIS_FEATURE_STORE_URL', 'redis://localhost:6379/2')
         _feature_store_instance = FeatureStore(redis_url=url)
     
     return _feature_store_instance

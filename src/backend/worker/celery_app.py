@@ -10,6 +10,11 @@ celery_app = Celery(
 
 celery_app.conf.task_routes = {
     "src.backend.worker.tasks.optimize_route_task": "main-queue",
+    "src.backend.worker.tasks.optimize_routes": "ml-queue",
+    "src.backend.worker.tasks.ab_shadow_evaluation_task": "ml-queue",
+    "src.backend.worker.tasks.ab_promotion_decision_task": "ml-queue",
+    "src.backend.worker.tasks.start_ab_test": "ml-queue",
+    "src.backend.worker.tasks.collect_ab_results": "ml-queue",
 }
 
 celery_app.conf.update(
@@ -37,7 +42,7 @@ def _parse_cron(expr: str) -> dict:
 
 if settings.AUTO_RETRAIN_ENABLED:
     schedule = _parse_cron(settings.RETRAIN_SCHEDULE_CRON)
-    celery_app.conf.beat_schedule = {
+    beat_schedule = {
         "retrain-eta-model": {
             "task": "src.backend.worker.tasks.retrain_eta_model_task",
             "schedule": crontab(**schedule),
@@ -47,3 +52,15 @@ if settings.AUTO_RETRAIN_ENABLED:
             "schedule": crontab(minute=0, hour=f"*/{settings.DRIFT_CHECK_INTERVAL_HOURS}"),
         },
     }
+
+    if settings.AB_TEST_ENABLED:
+        beat_schedule["ab-shadow-evaluation"] = {
+            "task": "src.backend.worker.tasks.ab_shadow_evaluation_task",
+            "schedule": crontab(**_parse_cron(settings.AB_SHADOW_EVAL_CRON)),
+        }
+        beat_schedule["ab-promotion-decision"] = {
+            "task": "src.backend.worker.tasks.ab_promotion_decision_task",
+            "schedule": crontab(**_parse_cron(settings.AB_PROMOTION_CRON)),
+        }
+
+    celery_app.conf.beat_schedule = beat_schedule

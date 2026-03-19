@@ -108,8 +108,69 @@ def build_time_matrix(distance_matrix_km: np.ndarray, avg_speed_kmph: float) -> 
     return (distance_matrix_km / speed * 3600).astype(int)
 
 
+def build_ml_time_matrix(
+    points: List[Tuple[float, float]],
+    distance_matrix_km: np.ndarray,
+    base_time_matrix_sec: np.ndarray,
+    model_predictor: Any,
+) -> np.ndarray:
+    """
+    Build an edge-level travel-time matrix (seconds) using the ML ETA predictor.
+
+    The predictor is called on synthetic edge rows where each row represents
+    travel from node i to node j. If a prediction is missing/invalid for an edge,
+    the base matrix value is retained for that edge.
+    """
+    n_nodes = len(points)
+    if n_nodes == 0:
+        return np.array([[]], dtype=int)
+
+    now = datetime.utcnow()
+    edge_rows: List[Dict[str, Any]] = []
+    edge_pairs: List[Tuple[int, int]] = []
+
+    for i in range(n_nodes):
+        for j in range(n_nodes):
+            if i == j:
+                continue
+            edge_rows.append(
+                {
+                    "distance_km": float(distance_matrix_km[i, j]),
+                    "weight": 1.0,
+                    "created_at": now,
+                    "hour": now.hour,
+                    "day_of_week": now.weekday(),
+                }
+            )
+            edge_pairs.append((i, j))
+
+    edge_df = pd.DataFrame(edge_rows)
+    predicted_minutes = model_predictor(edge_df)
+
+    if len(predicted_minutes) != len(edge_pairs):
+        raise ValueError(
+            "ML predictor returned an unexpected number of edge predictions: "
+            f"expected={len(edge_pairs)}, got={len(predicted_minutes)}"
+        )
+
+    ml_time_matrix = np.array(base_time_matrix_sec, dtype=float)
+    for (i, j), pred_min in zip(edge_pairs, predicted_minutes):
+        try:
+            pred_val = float(pred_min)
+        except (TypeError, ValueError):
+            continue
+        if not np.isfinite(pred_val) or pred_val <= 0:
+            continue
+        ml_time_matrix[i, j] = pred_val * 60.0
+
+    np.fill_diagonal(ml_time_matrix, 0.0)
+    ml_time_matrix = np.maximum(ml_time_matrix, 0.0)
+    return ml_time_matrix.astype(int)
+
+
 def ortools_vrp(
     distance_matrix_km: np.ndarray,
+    travel_time_matrix_min: Optional[np.ndarray] = None,
     num_vehicles: int = 3,
     starts: Optional[List[int]] = None,
     ends: Optional[List[int]] = None,
@@ -137,8 +198,15 @@ def ortools_vrp(
 
     n_nodes = distance_matrix_km.shape[0]
     dm = (distance_matrix_km * 1000).astype(int).tolist()  # meters for precision
+    travel_time_matrix = None
+    if travel_time_matrix_min is not None:
+        travel_time_matrix = np.array(travel_time_matrix_min, dtype=float)
+
     if time_matrix_sec is None:
-        time_matrix_sec = build_time_matrix(distance_matrix_km, avg_speed_kmph)
+        if travel_time_matrix is not None:
+            time_matrix_sec = (travel_time_matrix * 60.0).astype(int)
+        else:
+            time_matrix_sec = build_time_matrix(distance_matrix_km, avg_speed_kmph)
     if isinstance(time_matrix_sec, np.ndarray):
         time_matrix_sec = time_matrix_sec.astype(int)
     else:
@@ -161,11 +229,20 @@ def ortools_vrp(
     routing = pywrapcp.RoutingModel(manager)
 
     # Distance callback
-    def distance_callback(from_index, to_index):
-        from_node, to_node = manager.IndexToNode(from_index), manager.IndexToNode(to_index)
-        return dm[from_node][to_node]
+    if travel_time_matrix is not None:
+        def time_callback(from_index, to_index):
+            from_node = manager.IndexToNode(from_index)
+            to_node = manager.IndexToNode(to_index)
+            return int(travel_time_matrix[from_node][to_node] * 60)
 
-    transit_index = routing.RegisterTransitCallback(distance_callback)
+        transit_index = routing.RegisterTransitCallback(time_callback)
+    else:
+        def distance_callback(from_index, to_index):
+            from_node, to_node = manager.IndexToNode(from_index), manager.IndexToNode(to_index)
+            return dm[from_node][to_node]
+
+        transit_index = routing.RegisterTransitCallback(distance_callback)
+
     routing.SetArcCostEvaluatorOfAllVehicles(transit_index)
 
     # Capacity dimension
@@ -323,6 +400,7 @@ def plan_routes(
     drivers_data: Optional[List[Dict[str, Any]]] = None,
     distance_matrix_km: Optional[np.ndarray] = None,
     time_matrix_sec: Optional[np.ndarray] = None,
+    travel_time_matrix: Optional[np.ndarray] = None,
     depot_coords: Optional[Tuple[float, float]] = None,
 ) -> Dict[str, Any]:
     """
@@ -416,6 +494,36 @@ def plan_routes(
             else:
                 distance_matrix = distance_matrix_km
 
+            matrix_source = "static_fallback"
+            if travel_time_matrix is not None:
+                solver_time_matrix = (np.array(travel_time_matrix, dtype=float) * 60.0).astype(int)
+                matrix_source = "ml_predicted"
+            elif time_matrix_sec is None:
+                solver_time_matrix = build_time_matrix(distance_matrix, avg_speed_kmph)
+            else:
+                solver_time_matrix = np.array(time_matrix_sec, dtype=int)
+
+            if use_ml_predictions and model_predictor is not None and travel_time_matrix is None:
+                try:
+                    # Core IntelliLog innovation: route using ML-predicted travel times.
+                    solver_time_matrix = build_ml_time_matrix(
+                        points=points,
+                        distance_matrix_km=distance_matrix,
+                        base_time_matrix_sec=solver_time_matrix,
+                        model_predictor=model_predictor,
+                    )
+                    # Objective callback uses distance_matrix_km. Convert predicted
+                    # seconds into a proportional pseudo-distance so optimization is
+                    # driven by ML travel-time weights.
+                    speed = max(avg_speed_kmph, 5.0)
+                    distance_matrix = (solver_time_matrix / 3600.0) * speed
+                    matrix_source = "ml_predicted"
+                except Exception as e:
+                    logger.exception(
+                        "Failed to build ML travel-time matrix; falling back to static matrix: %s",
+                        e,
+                    )
+
             depot_count = len(depot_points)
 
             if depot_coords:
@@ -488,6 +596,7 @@ def plan_routes(
 
             result = ortools_vrp(
                 distance_matrix_km=distance_matrix,
+                travel_time_matrix_min=travel_time_matrix,
                 num_vehicles=num_vehicles,
                 starts=starts,
                 ends=ends,
@@ -496,7 +605,7 @@ def plan_routes(
                 time_windows=tw,
                 service_times_min=service_times,
                 avg_speed_kmph=avg_speed_kmph,
-                time_matrix_sec=time_matrix_sec,
+                time_matrix_sec=solver_time_matrix,
                 time_limit_sec=ortools_time_limit,
                 allow_dropping=True,
                 drop_penalty=100000,
@@ -538,6 +647,7 @@ def plan_routes(
                     "solver": "OR-Tools VRP",
                     "vehicles": num_vehicles,
                     "avg_speed_kmph": avg_speed_kmph,
+                    "matrix_source": matrix_source,
                 },
             }
 

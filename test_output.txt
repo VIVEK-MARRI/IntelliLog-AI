@@ -1,0 +1,207 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0
+rootdir: C:\vivek\IntelliLog-AI
+plugins: anyio-3.7.1, langsmith-0.3.38, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 14 items
+
+tests\test_eta_calibration.py ......F
+
+================================== FAILURES ===================================
+___________ TestPredictionIntervals.test_interval_width_reasonable ____________
+tests\test_eta_calibration.py:196: in test_interval_width_reasonable
+    assert np.all(interval_width > 0), "Non-positive interval widths"
+E   AssertionError: Non-positive interval widths
+E   assert np.False_
+E    +  where np.False_ = <function all at 0x0000021BDF0B4C70>(array([5.2930634e+01, 6.3369942e+00, 7.2419891e+00, 1.6361443e+01,\n       0.0000000e+00, 1.3514496e+01, 4.6085831e+01,... 6.4423294e+00, 9.6600037e+00,\n       7.6533722e+01, 8.2607269e-03, 1.2648804e+01, 1.3551147e+01],\n      dtype=float32) > 0)
+E    +    where <function all at 0x0000021BDF0B4C70> = np.all
+---------------------------- Captured stdout call -----------------------------
+[0]	validation_0-rmse:82.90527	validation_1-rmse:75.82697
+[10]	validation_0-rmse:51.80263	validation_1-rmse:47.64968
+[20]	validation_0-rmse:36.86658	validation_1-rmse:35.98252
+[30]	validation_0-rmse:24.64521	validation_1-rmse:25.58347
+[40]	validation_0-rmse:18.08822	validation_1-rmse:20.66724
+[50]	validation_0-rmse:13.50261	validation_1-rmse:17.24669
+[60]	validation_0-rmse:9.85094	validation_1-rmse:14.57808
+[70]	validation_0-rmse:7.15348	validation_1-rmse:12.42874
+[80]	validation_0-rmse:5.54014	validation_1-rmse:11.30023
+[90]	validation_0-rmse:4.55579	validation_1-rmse:10.63817
+[100]	validation_0-rmse:3.81049	validation_1-rmse:10.17005
+[110]	validation_0-rmse:3.26124	validation_1-rmse:9.82982
+[120]	validation_0-rmse:2.90659	validation_1-rmse:9.60920
+[130]	validation_0-rmse:2.55974	validation_1-rmse:9.39268
+[140]	validation_0-rmse:2.29802	validation_1-rmse:9.21710
+[150]	validation_0-rmse:2.07815	validation_1-rmse:9.08457
+[160]	validation_0-rmse:1.91271	validation_1-rmse:8.98829
+[170]	validation_0-rmse:1.79144	validation_1-rmse:8.93034
+[180]	validation_0-rmse:1.67543	validation_1-rmse:8.87353
+[190]	validation_0-rmse:1.56633	validation_1-rmse:8.82506
+[200]	validation_0-rmse:1.48390	validation_1-rmse:8.77016
+[210]	validation_0-rmse:1.38708	validation_1-rmse:8.73141
+[220]	validation_0-rmse:1.31742	validation_1-rmse:8.71984
+[230]	validation_0-rmse:1.24593	validation_1-rmse:8.69897
+[240]	validation_0-rmse:1.18784	validation_1-rmse:8.67925
+[250]	validation_0-rmse:1.13547	validation_1-rmse:8.66093
+[260]	validation_0-rmse:1.07968	validation_1-rmse:8.64802
+[270]	validation_0-rmse:1.03008	validation_1-rmse:8.62416
+[280]	validation_0-rmse:0.99100	validation_1-rmse:8.61532
+[290]	validation_0-rmse:0.94726	validation_1-rmse:8.60139
+[300]	validation_0-rmse:0.90224	validation_1-rmse:8.59020
+[310]	validation_0-rmse:0.86158	validation_1-rmse:8.58034
+[320]	validation_0-rmse:0.82617	validation_1-rmse:8.57045
+[330]	validation_0-rmse:0.79386	validation_1-rmse:8.56767
+[340]	validation_0-rmse:0.76061	validation_1-rmse:8.56498
+[350]	validation_0-rmse:0.72015	validation_1-rmse:8.56343
+[360]	validation_0-rmse:0.69001	validation_1-rmse:8.55915
+[370]	validation_0-rmse:0.65397	validation_1-rmse:8.55125
+[380]	validation_0-rmse:0.62332	validation_1-rmse:8.54641
+[390]	validation_0-rmse:0.60280	validation_1-rmse:8.53774
+[400]	validation_0-rmse:0.57662	validation_1-rmse:8.53355
+[410]	validation_0-rmse:0.55277	validation_1-rmse:8.52932
+[420]	validation_0-rmse:0.53257	validation_1-rmse:8.52480
+[430]	validation_0-rmse:0.50961	validation_1-rmse:8.52099
+[440]	validation_0-rmse:0.49493	validation_1-rmse:8.51752
+[450]	validation_0-rmse:0.47428	validation_1-rmse:8.51367
+[460]	validation_0-rmse:0.45591	validation_1-rmse:8.51035
+[470]	validation_0-rmse:0.44169	validation_1-rmse:8.50729
+[480]	validation_0-rmse:0.42627	validation_1-rmse:8.50258
+[490]	validation_0-rmse:0.40818	validation_1-rmse:8.50223
+[499]	validation_0-rmse:0.39793	validation_1-rmse:8.50074
+[0]	validation_0-quantile:11.60026	validation_1-quantile:10.28871
+[10]	validation_0-quantile:9.83721	validation_1-quantile:8.76793
+[20]	validation_0-quantile:8.78720	validation_1-quantile:8.02690
+[30]	validation_0-quantile:7.65674	validation_1-quantile:7.01879
+[40]	validation_0-quantile:6.98125	validation_1-quantile:6.42113
+[50]	validation_0-quantile:6.51374	validation_1-quantile:6.02896
+[60]	validation_0-quantile:6.04032	validation_1-quantile:5.63037
+[70]	validation_0-quantile:5.51376	validation_1-quantile:5.18454
+[80]	validation_0-quantile:4.97012	validation_1-quantile:4.75343
+[90]	validation_0-quantile:4.69408	validation_1-quantile:4.54856
+[100]	validation_0-quantile:4.37770	validation_1-quantile:4.28320
+[110]	validation_0-quantile:4.06246	validation_1-quantile:4.02608
+[120]	validation_0-quantile:3.91948	validation_1-quantile:3.90516
+[130]	validation_0-quantile:3.66622	validation_1-quantile:3.67138
+[140]	validation_0-quantile:3.44772	validation_1-quantile:3.49510
+[150]	validation_0-quantile:3.20602	validation_1-quantile:3.31421
+[160]	validation_0-quantile:3.02757	validation_1-quantile:3.18929
+[170]	validation_0-quantile:2.88375	validation_1-quantile:3.06600
+[180]	validation_0-quantile:2.77208	validation_1-quantile:2.99051
+[190]	validation_0-quantile:2.57851	validation_1-quantile:2.86301
+[200]	validation_0-quantile:2.43550	validation_1-quantile:2.75064
+[210]	validation_0-quantile:2.35339	validation_1-quantile:2.70582
+[220]	validation_0-quantile:2.28401	validation_1-quantile:2.66453
+[230]	validation_0-quantile:2.24475	validation_1-quantile:2.63734
+[240]	validation_0-quantile:2.20008	validation_1-quantile:2.61383
+[250]	validation_0-quantile:2.09506	validation_1-quantile:2.54458
+[260]	validation_0-quantile:2.04003	validation_1-quantile:2.50521
+[270]	validation_0-quantile:2.01362	validation_1-quantile:2.49861
+[280]	validation_0-quantile:1.97610	validation_1-quantile:2.49610
+[290]	validation_0-quantile:1.92949	validation_1-quantile:2.46857
+[300]	validation_0-quantile:1.88109	validation_1-quantile:2.43777
+[310]	validation_0-quantile:1.83579	validation_1-quantile:2.42174
+[320]	validation_0-quantile:1.75679	validation_1-quantile:2.37179
+[330]	validation_0-quantile:1.68127	validation_1-quantile:2.32594
+[340]	validation_0-quantile:1.63089	validation_1-quantile:2.29855
+[350]	validation_0-quantile:1.59926	validation_1-quantile:2.28205
+[360]	validation_0-quantile:1.57795	validation_1-quantile:2.27499
+[370]	validation_0-quantile:1.55003	validation_1-quantile:2.26362
+[380]	validation_0-quantile:1.54110	validation_1-quantile:2.25784
+[390]	validation_0-quantile:1.48870	validation_1-quantile:2.21624
+[400]	validation_0-quantile:1.46253	validation_1-quantile:2.19852
+[410]	validation_0-quantile:1.44588	validation_1-quantile:2.19591
+[420]	validation_0-quantile:1.38905	validation_1-quantile:2.15127
+[430]	validation_0-quantile:1.36100	validation_1-quantile:2.13254
+[440]	validation_0-quantile:1.32866	validation_1-quantile:2.11536
+[450]	validation_0-quantile:1.29717	validation_1-quantile:2.09217
+[460]	validation_0-quantile:1.26052	validation_1-quantile:2.06330
+[470]	validation_0-quantile:1.24302	validation_1-quantile:2.05468
+[480]	validation_0-quantile:1.21047	validation_1-quantile:2.02954
+[490]	validation_0-quantile:1.20594	validation_1-quantile:2.03190
+[499]	validation_0-quantile:1.18703	validation_1-quantile:2.01471
+[0]	validation_0-quantile:15.50069	validation_1-quantile:14.92319
+[10]	validation_0-quantile:11.62945	validation_1-quantile:11.80830
+[20]	validation_0-quantile:9.87370	validation_1-quantile:10.72326
+[30]	validation_0-quantile:8.32192	validation_1-quantile:9.39156
+[40]	validation_0-quantile:7.26176	validation_1-quantile:8.42604
+[50]	validation_0-quantile:6.53355	validation_1-quantile:7.76075
+[60]	validation_0-quantile:5.75138	validation_1-quantile:6.94936
+[70]	validation_0-quantile:4.92332	validation_1-quantile:6.06547
+[80]	validation_0-quantile:4.25343	validation_1-quantile:5.34785
+[90]	validation_0-quantile:3.77331	validation_1-quantile:4.85159
+[100]	validation_0-quantile:3.35979	validation_1-quantile:4.41535
+[110]	validation_0-quantile:2.98426	validation_1-quantile:4.02116
+[120]	validation_0-quantile:2.72566	validation_1-quantile:3.76188
+[130]	validation_0-quantile:2.40177	validation_1-quantile:3.42624
+[140]	validation_0-quantile:2.14046	validation_1-quantile:3.15752
+[150]	validation_0-quantile:1.90589	validation_1-quantile:2.90702
+[160]	validation_0-quantile:1.75582	validation_1-quantile:2.75727
+[170]	validation_0-quantile:1.62352	validation_1-quantile:2.63905
+[180]	validation_0-quantile:1.48469	validation_1-quantile:2.50825
+[190]	validation_0-quantile:1.32375	validation_1-quantile:2.34492
+[200]	validation_0-quantile:1.18081	validation_1-quantile:2.20508
+[210]	validation_0-quantile:1.06307	validation_1-quantile:2.10135
+[220]	validation_0-quantile:0.98776	validation_1-quantile:2.04385
+[230]	validation_0-quantile:0.93885	validation_1-quantile:2.00555
+[240]	validation_0-quantile:0.89760	validation_1-quantile:1.97572
+[250]	validation_0-quantile:0.83642	validation_1-quantile:1.94138
+[260]	validation_0-quantile:0.80747	validation_1-quantile:1.92323
+[270]	validation_0-quantile:0.77979	validation_1-quantile:1.90318
+[280]	validation_0-quantile:0.75487	validation_1-quantile:1.89106
+[290]	validation_0-quantile:0.72592	validation_1-quantile:1.87667
+[300]	validation_0-quantile:0.69675	validation_1-quantile:1.85936
+[310]	validation_0-quantile:0.68230	validation_1-quantile:1.85452
+[320]	validation_0-quantile:0.66660	validation_1-quantile:1.84722
+[330]	validation_0-quantile:0.64273	validation_1-quantile:1.83370
+[340]	validation_0-quantile:0.62838	validation_1-quantile:1.82430
+[350]	validation_0-quantile:0.62154	validation_1-quantile:1.82137
+[360]	validation_0-quantile:0.61008	validation_1-quantile:1.81487
+[370]	validation_0-quantile:0.59774	validation_1-quantile:1.80476
+[380]	validation_0-quantile:0.58609	validation_1-quantile:1.79872
+[390]	validation_0-quantile:0.57585	validation_1-quantile:1.79212
+[400]	validation_0-quantile:0.56714	validation_1-quantile:1.78983
+[410]	validation_0-quantile:0.55924	validation_1-quantile:1.78885
+[420]	validation_0-quantile:0.55194	validation_1-quantile:1.78829
+[430]	validation_0-quantile:0.54602	validation_1-quantile:1.78687
+[440]	validation_0-quantile:0.53353	validation_1-quantile:1.77821
+[450]	validation_0-quantile:0.52909	validation_1-quantile:1.77662
+[460]	validation_0-quantile:0.52156	validation_1-quantile:1.77379
+[470]	validation_0-quantile:0.51511	validation_1-quantile:1.77149
+[480]	validation_0-quantile:0.51150	validation_1-quantile:1.77146
+[490]	validation_0-quantile:0.50696	validation_1-quantile:1.77131
+[499]	validation_0-quantile:0.50297	validation_1-quantile:1.76991
+============================== warnings summary ===============================
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_train_creates_three_models
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_training_metrics_logged
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_quantile_ordering_in_predictions
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibrator_is_isotonic_regression
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibrated_confidence_bounds
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibration_evaluation_metrics
+tests/test_eta_calibration.py::TestPredictionIntervals::test_interval_width_reasonable
+  C:\vivek\IntelliLog-AI\src\ml\models\base_model.py:55: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_train_creates_three_models
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_training_metrics_logged
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_quantile_ordering_in_predictions
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibrator_is_isotonic_regression
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibrated_confidence_bounds
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibration_evaluation_metrics
+tests/test_eta_calibration.py::TestPredictionIntervals::test_interval_width_reasonable
+  C:\vivek\IntelliLog-AI\src\ml\models\base_model.py:49: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "created_at": datetime.utcnow().isoformat(),
+
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_train_creates_three_models
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_training_metrics_logged
+tests/test_eta_calibration.py::TestQuantileModelTraining::test_quantile_ordering_in_predictions
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibrator_is_isotonic_regression
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibrated_confidence_bounds
+tests/test_eta_calibration.py::TestIsotonicCalibration::test_calibration_evaluation_metrics
+tests/test_eta_calibration.py::TestPredictionIntervals::test_interval_width_reasonable
+  C:\vivek\IntelliLog-AI\src\ml\models\eta_predictor.py:251: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.set_metadata('trained_at', datetime.utcnow().isoformat())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_eta_calibration.py::TestPredictionIntervals::test_interval_width_reasonable
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+================== 1 failed, 6 passed, 21 warnings in 9.37s ===================

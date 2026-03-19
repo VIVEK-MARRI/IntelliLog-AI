@@ -3,6 +3,8 @@ import asyncio
 import json
 import logging
 from src.backend.app.api import deps
+from src.backend.app.core.auth import AuthenticatedPrincipal
+from src.backend.app.core.auth import decode_jwt_token
 from src.backend.app.db.base import SessionLocal
 from src.backend.app.services.reroute_service import live_location_store, reroute_tenant
 
@@ -19,6 +21,24 @@ async def driver_locations_ws(websocket: WebSocket):
     WebSocket endpoint for live driver location broadcasting.
     Clients connect and receive location updates for all drivers.
     """
+    authorization = websocket.headers.get("authorization")
+    if not authorization or not authorization.startswith("Bearer "):
+        await websocket.close(code=4401)
+        return
+
+    try:
+        payload = decode_jwt_token(authorization.split(" ", 1)[1])
+        if payload.get("type") != "access":
+            await websocket.close(code=4401)
+            return
+        socket_tenant_id = str(payload.get("tenant_id", ""))
+        if not socket_tenant_id:
+            await websocket.close(code=4401)
+            return
+    except Exception:
+        await websocket.close(code=4401)
+        return
+
     await websocket.accept()
     connected_clients.add(websocket)
     
@@ -32,19 +52,28 @@ async def driver_locations_ws(websocket: WebSocket):
             try:
                 # We wait for messages but also use this as a heartbeat check
                 data = await asyncio.wait_for(websocket.receive_json(), timeout=60.0)
-                tenant_id = data.get("tenant_id", "default")
+                tenant_id = socket_tenant_id
                 driver_id = data.get("driver_id")
                 lat = data.get("lat")
                 lng = data.get("lng")
                 speed_kmph = data.get("speed_kmph")
 
                 if driver_id and lat is not None and lng is not None:
+                    lat = float(lat)
+                    lng = float(lng)
+                    if not (-90 <= lat <= 90):
+                        await websocket.send_json({"type": "error", "detail": "Invalid latitude"})
+                        continue
+                    if not (-180 <= lng <= 180):
+                        await websocket.send_json({"type": "error", "detail": "Invalid longitude"})
+                        continue
+
                     # Store location
                     await live_location_store.update_location(
                         tenant_id=tenant_id,
                         driver_id=str(driver_id),
-                        lat=float(lat),
-                        lng=float(lng),
+                        lat=lat,
+                        lng=lng,
                         speed_kmph=float(speed_kmph) if speed_kmph is not None else None,
                     )
                     
@@ -53,8 +82,8 @@ async def driver_locations_ws(websocket: WebSocket):
                         "type": "location_update",
                         "tenant_id": tenant_id,
                         "driver_id": str(driver_id),
-                        "lat": float(lat),
-                        "lng": float(lng),
+                        "lat": lat,
+                        "lng": lng,
                         "speed_kmph": float(speed_kmph) if speed_kmph is not None else None,
                     }
                     
@@ -90,9 +119,10 @@ async def driver_locations_ws(websocket: WebSocket):
 
 @router.post("/reroute/now")
 def reroute_now(
-    tenant_id: str = Depends(deps.get_current_tenant),
+    current_user: AuthenticatedPrincipal = Depends(deps.get_current_user),
 ):
     """Manually trigger reroute for current tenant."""
+    tenant_id = current_user.tenant_id
     db = SessionLocal()
     try:
         result = reroute_tenant(db, tenant_id)

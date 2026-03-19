@@ -6,6 +6,7 @@ from src.backend.app.db.base import get_db
 from src.backend.app.db.models import Driver
 from src.backend.app.schemas import all as schemas
 from src.backend.app.api import deps
+from src.backend.app.core.validators import ensure_uuid4
 
 router = APIRouter()
 
@@ -31,6 +32,7 @@ def read_drivers(
             query = query.filter(Driver.status == status)
         
         if warehouse_id:
+            ensure_uuid4(warehouse_id, "warehouse_id")
             query = query.filter(Driver.warehouse_id == warehouse_id)
         
         drivers = query.offset(skip).limit(limit).all()
@@ -83,6 +85,7 @@ def read_driver(
     """
     Get driver by ID.
     """
+    ensure_uuid4(driver_id, "driver_id")
     driver = db.query(Driver).filter(Driver.id == driver_id, Driver.tenant_id == tenant_id).first()
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")

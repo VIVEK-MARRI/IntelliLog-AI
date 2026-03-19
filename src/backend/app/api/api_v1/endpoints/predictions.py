@@ -6,20 +6,71 @@ Production-ready ETA predictions with explainability and monitoring
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, List
+import hashlib
+import json
 import pandas as pd
 import time
 from datetime import datetime
+from pathlib import Path
+
+import redis
+from sqlalchemy.orm import Session
 
 from src.ml.models.eta_predictor import ETAPredictor
 from src.ml.features.store import get_feature_store
 from src.ml.monitoring.metrics import get_metrics_collector
+from src.backend.app.api import deps
+from src.backend.app.core.auth import AuthenticatedPrincipal
+from src.backend.app.core.config import settings
+from src.backend.app.db.models import DeliveryFeedback
 
 router = APIRouter()
 
 # Global model instance (loaded on startup)
 _model: Optional[ETAPredictor] = None
+_model_cache: Dict[str, ETAPredictor] = {}
 _feature_store = None
 _metrics_collector = None
+
+
+def _get_model_by_version(model_version: str) -> ETAPredictor:
+    """Load and cache ETAPredictor model artifacts for a specific version."""
+    if model_version in _model_cache:
+        return _model_cache[model_version]
+
+    model_path = Path("models") / model_version
+    if not model_path.exists():
+        raise FileNotFoundError(f"Model version path not found: {model_path}")
+
+    model_instance = ETAPredictor(version=model_version)
+    model_instance.load(model_path)
+    _model_cache[model_version] = model_instance
+    return model_instance
+
+
+def _resolve_ab_test_routing(tenant_id: str, order_id: str) -> Optional[Dict[str, str]]:
+    """Resolve active A/B route assignment using deterministic order-id hashing."""
+    redis_client = redis.from_url(settings.REDIS_FEATURE_STORE_URL, decode_responses=True)
+    payload_raw = redis_client.get(f"ab_test:{tenant_id}:active")
+    if not payload_raw:
+        return None
+
+    payload = json.loads(payload_raw)
+    model_a = str(payload.get("model_a", "")).strip()
+    model_b = str(payload.get("model_b", "")).strip()
+    test_id = str(payload.get("test_id", "")).strip()
+    if not model_a or not model_b or not test_id:
+        return None
+
+    bucket = int(hashlib.sha256(order_id.encode("utf-8")).hexdigest(), 16) % 2
+    selected_model = model_a if bucket == 0 else model_b
+    group = "A" if bucket == 0 else "B"
+
+    return {
+        "test_id": test_id,
+        "model_version": selected_model,
+        "group": group,
+    }
 
 
 def get_model() -> ETAPredictor:
@@ -49,6 +100,7 @@ def get_metrics_dependency():
 # Request/Response Models
 class ETAPredictionRequest(BaseModel):
     """Request schema for ETA prediction"""
+    tenant_id: str = Field("default", description="Tenant identifier for data isolation")
     order_id: str = Field(..., description="Unique order identifier")
     origin_lat: float = Field(..., ge=-90, le=90)
     origin_lng: float = Field(..., ge=-180, le=180)
@@ -88,11 +140,16 @@ class ETAPredictionRequest(BaseModel):
 
 class ETAPredictionResponse(BaseModel):
     """Response schema for ETA prediction"""
+    tenant_id: str
     order_id: str
-    predicted_eta_minutes: float
-    confidence_score: float = Field(..., ge=0, le=1)
-    is_out_of_distribution: bool
-    explanation: Optional[Dict[str, Any]] = None
+    eta_minutes: float
+    eta_p10: float
+    eta_p90: float
+    interval_width_minutes: float
+    confidence_within_5min: float = Field(..., ge=0, le=1)
+    is_ood: bool
+    top_features: Dict[str, float]
+    explanation: str
     model_version: str
     prediction_latency_ms: float
     timestamp: str
@@ -113,7 +170,9 @@ async def predict_eta(
     background_tasks: BackgroundTasks,
     model: ETAPredictor = Depends(get_model),
     feature_store = Depends(get_feature_store_dependency),
-    metrics = Depends(get_metrics_dependency)
+    metrics = Depends(get_metrics_dependency),
+    db: Session = Depends(deps.get_db_session),
+    current_user: AuthenticatedPrincipal = Depends(deps.get_current_user),
 ):
     """
     Predict delivery ETA with explainability
@@ -131,13 +190,18 @@ async def predict_eta(
     start_time = time.time()
     
     try:
+        if request.tenant_id != current_user.tenant_id:
+            raise HTTPException(status_code=404, detail="Resource not found")
+
+        feature_entity_id = f"{current_user.tenant_id}:{request.order_id}"
+
         # Step 1: Get features (from store or compute)
         features_dict = request.features
         
         if features_dict is None:
             # Try feature store first
             features_dict = feature_store.get_features(
-                entity_id=request.order_id,
+                entity_id=feature_entity_id,
                 version="v1",
                 validate_freshness=True,
                 max_age_hours=6
@@ -150,41 +214,54 @@ async def predict_eta(
             # Store in feature store for future use
             background_tasks.add_task(
                 feature_store.store_features,
-                entity_id=request.order_id,
+                entity_id=feature_entity_id,
                 features=features_dict,
                 version="v1",
                 ttl_hours=6
             )
         
+        selected_model = model
+        selected_model_version = model.version
+        ab_route = _resolve_ab_test_routing(current_user.tenant_id, request.order_id)
+        if ab_route is not None:
+            selected_model_version = ab_route["model_version"]
+            selected_model = _get_model_by_version(selected_model_version)
+
         # Convert to DataFrame
         X = pd.DataFrame([features_dict])
         
         # Align columns to model expectations if metadata is available
-        feature_names = model.get_metadata().get("feature_names")
+        feature_names = selected_model.get_metadata().get("feature_names")
         if feature_names:
             for name in feature_names:
                 if name not in X.columns:
                     X[name] = 0.0
             X = X[feature_names]
         
-        # Step 2: Detect OOD samples
-        is_ood = not model.detect_ood(X)[0]
+        # Step 2: Make prediction with calibrated confidence and intervals
+        prediction_bundle = selected_model.predict_with_intervals(X)
+        p10_eta = float(prediction_bundle['p10'][0])
+        p50_eta = float(prediction_bundle['p50'][0])
+        p90_eta = float(prediction_bundle['p90'][0])
+        confidence_score = float(prediction_bundle['confidence_within_5min'][0])
+        predicted_eta = p50_eta
+
+        prediction_object = selected_model.predict(X)
+        is_ood = bool(prediction_object['is_ood'])
+
+        # Step 5: Persist prediction provenance for A/B analysis
+        feedback_row = DeliveryFeedback(
+            tenant_id=current_user.tenant_id,
+            order_id=request.order_id,
+            prediction_model_version=selected_model_version,
+            predicted_eta_min=predicted_eta,
+            actual_delivery_min=None,
+            predicted_at=datetime.utcnow(),
+        )
+        db.add(feedback_row)
+        db.commit()
         
-        # Step 3: Make prediction
-        prediction, confidence = model.predict_with_confidence(X)
-        predicted_eta = float(prediction[0])
-        confidence_score = float(confidence[0])
-        
-        # Step 4: Generate explanation (if not OOD)
-        explanation = None
-        if not is_ood:
-            try:
-                explanation = model.explain(X, sample_idx=0)
-            except Exception as e:
-                # Explanation failed - log but don't fail request
-                print(f"Explanation generation failed: {e}")
-        
-        # Step 5: Record metrics (background task)
+        # Step 6: Record metrics (background task)
         latency_ms = (time.time() - start_time) * 1000
         background_tasks.add_task(
             metrics.record_prediction,
@@ -192,21 +269,34 @@ async def predict_eta(
             latency_ms=latency_ms,
             is_ood=is_ood,
             confidence=confidence_score,
-            metadata={'order_id': request.order_id}
+            metadata={
+                'order_id': request.order_id,
+                'tenant_id': current_user.tenant_id,
+                'model_version': selected_model_version,
+                'ab_test_id': ab_route['test_id'] if ab_route else None,
+                'ab_group': ab_route['group'] if ab_route else None,
+            }
         )
         
-        # Step 6: Return response
+        # Step 7: Return response
         return ETAPredictionResponse(
+            tenant_id=current_user.tenant_id,
             order_id=request.order_id,
-            predicted_eta_minutes=predicted_eta,
-            confidence_score=confidence_score,
-            is_out_of_distribution=is_ood,
-            explanation=explanation,
-            model_version=model.version,
+            eta_minutes=float(prediction_object['eta_minutes']),
+            eta_p10=float(prediction_object['eta_p10']),
+            eta_p90=float(prediction_object['eta_p90']),
+            interval_width_minutes=float(prediction_object['interval_width_minutes']),
+            confidence_within_5min=float(prediction_object['confidence_within_5min']),
+            is_ood=bool(prediction_object['is_ood']),
+            top_features={k: float(v) for k, v in prediction_object['top_features'].items()},
+            explanation=str(prediction_object['explanation']),
+            model_version=selected_model_version,
             prediction_latency_ms=latency_ms,
             timestamp=datetime.utcnow().isoformat()
         )
     
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 

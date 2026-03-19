@@ -1,6 +1,8 @@
 from typing import Generator
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+
+from fastapi import Depends
+
+from src.backend.app.core.auth import AuthenticatedPrincipal, get_current_user as auth_get_current_user
 from src.backend.app.db.base import SessionLocal
 
 def get_db_session() -> Generator:
@@ -11,33 +13,16 @@ def get_db_session() -> Generator:
     finally:
         db.close()
 
-# Variable to hold the current tenant for the request context if needed
-# In a real implementation, we would extract this from the JWT or Subdomain
-def get_current_tenant(db: Session = Depends(get_db_session)):
-    """
-    Placeholder for Tenant Dependency.
-    In production, this would parse the JWT token or Host header to fetch the Tenant.
-    """
-    # For now, return None or raising generic error if no auth is present
-    # MOCK: Return default tenant
-    # In real app, query DB for tenant with slug="default" or similar
-    return "default"
+def get_current_user(current_user: AuthenticatedPrincipal = Depends(auth_get_current_user)) -> AuthenticatedPrincipal:
+    """Return authenticated principal from core auth dependency."""
+    return current_user
 
-def get_current_user():
-    """
-    Mock dependency to return a default 'admin' user.
-    """
-    return {
-        "id": "1",
-        "email": "admin@example.com",
-        "full_name": "System Admin",
-        "role": "admin",
-        "is_superuser": True,
-        "tenant_id": "default"
-    }
 
-def get_current_active_user(current_user = Depends(get_current_user)):
-    """
-    Mock dependency to bypass active user check.
-    """
+def get_current_tenant(current_user: AuthenticatedPrincipal = Depends(auth_get_current_user)) -> str:
+    """Tenant resolver derived from authenticated principal."""
+    return current_user.tenant_id
+
+
+def get_current_active_user(current_user: AuthenticatedPrincipal = Depends(auth_get_current_user)) -> AuthenticatedPrincipal:
+    """Compatibility alias for active authenticated principal."""
     return current_user

@@ -1,12 +1,42 @@
 import asyncio
+import uuid
+
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from src.backend.app.core.config import settings
 from src.backend.app.core.logging import setup_logging
+from src.backend.app.core.rate_limit import RateLimitExceededError
 
 # Configure logging at startup
 setup_logging()
+
+
+class RequestContextMiddleware(BaseHTTPMiddleware):
+    """Attach X-Request-ID header and enforce a max request size."""
+
+    MAX_BODY_BYTES = 1024 * 1024
+
+    async def dispatch(self, request, call_next):
+        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                if int(content_length) > self.MAX_BODY_BYTES:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"detail": "Request body too large (max 1MB)"},
+                        headers={"X-Request-ID": request_id},
+                    )
+            except ValueError:
+                pass
+
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
 def create_application() -> FastAPI:
     application = FastAPI(
@@ -17,6 +47,8 @@ def create_application() -> FastAPI:
     )
 
     # Set all CORS enabled origins
+    application.add_middleware(RequestContextMiddleware)
+
     application.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -42,7 +74,9 @@ def create_application() -> FastAPI:
 
     # Import and include routers here
     from src.backend.app.api.api_v1.api import api_router
+    from src.backend.app.websocket.dispatch_ws import router as ws_router
     application.include_router(api_router, prefix=settings.API_V1_STR)
+    application.include_router(ws_router)
     
     @application.get("/")
     def root():
@@ -52,6 +86,18 @@ def create_application() -> FastAPI:
     def health_check():
         print("Health check endpoint called")
         return {"status": "ok", "project": settings.PROJECT_NAME}
+
+    @application.exception_handler(RateLimitExceededError)
+    async def rate_limit_exceeded_handler(request, exc: RateLimitExceededError):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "rate_limit_exceeded",
+                "retry_after_seconds": int(exc.retry_after_seconds),
+                "limit": exc.limit,
+            },
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        )
     
     # ML System startup event
     @application.on_event("startup")

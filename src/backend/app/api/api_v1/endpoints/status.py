@@ -82,10 +82,10 @@ def logistics_metrics(
     warehouses = db.query(Warehouse).filter(Warehouse.tenant_id == tenant_id).all()
     warehouse_stats = []
     for wh in warehouses:
-        wh_orders = db.query(Order).filter(Order.warehouse_id == wh.id).count()
-        wh_drivers = db.query(Driver).filter(Driver.warehouse_id == wh.id).count()
+        wh_orders = db.query(Order).filter(Order.warehouse_id == wh.id, Order.tenant_id == tenant_id).count()
+        wh_drivers = db.query(Driver).filter(Driver.warehouse_id == wh.id, Driver.tenant_id == tenant_id).count()
         wh_pending = db.query(Order).filter(
-            Order.warehouse_id == wh.id, Order.status == "pending"
+            Order.warehouse_id == wh.id, Order.tenant_id == tenant_id, Order.status == "pending"
         ).count()
         warehouse_stats.append({
             "id": wh.id,
