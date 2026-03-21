@@ -146,14 +146,14 @@ sequenceDiagram
     participant User as Dispatcher
     participant FE as Frontend
     participant API as FastAPI
-    participant OPT as Optimization Service
+    participant SOLVER as Optimization Service
     participant DB as PostgreSQL
     participant WS as WebSocket Channel
 
     User->>FE: Trigger route optimization
     FE->>API: POST /api/v1/routes/optimize
-    API->>OPT: Solve VRP with constraints
-    OPT-->>API: Optimized route plan
+    API->>SOLVER: Solve VRP with constraints
+    SOLVER-->>API: Optimized route plan
     API->>DB: Persist route assignments
     API-->>FE: Return route response
     API-->>WS: Publish route and status update
