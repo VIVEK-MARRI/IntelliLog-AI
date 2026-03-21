@@ -15,13 +15,15 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
-
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const response = await fetch('http://localhost:8000/api/v1/auth/token', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
       if (!response.ok) {
@@ -36,6 +38,18 @@ export const LoginPage: React.FC = () => {
       localStorage.setItem('access_token', data.access_token);
       if (data.refresh_token) {
         localStorage.setItem('refresh_token', data.refresh_token);
+      }
+
+      // Backend /auth/token returns tokens only; fetch profile separately.
+      const meResponse = await fetch('http://localhost:8000/api/v1/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${data.access_token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (meResponse.ok) {
+        const me = await meResponse.json();
+        localStorage.setItem('user', JSON.stringify(me));
       }
 
       // Redirect to dashboard

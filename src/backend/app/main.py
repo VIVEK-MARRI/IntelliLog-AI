@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 from src.backend.app.core.config import settings
 from src.backend.app.core.logging import setup_logging
@@ -15,13 +16,14 @@ from src.backend.app.core.rate_limit import RateLimitExceededError
 setup_logging()
 
 
-class RequestContextMiddleware(BaseHTTPMiddleware):
-    """Attach X-Request-ID header and enforce a max request size."""
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Attach request ID for tracing and enforce max request size."""
 
     MAX_BODY_BYTES = 1024 * 1024
 
-    async def dispatch(self, request, call_next):
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())[:8]
+        request.state.request_id = request_id
         content_length = request.headers.get("content-length")
         if content_length is not None:
             try:
@@ -47,7 +49,7 @@ def create_application() -> FastAPI:
     )
 
     # Set all CORS enabled origins
-    application.add_middleware(RequestContextMiddleware)
+    application.add_middleware(RequestIDMiddleware)
 
     application.add_middleware(
         CORSMiddleware,

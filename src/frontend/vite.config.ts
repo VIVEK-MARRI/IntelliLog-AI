@@ -28,7 +28,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'maplibre': ['maplibre-gl'],
+          three: ['three'],
+          'three-extras': ['three/examples/jsm/controls/OrbitControls.js'],
+          leaflet: ['leaflet'],
+          framer: ['framer-motion'],
+          lottie: ['lottie-react', 'lottie-web'],
+          gsap: ['gsap'],
+          simplex: ['simplex-noise'],
         },
       },
     },

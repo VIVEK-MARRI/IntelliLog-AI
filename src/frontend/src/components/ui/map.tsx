@@ -234,7 +234,7 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       styleTimeoutRef.current = setTimeout(() => {
         setIsStyleLoaded(true);
         if (projection) {
-          map.setProjection(projection);
+          (map as any).setProjection?.(projection);
         }
       }, 100);
     };
@@ -614,6 +614,7 @@ function MarkerTooltip({
   const { marker, map } = useMarkerContext();
   const container = useMemo(() => document.createElement("div"), []);
   const prevTooltipOptions = useRef(popupOptions);
+  const hoverTimerRef = useRef<number | null>(null);
 
   const tooltip = useMemo(() => {
     const tooltipInstance = new MapLibreGL.Popup({
@@ -633,9 +634,17 @@ function MarkerTooltip({
     tooltip.setDOMContent(container);
 
     const handleMouseEnter = () => {
-      tooltip.setLngLat(marker.getLngLat()).addTo(map);
+      hoverTimerRef.current = window.setTimeout(() => {
+        tooltip.setLngLat(marker.getLngLat()).addTo(map);
+      }, 400);
     };
-    const handleMouseLeave = () => tooltip.remove();
+    const handleMouseLeave = () => {
+      if (hoverTimerRef.current) {
+        window.clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
+      }
+      tooltip.remove();
+    };
 
     marker.getElement()?.addEventListener("mouseenter", handleMouseEnter);
     marker.getElement()?.addEventListener("mouseleave", handleMouseLeave);
@@ -643,6 +652,10 @@ function MarkerTooltip({
     return () => {
       marker.getElement()?.removeEventListener("mouseenter", handleMouseEnter);
       marker.getElement()?.removeEventListener("mouseleave", handleMouseLeave);
+      if (hoverTimerRef.current) {
+        window.clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
+      }
       tooltip.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -664,7 +677,7 @@ function MarkerTooltip({
   return createPortal(
     <div
       className={cn(
-        "rounded-md bg-foreground px-2 py-1 text-xs text-background shadow-md animate-in fade-in-0 zoom-in-95",
+        "ds-tooltip rounded-md px-2 py-1 text-xs shadow-md",
         className
       )}
     >

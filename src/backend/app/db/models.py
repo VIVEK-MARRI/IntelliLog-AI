@@ -64,7 +64,9 @@ class Driver(Base):
     status = Column(String, default="offline")  # available, busy, offline
     current_lat = Column(Float, nullable=True)
     current_lng = Column(Float, nullable=True)
+    vehicle_type = Column(String, default="bike")  # bike, auto, car
     vehicle_capacity = Column(Integer, default=10)
+    zone_expertise = Column(JSON, nullable=True)  # List of zones where driver has high familiarity
     
     tenant_id = Column(String, ForeignKey("tenants.id"))
     tenant = relationship("Tenant", back_populates="drivers")

@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: intellog_ai_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/intellog_ai_dev
+      REDIS_URL: redis://redis:6379/0
+      REDIS_FEATURE_STORE_URL: redis://redis:6379/2
+      CELERY_BROKER_URL: redis://redis:6379/0
+      FRONTEND_URL: http://localhost:5173
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: intellog_ai_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    depends_on:
+      - db
+      - redis
+    command: uvicorn src.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+
+  celery_worker:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/intellog_ai_dev
+      REDIS_URL: redis://redis:6379/0
+      REDIS_FEATURE_STORE_URL: redis://redis:6379/2
+      CELERY_BROKER_URL: redis://redis:6379/0
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: intellog_ai_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    depends_on:
+      - db
+      - redis
+      - backend
+    command: celery -A src.backend.worker.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+
+  frontend:
+    build: src/frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_WS_URL: ws://localhost:8000
+      VITE_TENANT_ID: demo-tenant-001
+      VITE_ENVIRONMENT: development
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./src/frontend:/app
+
+volumes:
+  postgres_data:

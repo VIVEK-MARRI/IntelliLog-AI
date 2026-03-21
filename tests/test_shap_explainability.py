@@ -1,29 +1,263 @@
 """
-Comprehensive test suite for SHAP explainability layer.
-
-Tests coverage:
-1. SHAP value consistency checks
-2. Feature-specific sentence generation
-3. What-would-help actionability
-4. Driver familiarity scoring
-5. Explanation API endpoints
-6. Celery task generation + backfilling
-7. Aggregation logic
+Comprehensive tests for SHAP explainability backend validation.
+Ensures no raw Python field names ever appear in explanation output.
 """
 
-import json
 import pytest
-from datetime import datetime, timedelta
+import json
 from unittest.mock import Mock, patch, MagicMock
-from decimal import Decimal
+from datetime import datetime
 
-import numpy as np
-import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+# Import the shap_explainer module
+from src.ml.models.shap_explainer import SHAPExplainer
 
-# Assuming imports from project structure
-# This is a template - adjust imports based on actual project structure
+
+class TestSHAPExplainerValidation:
+    """Test suite for SHAP explanation validation"""
+
+    @pytest.fixture
+    def mock_model(self):
+        """Create a mock XGBoost model"""
+        model = Mock()
+        model.predict = Mock(return_value=[25.0])
+        return model
+
+    @pytest.fixture
+    def mock_preprocessor(self):
+        """Create a mock preprocessor"""
+        preprocessor = Mock()
+        preprocessor.transform = Mock(
+            return_value=[[1.5, 1.0, 0.5, 12.3, 1.0, 0, 0.8, 0, 0.5, 0.2]]
+        )
+        return preprocessor
+
+    @pytest.fixture
+    def shap_explainer(self, mock_model, mock_preprocessor):
+        """Create a SHAPExplainer instance with mocks"""
+        with patch("src.ml.models.shap_explainer.xgb.Booster", return_value=mock_model):
+            explainer = SHAPExplainer(model_path="fake_model.json")
+            explainer.preprocessor = mock_preprocessor
+            return explainer
+
+    @pytest.fixture
+    def sample_order_data(self):
+        """Sample order data for testing"""
+        return {
+            "order_id": "ORD-E3-DEMO",
+            "distance": 12.3,
+            "rush_hour": 1,
+            "weather": 0.5,
+            "package_weight": 18.5,
+            "driver_zone_familiarity": 0.2,
+            "vehicle_type": 0,
+            "current_traffic_ratio": 1.67,
+            "is_peak_hour": 1,
+        }
+
+    def test_no_raw_field_names_in_factors(self, shap_explainer, sample_order_data):
+        """Test that factor display names don't contain raw field names"""
+        explanation = shap_explainer.generate_explanation(
+            order_data=sample_order_data, order_id="ORD-E3-DEMO"
+        )
+
+        forbidden_patterns = [
+            "_ratio",
+            "_km",
+            "_encoded",
+            "_familiarity",
+            "_severity",
+            "weather_",
+            "traffic_",
+            "zone_",
+        ]
+
+        # Check all factors
+        for factor in explanation.get("factors", []):
+            for pattern in forbidden_patterns:
+                assert (
+                    pattern not in factor.get("feature", "").lower()
+                ), f"Found forbidden pattern '{pattern}' in factor feature: {factor['feature']}"
+
+    def test_no_raw_field_names_in_summaries(self, shap_explainer, sample_order_data):
+        """Test that summary sentences don't contain raw field names"""
+        explanation = shap_explainer.generate_explanation(
+            order_data=sample_order_data, order_id="ORD-E3-DEMO"
+        )
+
+        forbidden_patterns = [
+            "_ratio",
+            "_km",
+            "_encoded",
+            "_familiarity",
+            "_severity",
+            "weather_",
+            "traffic_",
+            "zone_",
+        ]
+
+        # Check factor sentences
+        for factor in explanation.get("factors", []):
+            sentence = factor.get("sentence", "")
+            for pattern in forbidden_patterns:
+                assert (
+                    pattern not in sentence.lower()
+                ), f"Found forbidden pattern '{pattern}' in sentence: {sentence}"
+
+        # Check summary
+        summary = explanation.get("summary", "")
+        for pattern in forbidden_patterns:
+            assert (
+                pattern not in summary.lower()
+            ), f"Found forbidden pattern '{pattern}' in summary: {summary}"
+
+    def test_no_raw_field_names_in_what_would_help(self, shap_explainer, sample_order_data):
+        """Test that 'what would help' section doesn't contain raw field names"""
+        explanation = shap_explainer.generate_explanation(
+            order_data=sample_order_data, order_id="ORD-E3-DEMO"
+        )
+
+        forbidden_patterns = [
+            "_ratio",
+            "_km",
+            "_encoded",
+            "_familiarity",
+            "_severity",
+            "weather_",
+            "traffic_",
+            "zone_",
+        ]
+
+        what_would_help = explanation.get("what_would_help", [])
+        for suggestion in what_would_help:
+            text = suggestion if isinstance(suggestion, str) else suggestion.get("text", "")
+            for pattern in forbidden_patterns:
+                assert (
+                    pattern not in text.lower()
+                ), f"Found forbidden pattern '{pattern}' in what_would_help: {text}"
+
+    def test_no_underscores_in_visible_text(self, shap_explainer, sample_order_data):
+        """Test that no underscores appear in any visible text field"""
+        explanation = shap_explainer.generate_explanation(
+            order_data=sample_order_data, order_id="ORD-E3-DEMO"
+        )
+
+        fields_to_check = [
+            ("factors", lambda f: [f.get("feature"), f.get("sentence")]),
+            ("summary", lambda s: [s]),
+            ("explanation", lambda e: [e]),
+            ("what_would_help", lambda w: w if isinstance(w, list) else [w]),
+        ]
+
+        for field_name, extractor in fields_to_check:
+            field_value = explanation.get(field_name)
+            if field_value:
+                texts = extractor(field_value)
+                for text in texts:
+                    if text and isinstance(text, str):
+                        # Check that underscores don't appear in visible text
+                        # (except in URLs or code snippets, which shouldn't be there anyway)
+                        assert (
+                            "_" not in text
+                        ), f"Found underscore in {field_name}: {text}"
+
+    def test_explanation_structure_is_valid(self, shap_explainer, sample_order_data):
+        """Test that explanation JSON structure is correct"""
+        explanation = shap_explainer.generate_explanation(
+            order_data=sample_order_data, order_id="ORD-E3-DEMO"
+        )
+
+        # Check required fields
+        assert "factors" in explanation
+        assert "summary" in explanation
+        assert isinstance(explanation["factors"], list)
+        assert len(explanation["factors"]) > 0
+
+        # Check factor structure
+        for factor in explanation["factors"]:
+            assert "feature" in factor
+            assert "impact_minutes" in factor
+            assert "feature" in factor
+            assert isinstance(factor["impact_minutes"], (int, float))
+
+    def test_json_serializable(self, shap_explainer, sample_order_data):
+        """Test that explanation is JSON serializable"""
+        explanation = shap_explainer.generate_explanation(
+            order_data=sample_order_data, order_id="ORD-E3-DEMO"
+        )
+
+        # Should not raise
+        json_str = json.dumps(explanation)
+        assert isinstance(json_str, str)
+        assert len(json_str) > 0
+
+        # Should be parseable back
+        parsed = json.loads(json_str)
+        assert parsed == explanation
+
+    def test_validate_explanation_method_exists(self, shap_explainer):
+        """Test that validation method is implemented"""
+        assert hasattr(shap_explainer, "_validate_explanation")
+        assert callable(getattr(shap_explainer, "_validate_explanation"))
+
+    def test_fallback_sentence_generation_exists(self, shap_explainer):
+        """Test that fallback sentence generation is implemented"""
+        assert hasattr(shap_explainer, "_generate_fallback_sentence")
+        assert callable(getattr(shap_explainer, "_generate_fallback_sentence"))
+
+    def test_multiple_order_generation(self, shap_explainer):
+        """Test that multiple orders can be explained without field name leakage"""
+        orders = [
+            {
+                "order_id": "ORD-001",
+                "distance": 5.2,
+                "rush_hour": 0,
+                "weather": 0.0,
+                "package_weight": 10.0,
+                "driver_zone_familiarity": 0.9,
+                "vehicle_type": 0,
+                "current_traffic_ratio": 1.0,
+                "is_peak_hour": 0,
+            },
+            {
+                "order_id": "ORD-002",
+                "distance": 15.3,
+                "rush_hour": 1,
+                "weather": 2.0,
+                "package_weight": 25.0,
+                "driver_zone_familiarity": 0.1,
+                "vehicle_type": 1,
+                "current_traffic_ratio": 2.1,
+                "is_peak_hour": 1,
+            },
+        ]
+
+        forbidden_patterns = [
+            "_ratio",
+            "_km",
+            "_encoded",
+            "_familiarity",
+            "_severity",
+        ]
+
+        for order in orders:
+            explanation = shap_explainer.generate_explanation(
+                order_data=order, order_id=order["order_id"]
+            )
+
+            # Check all text fields
+            text_fields = [
+                explanation.get("summary", ""),
+                explanation.get("explanation", ""),
+            ]
+
+            for factor in explanation.get("factors", []):
+                text_fields.append(factor.get("sentence", ""))
+
+            for text in text_fields:
+                for pattern in forbidden_patterns:
+                    assert (
+                        pattern not in text.lower()
+                    ), f"Order {order['order_id']}: Found pattern '{pattern}' in: {text}"
 
 
 class TestSHAPExplainer:

@@ -224,6 +224,7 @@ class Order(OrderBase):
     id: str
     tenant_id: str
     route_id: Optional[str] = None
+    predicted_eta_minutes: Optional[float] = None
 
     class Config:
         from_attributes = True

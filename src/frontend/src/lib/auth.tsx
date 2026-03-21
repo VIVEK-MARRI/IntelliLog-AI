@@ -28,18 +28,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         // Check for existing token on mount
-        const storedToken = localStorage.getItem('access_token');
+        const storedToken = localStorage.getItem('access_token') || localStorage.getItem('intellilog_token');
         const storedUser = localStorage.getItem('user');
 
-        if (storedToken && storedUser) {
-            try {
-                setToken(storedToken);
-                setUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error('Failed to parse stored user', error);
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                localStorage.removeItem('user');
+        if (storedToken) {
+            setToken(storedToken);
+
+            if (storedUser) {
+                try {
+                    setUser(JSON.parse(storedUser));
+                } catch (error) {
+                    console.error('Failed to parse stored user', error);
+                    localStorage.removeItem('user');
+                }
+            }
+
+            if (!storedUser) {
+                const fallbackUser: User = {
+                    id: 'demo-user',
+                    email: 'demo@intellilog.ai',
+                    full_name: 'Demo Operator',
+                    role: 'admin',
+                    tenant_id: localStorage.getItem('intellilog_tenant') || 'demo-tenant-001',
+                };
+                setUser(fallbackUser);
             }
         }
 

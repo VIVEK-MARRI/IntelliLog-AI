@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from src.backend.app.core.auth import (
@@ -25,9 +27,31 @@ from src.backend.app.core.auth import (
     verify_password,
 )
 from src.backend.app.db.base import get_db
-from src.backend.app.db.models import APIKey, User
+from src.backend.app.db.models import APIKey, Tenant, User
 
 router = APIRouter()
+
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    full_name: str | None = None
+    password: str
+    tenant_id: str | None = None
+    role: str = "user"
+
+
+class SignupResponse(BaseModel):
+    id: str
+    email: EmailStr
+    full_name: str | None = None
+    role: str
+    tenant_id: str
+    is_active: bool
+
+
+def _normalize_slug(value: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", value).strip("-").lower()
+    return slug or "default"
 
 
 @router.post("/token", response_model=TokenResponse)
@@ -63,6 +87,57 @@ def refresh_access_token(payload: RefreshTokenRequest, db: Session = Depends(get
 
     access_token = create_access_token(user_id=user_id, tenant_id=tenant_id, role=role)
     return RefreshResponse(access_token=access_token)
+
+
+@router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
+def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> SignupResponse:
+    """Register a new user account for a tenant.
+
+    If tenant_id is not provided or not found, a safe default tenant is used/created.
+    """
+    existing_user = db.query(User).filter(User.email == payload.email).first()
+    if existing_user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is already registered")
+
+    tenant: Tenant | None = None
+    requested_tenant_id = (payload.tenant_id or "").strip()
+    if requested_tenant_id:
+        tenant = db.query(Tenant).filter(Tenant.id == requested_tenant_id).first()
+
+    if not tenant:
+        tenant = db.query(Tenant).filter(Tenant.slug == "default").first()
+
+    if not tenant:
+        tenant = Tenant(name="Default Tenant", slug="default", plan="free")
+        db.add(tenant)
+        db.flush()
+
+    role = (payload.role or "user").strip().lower()
+    if role not in {"user", "dispatcher", "manager", "admin"}:
+        role = "user"
+
+    new_user = User(
+        email=payload.email,
+        full_name=(payload.full_name or "").strip() or None,
+        hashed_password=get_password_hash(payload.password),
+        is_active=True,
+        is_superuser=(role == "admin"),
+        role=role,
+        tenant_id=str(tenant.id),
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return SignupResponse(
+        id=str(new_user.id),
+        email=new_user.email,
+        full_name=new_user.full_name,
+        role=str(new_user.role),
+        tenant_id=str(new_user.tenant_id),
+        is_active=bool(new_user.is_active),
+    )
 
 
 @router.post(

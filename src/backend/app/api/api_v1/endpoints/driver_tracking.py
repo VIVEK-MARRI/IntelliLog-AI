@@ -1,14 +1,12 @@
 """Driver position tracking endpoints."""
 
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from prometheus_client import Counter
 
-from src.backend.app.core.auth import get_current_user, AuthenticatedUser
-from src.backend.app.core.config import settings
+from src.backend.app.api import deps
 from src.backend.app.schemas.tracking import (
     DriverPositionUpdate,
     NearbyDriversResponse,
@@ -17,7 +15,6 @@ from src.backend.app.schemas.tracking import (
 )
 from src.backend.app.services.tracking_service import get_geo_tracker, RedisGeoTracker
 from src.backend.app.services.deviation_detection import DeviationDetector
-from src.backend.app.core.validators import ensure_uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +25,7 @@ rate_limit_redis_failures = Counter(
     ['driver_id']
 )
 
-router = APIRouter(prefix="/api/v1/driver", tags=["driver-tracking"])
+router = APIRouter(prefix="/driver", tags=["driver-tracking"])
 
 
 def _enforce_position_rate_limit(tracker: RedisGeoTracker, driver_id: str) -> None:
@@ -58,7 +55,7 @@ def _enforce_position_rate_limit(tracker: RedisGeoTracker, driver_id: str) -> No
     except Exception:
         # Fail open: Redis down means no rate limiting, not no GPS data
         logger.warning(
-            "Rate limiter Redis unavailable for driver %s — allowing update",
+            "Rate limiter Redis unavailable for driver %s - allowing update",
             driver_id
         )
         rate_limit_redis_failures.labels(driver_id=driver_id).inc()
@@ -68,15 +65,20 @@ def _enforce_position_rate_limit(tracker: RedisGeoTracker, driver_id: str) -> No
 async def update_driver_position(
     position: DriverPositionUpdate,
     tracker: RedisGeoTracker = Depends(get_geo_tracker),
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    tenant_id: str = Depends(deps.get_current_tenant),
 ) -> PositionUpdateResponse:
     """
     Receive driver GPS position update.
     
     Stores position in Redis Geo, publishes to WebSocket subscribers, and checks for route deviation.
     """
-    # Validate timestamp is recent (within 30 seconds)
-    time_diff = (datetime.utcnow() - position.timestamp).total_seconds()
+    # Validate timestamp is recent (within 30 seconds).
+    # Accept both naive and timezone-aware inputs by normalizing to UTC.
+    position_timestamp = position.timestamp
+    if position_timestamp.tzinfo is None:
+        position_timestamp = position_timestamp.replace(tzinfo=timezone.utc)
+
+    time_diff = (datetime.now(timezone.utc) - position_timestamp).total_seconds()
     if time_diff > 30:
         raise HTTPException(
             status_code=400,
@@ -90,8 +92,6 @@ async def update_driver_position(
         )
 
     _enforce_position_rate_limit(tracker, position.driver_id)
-
-    tenant_id = current_user.tenant_id
 
     # Store position in Redis
     stored = tracker.store_position(tenant_id, position)
@@ -144,15 +144,13 @@ async def find_nearby_drivers(
     lon: float = Query(..., ge=-180, le=180, description="Search longitude"),
     radius_km: float = Query(5.0, ge=0.1, le=100, description="Search radius in km"),
     tracker: RedisGeoTracker = Depends(get_geo_tracker),
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    tenant_id: str = Depends(deps.get_current_tenant),
 ) -> NearbyDriversResponse:
     """
     Find drivers within specified radius using Redis GEORADIUS.
     
     Only returns drivers with position updates within last 60 seconds.
     """
-    tenant_id = current_user.tenant_id
-
     drivers = tracker.find_nearby_drivers(tenant_id, lat, lon, radius_km)
 
     return NearbyDriversResponse(
@@ -165,10 +163,9 @@ async def find_nearby_drivers(
 async def get_driver_status(
     driver_id: str,
     tracker: RedisGeoTracker = Depends(get_geo_tracker),
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    tenant_id: str = Depends(deps.get_current_tenant),
 ):
     """Get current status of a specific driver."""
-    ensure_uuid4(driver_id, "driver_id")
     position = tracker.get_driver_position(driver_id)
     if not position:
         raise HTTPException(status_code=404, detail="Driver not found or offline")
@@ -188,17 +185,15 @@ async def get_driver_status(
 async def batch_update_positions(
     positions: list[DriverPositionUpdate],
     tracker: RedisGeoTracker = Depends(get_geo_tracker),
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    tenant_id: str = Depends(deps.get_current_tenant),
 ):
     """
     Batch update multiple driver positions (for fleet optimization).
     """
-    tenant_id = current_user.tenant_id
     results = []
 
     for position in positions:
         try:
-            ensure_uuid4(position.driver_id, "driver_id")
             stored = tracker.store_position(tenant_id, position)
             tracker.publish_position_update(tenant_id, position)
             results.append({

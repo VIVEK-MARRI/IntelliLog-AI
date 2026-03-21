@@ -1,445 +1,526 @@
-# 🚚 IntelliLog-AI
+# IntelliLog-AI
 
-## Intelligent Logistics & Delivery Optimization System
+IntelliLog-AI is an enterprise logistics intelligence platform that unifies dispatch operations, ETA prediction, route optimization, and fleet observability into one production-oriented system.
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-teal.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/Frontend-React%2018-61DAFB.svg)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Containerized-Docker-2496ED.svg)](https://www.docker.com/)
-[![XGBoost](https://img.shields.io/badge/ML-XGBoost-orange.svg)](https://xgboost.readthedocs.io/)
-[![OR-Tools](https://img.shields.io/badge/Optimizer-Google%20OR--Tools-4285F4.svg)](https://developers.google.com/optimization)
-[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791.svg)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Cache-Redis-DC382D.svg)](https://redis.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+<p align="center">
+    <a href="http://localhost:5173"><img src="https://img.shields.io/badge/Open-Frontend-0ea5a4?style=for-the-badge&logo=react&logoColor=white" alt="Open Frontend" /></a>
+    <a href="http://localhost:8000/docs"><img src="https://img.shields.io/badge/Open-API%20Docs-0f766e?style=for-the-badge&logo=fastapi&logoColor=white" alt="Open API Docs" /></a>
+    <a href="./docs/architecture.md"><img src="https://img.shields.io/badge/View-Architecture-115e59?style=for-the-badge&logo=readthedocs&logoColor=white" alt="View Architecture" /></a>
+    <a href="./docs/PRODUCTION_OPERATIONS_GUIDE.md"><img src="https://img.shields.io/badge/Read-Operations%20Guide-134e4a?style=for-the-badge&logo=bookstack&logoColor=white" alt="Read Operations Guide" /></a>
+</p>
 
----
+<p align="center">
+    <img src="https://img.shields.io/badge/Python-3.10%2B-1f2937?style=flat-square&logo=python" alt="Python" />
+    <img src="https://img.shields.io/badge/FastAPI-Backend-1f2937?style=flat-square&logo=fastapi" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/React-Frontend-1f2937?style=flat-square&logo=react" alt="React" />
+    <img src="https://img.shields.io/badge/PostgreSQL-Primary%20Store-1f2937?style=flat-square&logo=postgresql" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/Redis-Cache%20%26%20Broker-1f2937?style=flat-square&logo=redis" alt="Redis" />
+    <img src="https://img.shields.io/badge/Celery-Async%20Workers-1f2937?style=flat-square&logo=celery" alt="Celery" />
+</p>
 
-<div align="center">
+<p align="center">
+    <a href="#platform-overview"><img src="https://img.shields.io/badge/Platform%20Overview-0f172a?style=for-the-badge" alt="Platform Overview" /></a>
+    <a href="#system-architecture"><img src="https://img.shields.io/badge/System%20Architecture-1e293b?style=for-the-badge" alt="System Architecture" /></a>
+    <a href="#local-setup-and-runbook"><img src="https://img.shields.io/badge/Quick%20Start-334155?style=for-the-badge" alt="Quick Start" /></a>
+    <a href="#api-surface"><img src="https://img.shields.io/badge/API%20Surface-475569?style=for-the-badge" alt="API Surface" /></a>
+    <a href="#quality-gates-and-verification"><img src="https://img.shields.io/badge/Quality%20Gates-64748b?style=for-the-badge" alt="Quality Gates" /></a>
+    <a href="#roadmap-and-remaining-work"><img src="https://img.shields.io/badge/Roadmap-0f766e?style=for-the-badge" alt="Roadmap" /></a>
+</p>
 
-**Enterprise-Grade AI/ML Platform for Intelligent Route Optimization & Fleet Management**
+## Table of Contents
 
-[Features](#-key-features) • [Architecture](#-system-architecture) • [Quick Start](#-quick-start) • [API](#-api-documentation) • [Contributing](#-contributing)
+1. Platform Overview
+2. Business and Technical Objectives
+3. Core Capabilities
+4. System Architecture
+5. Service Responsibilities
+6. Data and Event Flows
+7. Technology Stack
+8. Repository Structure
+9. Local Setup and Runbook
+10. Configuration Model
+11. API Surface
+12. Quality Gates and Verification
+13. Security, Multi-Tenancy, and Governance
+14. Deployment and Operations
+15. Role-Based Onboarding Tracks
+16. Go-Live Readiness Checklist
+17. Roadmap and Remaining Work
+18. Documentation Index
+19. License
 
-</div>
+## Platform Overview
 
----
+The platform is designed for operations teams that need reliable ETA predictions, optimized route plans, and live fleet awareness while preserving software quality and model governance.
 
-## 📋 Table of Contents
+IntelliLog-AI provides:
 
-- [Executive Summary](#executive-summary)
-- [Key Features](#-key-features)
-- [System Architecture](#-system-architecture)
-- [Technology Stack](#-technology-stack)
-- [Quick Start](#-quick-start)
-- [Project Structure](#-project-structure)
-- [API Documentation](#-api-documentation)
-- [Development Guide](#-development-guide)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
-- [Roadmap](#-roadmap)
-- [License & Authors](#-license--authors)
-- [Additional Resources](#-additional-resources)
+- A modern operator-facing frontend for dispatch, analytics, and map workflows
+- A FastAPI backend for domain APIs, orchestration, and health telemetry
+- Optimization engines for route planning under practical constraints
+- ML services for ETA estimation and explanation
+- Async infrastructure for background processing and continuous learning workflows
 
----
+## Business and Technical Objectives
 
-## Executive Summary
+### Business Objectives
 
-**IntelliLog-AI** is an enterprise-grade SaaS platform designed for intelligent logistics management and fleet optimization. It leverages cutting-edge AI/ML and mathematical optimization algorithms to solve real-world delivery challenges at scale.
+- Improve on-time delivery performance
+- Reduce route inefficiency and operational cost
+- Increase dispatcher productivity with real-time visibility
+- Build a multi-tenant SaaS foundation for scale
 
-### Core Capabilities
+### Technical Objectives
 
-🎯 **ETA Prediction** — Accurately predict delivery times using XGBoost regression models with ~92% confidence  
-🚗 **Route Optimization** — Solve complex Vehicle Routing Problems (VRP) using Google OR-Tools  
-📊 **Fleet Management** — Real-time tracking, monitoring, and control of delivery operations  
-📈 **Advanced Analytics** — Comprehensive KPI dashboards and performance insights  
-🔐 **Multi-Tenant Architecture** — Complete data isolation with role-based access control (RBAC)  
-🐳 **Cloud-Ready Infrastructure** — Production-ready Docker containerization and scalable deployment  
+- Keep request/response APIs fast and predictable
+- Isolate heavy work via asynchronous processing
+- Preserve tenant isolation and traceability
+- Support model evolution with measurable governance
 
-### Target Use Cases
+## Core Capabilities
 
-- 🚚 **Delivery Services** — Optimize last-mile delivery operations
-- 📦 **Logistics Companies** — Multi-tenant fleet management platforms
-- 🍕 **Food Delivery Aggregators** — Real-time order routing and ETA
-- 🚛 **Fleet Management Platforms** — Enterprise-scale vehicle optimization
-- 📍 **On-Demand Services** — Courier, moving, repair services
+- ETA prediction using XGBoost-based inference pipelines
+- Route optimization via Google OR-Tools VRP solvers
+- WebSocket-powered fleet state updates and operational events
+- Explanation endpoints for ETA factor visibility
+- Tenant-aware API and data model patterns
+- Celery + Redis background processing architecture
+- Learning system hooks for drift detection and retraining
+- Health monitoring and request-level trace IDs
 
----
+## System Architecture
 
-## ✨ Key Features
-
-- **Top-tier ML system** with experiment tracking, drift detection, A/B testing
-- **ETA prediction** (XGBoost) with SHAP explainability, confidence scoring, OOD detection
-- **Route optimization** (OR-Tools) with multi-tenant constraints
-- **Continuous learning** from real feedback, weekly retraining, automatic drift alerts
-- **Production-ready** monitoring: Prometheus metrics, Grafana dashboards, PagerDuty alerts
-- **5-minute dev setup** (no auth needed yet), Docker Compose, Kubernetes-ready
-- **Data governance**: DVC pipelines, MLflow tracking, full lineage & reproducibility
-- **Enterprise scale** with feature store (Redis), batch inference, real-time prediction servers
-
----
-
-## 🏗️ System Architecture
-
-IntelliLog-AI uses a layered, service-oriented architecture that separates frontend presentation, API services, and async ML/optimization workloads. This keeps the system scalable and easy to evolve.
-
-Your system is optimized for **ML excellence**:
-- Feature store (Redis) for fast, reproducible feature retrieval
-- Model registry (MLflow) with versioning and lineage
-- Real-time prediction servers with caching
-- Background training pipeline with DVC orchestration
-- Continuous drift detection and A/B testing
+### High-Level Architecture
 
 ```mermaid
 graph TD
-    User[User / Client] -->|HTTPS| CDN[CDN / Load Balancer]
-    CDN -->|Static Assets| FE[Frontend<br/>React 18 + TypeScript]
-    CDN -->|API Requests| API[Backend API<br/>FastAPI]
-    
-    subgraph "Backend Services"
-        API -->|Auth & User Mgmt| Auth[Auth Service<br/>JWT + OAuth2]
-        API -->|Business Logic| SVC[Core Services<br/>Orders, Drivers, Routes]
-        API -->|Async Tasks| Worker[Celery Workers<br/>Async Processing]
-        
-        SVC -->|Read/Write| DB[(PostgreSQL<br/>Primary Database)]
-        SVC -->|Cache/Query| Store[Feature Store<br/>Redis]
-        SVC -->|Queue| Redis[(Redis<br/>Broker)]
-        
-        Worker -->|ML Inference| ML[XGBoost Models<br/>ETA Prediction]
-        Worker -->|Training| Train[DVC Pipeline<br/>Weekly Retraining]
-        Worker -->|Optimization| OR[OR-Tools Engine<br/>VRP Solver]
+    Ops[Operations User] --> FE[Frontend\nReact + TypeScript + Vite]
+
+    FE -->|REST| API[Backend API\nFastAPI /api/v1]
+    FE -->|WebSocket| WS[Dispatch WS Channel]
+
+    API --> DB[(PostgreSQL)]
+    API --> Redis[(Redis)]
+    API --> Opt[Optimization Service\nOR-Tools]
+    API --> Pred[Prediction Service\nXGBoost]
+
+    API --> Queue[Celery Broker Queue]
+    Queue --> Worker[Celery Worker]
+    Worker --> DB
+    Worker --> Redis
+    Worker --> Pred
+
+    API --> Health[Health + Status + Metrics]
+```
+
+### Container and Service Topology
+
+```mermaid
+flowchart LR
+    subgraph Browser[User Browser]
+        UI[Operations Console]
     end
-    
-    subgraph "Monitoring"
-        Metrics[Prometheus<br/>Metrics]
-        Drift[Drift Detector<br/>KS + MMD]
-        AB[A/B Test<br/>Framework]
+
+    subgraph DevStack[Docker Compose Dev Stack]
+        FE[frontend:5173]
+        API[backend:8000]
+        CW[celery_worker]
+        DB[(postgres:5432)]
+        REDIS[(redis:6379)]
     end
-    
-    SVC --> Metrics
-    Train --> Drift
-    Drift --> AB
+
+    UI --> FE
+    FE --> API
+    FE -->|WebSocket| API
+    API --> DB
+    API --> REDIS
+    API --> CW
+    CW --> DB
+    CW --> REDIS
 ```
 
-- **Core services** handle orders, drivers, routes, and analytics
-- **Async workers** run ETA inference, training, and VRP optimization
-- **Feature store** enables reproducible, fast predictions
-- **Continuous learning** from real feedback with automatic drift alerts
-- **ML governance** via MLflow tracking, DVC pipelines, and A/B testing
+### Critical Runtime Sequence
 
-For ultra-detailed ML system design, see [ML_SYSTEM.md](docs/ML_SYSTEM.md), [LEARNING_SYSTEM.md](docs/LEARNING_SYSTEM.md), and [MLOPS_DEPLOYMENT.md](docs/MLOPS_DEPLOYMENT.md).
+```mermaid
+sequenceDiagram
+    participant User as Dispatcher
+    participant FE as Frontend
+    participant API as FastAPI
+    participant OPT as Optimization Service
+    participant DB as PostgreSQL
+    participant WS as WebSocket Channel
 
-### Database Design
-
-```
-TENANT (Multi-Tenancy Root)
-├── USER
-│   ├── id (UUID, PK)
-│   ├── email (unique per tenant)
-│   ├── role (Admin, Manager, Dispatcher)
-│   └── tenant_id (FK)
-│
-├── DRIVER
-│   ├── id (UUID, PK)
-│   ├── name
-│   ├── status (Active, Off, Break)
-│   ├── vehicle_capacity
-│   └── tenant_id (FK)
-│
-├── ORDER
-│   ├── id (UUID, PK)
-│   ├── order_number (unique per tenant)
-│   ├── delivery_address
-│   ├── weight, lat, lon
-│   ├── time_window (start, end)
-│   ├── status (Pending, Assigned, Completed)
-│   ├── route_id (FK)
-│   └── tenant_id (FK)
-│
-└── ROUTE
-    ├── id (UUID, PK)
-    ├── status (Planning, Active, Completed)
-    ├── total_distance, total_time
-    ├── geometry (GeoJSON)
-    ├── driver_id (FK)
-    └── tenant_id (FK)
-
-Key Design Patterns:
-✓ UUID primary keys for security
-✓ Soft deletes for audit trails
-✓ Timestamps (created_at, updated_at)
-✓ Tenant ID partitioning
-✓ Indexed foreign keys
+    User->>FE: Trigger route optimization
+    FE->>API: POST /api/v1/routes/optimize
+    API->>OPT: Solve VRP with constraints
+    OPT-->>API: Optimized route plan
+    API->>DB: Persist route assignments
+    API-->>FE: Return route response
+    API-->>WS: Publish route and status update
+    WS-->>FE: Push live update
+    FE-->>User: Render optimized routes on map
 ```
 
-### Data Flow Architecture
+### Architecture Layers
 
-```
-ORDER INGESTION FLOW:
-1. User uploads CSV/API request
-2. Backend validates data structure
-3. Data stored in PostgreSQL
-4. Celery task queued for processing
-5. Frontend receives confirmation
+```mermaid
+graph BT
+    L4[Data Layer\nPostgreSQL and Redis]
+    L3[Domain Services Layer\nPrediction, Optimization, Learning]
+    L2[Application Layer\nFastAPI Routers and Orchestration]
+    L1[Experience Layer\nReact Operations Console]
 
-ETA PREDICTION FLOW:
-1. Backend receives order data
-2. Feature extraction & preprocessing
-3. XGBoost model inference
-4. Results cached in Redis
-5. Database update with predictions
-6. Frontend displays ETAs
-
-ROUTE OPTIMIZATION FLOW:
-1. Collect pending orders
-2. Get available drivers
-3. Invoke OR-Tools VRP solver
-4. Generate optimized routes
-5. Cache results in Redis
-6. Frontend visualizes on map
-7. Send notifications to drivers
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
 ```
 
----
+### Architecture Legend
 
-## 🛠️ Technology Stack
+| Diagram Symbol | Meaning | Notes |
+|---|---|---|
+| Rounded rectangle node | Service or logical component | Examples: frontend, backend API, worker |
+| Cylinder node | Data store | PostgreSQL and Redis |
+| Solid arrow | Primary runtime dependency | Synchronous or orchestration call path |
+| Labeled arrow | Protocol or intent | REST, WebSocket, queue, publish |
+| Sequence diagram lifeline | Runtime actor | User, UI, API, service, storage |
+| Subgraph container | Deployment or domain boundary | Browser, Docker stack, architecture layer |
 
-**Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Shadcn/UI, Leaflet, Recharts
+### Architecture Principles
 
-**Backend:** FastAPI, Python 3.10+, SQLAlchemy, Pydantic, Celery, XGBoost, OR-Tools
+- API plane and worker plane are separated for reliability
+- Stateful data stays in PostgreSQL; transient/high-throughput state uses Redis
+- User workflows remain responsive by delegating long-running tasks to workers
+- Health and traceability are first-class concerns for runtime operations
 
-**Infrastructure:** PostgreSQL, Redis, Docker, Docker Compose, Nginx
+### Architecture Decision Highlights
 
----
+| Decision Area | Current Choice | Rationale | Trade-off |
+|---|---|---|---|
+| API Framework | FastAPI | High developer velocity, type-driven contracts, strong async support | Requires discipline to keep service boundaries clean |
+| Async Workloads | Celery + Redis | Reliable offloading of long-running tasks and future scaling | Operational overhead for worker monitoring |
+| Primary Store | PostgreSQL | Strong consistency and mature relational modeling | Requires indexing and query tuning at scale |
+| Cache and Broker | Redis | Low-latency caching and queue broker reuse | Memory policy tuning needed for sustained load |
+| Route Optimization | OR-Tools | Strong VRP constraint handling and proven solver quality | Solver complexity can raise compute cost |
+| ETA Modeling | XGBoost | Strong tabular performance and interpretability compatibility | Requires robust feature governance and drift controls |
+| Real-time Updates | WebSocket dispatch channel | Immediate fleet state visibility for operators | Requires reconnect handling and idempotent event processing |
+| Observability Pattern | Health endpoints + request IDs | Fast diagnosis and traceability across API calls | Needs full metric/alert maturity for production SLAs |
 
-## 🚀 Quick Start (5 Minutes)
+## Service Responsibilities
 
-### One-Command Setup
+### Frontend
+
+- Dashboard and fleet control user experiences
+- Route and order visualization over map interfaces
+- Real-time rendering of operational status and websocket events
+
+### Backend API
+
+- Request validation and domain orchestration
+- Tenant-aware order, driver, route, and analytics endpoints
+- Prediction and explanation endpoint exposure
+- Health and status contracts consumed by UI and tests
+
+### Celery Worker
+
+- Background processing for computationally expensive or asynchronous jobs
+- Supports scalable execution for learning and optimization-adjacent workflows
+
+### Data Stores
+
+- PostgreSQL: source of truth for transactional logistics entities
+- Redis: broker, caching, and feature-store style fast retrieval
+
+## Data and Event Flows
+
+### Order to ETA Flow
+
+1. Orders are submitted or synchronized into backend services
+2. Domain validation and persistence are applied
+3. ETA prediction service computes outcomes
+4. Explanation data is prepared for UI consumption
+5. UI displays ETA, confidence, and rationale
+
+### Optimization Flow
+
+1. Candidate orders and active drivers are collected
+2. OR-Tools VRP solver computes route plans
+3. Routes are persisted and published through API responses
+4. Fleet views reflect planned and active execution states
+
+### Live Dispatch Flow
+
+1. Position updates arrive through driver tracking interfaces
+2. Backend processes and publishes updates via WebSocket
+3. Fleet UI updates markers, metrics, and operational alerts
+
+## Technology Stack
+
+### Frontend
+
+- React 19, TypeScript, Vite
+- Leaflet and React-Leaflet for map rendering
+- Recharts for KPI and trend visualization
+- Framer Motion and GSAP for interaction polish
+
+### Backend and ML
+
+- Python 3.10+
+- FastAPI, Pydantic, SQLAlchemy, Alembic
+- Celery for asynchronous task execution
+- XGBoost and scikit-learn for ETA modeling
+- Google OR-Tools for constrained routing
+
+### Infrastructure
+
+- PostgreSQL 15
+- Redis 7
+- Docker and Docker Compose
+- MLflow for model and experiment tracking
+
+## Repository Structure
+
+```text
+.
+|-- src/
+|   |-- backend/
+|   |   |-- app/
+|   |   |   |-- api/
+|   |   |   |-- core/
+|   |   |   |-- db/
+|   |   |   |-- services/
+|   |-- frontend/
+|   |   |-- src/
+|   |       |-- pages/
+|   |       |-- components/
+|-- alembic/
+|-- scripts/
+|-- docs/
+|-- models/
+|-- tests/
+|-- docker-compose.dev.yml
+|-- docker-compose.yml
+```
+
+## Local Setup and Runbook
+
+### Prerequisites
+
+- Python 3.10 or newer
+- Node.js 18 or newer
+- Docker Desktop for containerized development
+
+### Option A: Full Development Stack (Recommended)
+
+> [!TIP]
+> Best default for new contributors and demos: this mode starts frontend, backend, worker, database, and Redis together with aligned local ports.
 
 ```bash
-# Clone and initialize everything
-git clone https://github.com/VIVEK-MARRI/IntelliLog-AI.git
-cd IntelliLog-AI
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Default local endpoints:
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- PostgreSQL: localhost:5433
+- Redis: localhost:6379
+
+### Option B: Hybrid Local Run
+
+> [!NOTE]
+> Use hybrid mode when iterating quickly on frontend/backend code without rebuilding containers on every change.
+
+Bootstrap scripts:
+
+```bash
+./scripts/dev_bootstrap.ps1
 ./scripts/dev_bootstrap.sh
-
-# Services start automatically
-# Frontend:  http://localhost:5173
-# API:       http://localhost:8000
-# Docs:      http://localhost:8000/docs
 ```
 
-**What it does:**
-- Creates Python venv
-- Installs dependencies
-- Initializes PostgreSQL database
-- Downloads pre-trained ML models
-- Seeds 1,000 sample deliveries
-- Prints start commands
-
----
-
-### Without Bootstrap Script
-
-**Option A: Docker Compose** (recommended for production-like env)
+Run backend:
 
 ```bash
-docker compose up --build
+uvicorn src.backend.app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Option B: Local Python** (fastest for ML development)
+Run frontend:
 
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-alembic upgrade head
-python scripts/seed_db.py
-
-# Terminal 1: Backend
-uvicorn src.backend.app.main:app --reload
-
-# Terminal 2: Frontend
-cd src/frontend && npm run dev
-
-# Terminal 3: Worker
-celery -A src.backend.worker.celery_app worker --loglevel=info
-```
-
----
-
-## 📁 Project Structure
-
-```
-IntelliLog-AI/
-│
-├── src/
-│   ├── backend/                         # FastAPI backend
-│   ├── frontend/                        # React + Vite frontend
-│   ├── worker/                          # Celery workers
-│   ├── optimization/                    # VRP solver logic
-│   ├── features/                        # Feature engineering
-│   └── etl/                             # Data ingestion
-├── docs/                                # Architecture, API, deployment docs
-├── scripts/                             # Seed, train, validate
-├── alembic/                             # DB migrations
-├── models/                              # ML artifacts
-├── docker-compose.yml                   # Local orchestration
-├── Dockerfile                           # Backend image
-└── README.md                            # This file
-```
-
----
-
-## 📡 API Documentation
-
-**Quick links:**
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-- Full API reference: [docs/api.md](docs/api.md)
-
-**Main resource groups:**
-- Auth & tenants
-- Orders & ETA prediction
-- Routes & optimization
-- Drivers & fleet status
-- Analytics & monitoring
-
----
-
-## 🔧 Development Guide
-
-```bash
-# Backend + frontend
-# Install dependencies
-pip install -r requirements.txt
+cd src/frontend
 npm install
-
-# Setup database
-alembic upgrade head
-
-# Start services
-uvicorn src.backend.app.main:app --reload &
 npm run dev
 ```
 
-For code quality, tests, and migrations, see [docs/README.md](docs/README.md).
+## Configuration Model
 
----
+> [!IMPORTANT]
+> Keep secrets out of source control. Use environment variables or a dedicated secret manager for production deployments.
 
-## 📦 Deployment
+Primary runtime configuration is environment-driven.
 
-```bash
-# Build production images
-docker compose -f docker-compose.yml build
+Key variables:
 
-# Start services
-docker compose up -d
+- DATABASE_URL
+- REDIS_URL
+- REDIS_FEATURE_STORE_URL
+- CELERY_BROKER_URL
+- MODEL_PATH
+- OSRM_BASE_URL
+- AUTO_RETRAIN_ENABLED
+- DRIFT_DETECTION_ENABLED
+- MLFLOW_TRACKING_URI
 
-# Scale backend
-docker compose up -d --scale backend=3
+Example local database URL:
 
-# Monitor logs
-docker compose logs -f
-
-# Stop services
-docker compose down
+```text
+postgresql://postgres:postgres@localhost:5433/intellog_ai_dev
 ```
 
-Environment variables and cloud deployment guidance: [docs/deployment.md](docs/deployment.md).
+## API Surface
 
----
+Representative endpoints:
 
-## 🤝 Contributing
+- /api/v1/health
+- /api/v1/orders
+- /api/v1/routes
+- /api/v1/drivers
+- /api/v1/driver/position
+- /api/v1/predictions/explain
+- /api/v1/ml/predict/eta
+- /api/v1/status/system
+- /api/v1/learning/*
+- /api/v1/analytics/*
 
-### Code Style
-- **Python**: PEP 8, `black` formatter, `pylint` linter
-- **TypeScript**: ESLint, `prettier` formatter
-- **Commits**: Conventional commits (`feat:`, `fix:`, `docs:`)
+Interactive contracts:
 
-### Pull Request Process
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/feature-name`
-3. Make changes with tests
-4. Run quality checks: `black`, `pylint`, `mypy`, `pytest`
-5. Commit with clear messages
-6. Push and create Pull Request
-7. Wait for code review
+- Swagger UI at /docs
+- OpenAPI schema at /openapi.json
 
-### Issue Reporting
-- Use GitHub Issues
-- Provide reproduction steps
-- Include environment details
-- Attach relevant logs
+## Quality Gates and Verification
 
----
+> [!TIP]
+> Treat these commands as release gates. A production-ready branch should pass all three before deployment.
 
-## 🗺️ Roadmap
+### Frontend build gate
 
-### Q1 2026
-- [ ] Real-time GPS tracking
-- [ ] Mobile app (React Native)
-- [ ] Advanced forecasting (LSTM)
+```bash
+cd src/frontend
+npm run build
+```
 
-### Q2 2026
-- [ ] Google Maps integration
-- [ ] WebSocket notifications
-- [ ] Multi-language support
+### Database migration gate
 
-### Q3 2026
-- [ ] AI routing suggestions
-- [ ] ML model A/B testing
-- [ ] Advanced reporting
+```bash
+alembic upgrade head
+```
 
-### Q4 2026
-- [ ] Blockchain audit trail
-- [ ] Supply chain optimization
-- [ ] Marketplace integration
+### End-to-end wiring gate
 
----
+```bash
+npx playwright test tests/e2e/wiring.spec.ts --config playwright.config.ts
+```
 
-## 📄 License & Authors
+Wiring suite coverage includes:
 
-**License**: MIT — See [LICENSE](LICENSE) file
+- Health and readiness status rendering
+- Tenant-aware orders API behavior
+- Dashboard and fleet visual integrity
+- Explanation flow and factor rendering
+- WebSocket live state and reconnect behavior
+- Error handling and non-crash UX guarantees
 
-**Author**: Vivek Marri  
-**Email**: marrivivek26@gmail.com  
-**GitHub**: [@VIVEK-MARRI](https://github.com/VIVEK-MARRI)  
-**Repository**: [IntelliLog-AI](https://github.com/VIVEK-MARRI/IntelliLog-AI)
+## Security, Multi-Tenancy, and Governance
 
----
+- Tenant-aware data access patterns across API boundaries
+- Auth and role routes present in v1 API structure
+- Request-level traceability through X-Request-ID middleware
+- Typed validation and serialization via Pydantic models
+- Drift/retraining and model tracking hooks for lifecycle governance
 
-## 📚 Additional Resources
+## Deployment and Operations
 
-### ML System Design (Top 1%)
-- **[ML_QUICK_START.md](docs/ML_QUICK_START.md)** — 5-minute guide from zero to first prediction
-- **[ML_SYSTEM.md](docs/ML_SYSTEM.md)** — Production ML architecture, feature store, model registry, explainability
-- **[LEARNING_SYSTEM.md](docs/LEARNING_SYSTEM.md)** — Continuous learning pipeline, drift detection, A/B testing
-- **[MLOPS_DEPLOYMENT.md](docs/MLOPS_DEPLOYMENT.md)** — Deployment stages, CI/CD, monitoring, runbooks
+> [!WARNING]
+> The default compose settings are development-friendly, not production-hardened. Enforce security controls before internet exposure.
 
-### Real-World Readiness
-- **[REAL_WORLD_ASSESSMENT.md](docs/REAL_WORLD_ASSESSMENT.md)** — Honest assessment of what works now vs what needs implementation
-- **Real-world use cases**: $2-5M annual savings potential (100-driver fleet)
-- **Production timeline**: 8-12 weeks to full deployment
+Two compose profiles are available:
 
-### Business & Go-To-Market
-- **[BUSINESS_STRATEGY.md](docs/BUSINESS_STRATEGY.md)** — Pricing models ($2K-$30K/month), sales playbook, TAM analysis, 90-day to first customer
-- **Customer profiles**: Who buys (regional logistics, 3PLs, couriers) vs who won't (Uber/Amazon)
-- **Revenue potential**: $600K Year 1 → $2-3M Year 2 → $5-10M+ Year 3
+- docker-compose.dev.yml for active development workflows
+- docker-compose.yml for alternate containerized stack topology
 
-### Technical References
-- **[architecture.md](docs/architecture.md)** — System architecture overview
-- **[API Reference](docs/api.md)** — REST API endpoints (add auth later)
-- **[CONTRIBUTING](CONTRIBUTING.md)** — Development guidelines
-- **[Contributing Guide](CONTRIBUTING.md)** — Contribution guidelines
+Recommended production hardening baseline:
 
----
+- strict CORS and trusted host policy
+- secret and key rotation strategy
+- TLS termination and secure ingress
+- metrics dashboards with SLO alerts
+- backup, restore, and disaster recovery validation
 
-<div align="center">
+## Role-Based Onboarding Tracks
 
-**Made with ❤️ by Vivek Marri** .
+### Software Engineer Track
 
-⭐ If you find this helpful, please give it a star on GitHub!
+1. Start with docs/START_HERE.md and docs/DEVELOPER_GUIDE.md
+2. Bring up the stack using docker-compose.dev.yml
+3. Validate frontend build, migrations, and wiring tests
+4. Review service boundaries in backend API and frontend pages
+5. Deliver first change with tests and verification notes
 
-[⬆ Back to Top](#intellog-ai)
+### ML Engineer Track
 
-</div>
+1. Review docs/ML_SYSTEM.md and docs/LEARNING_SYSTEM.md
+2. Inspect model artifacts and training scripts in scripts/
+3. Validate prediction and explanation endpoints end-to-end
+4. Confirm drift/retraining configuration and MLflow tracking
+5. Document model-change impact and rollback plan
+
+### DevOps and SRE Track
+
+1. Review docs/PRODUCTION_OPERATIONS_GUIDE.md and docs/SECURITY_BEST_PRACTICES.md
+2. Verify environment variables and secret handling strategy
+3. Validate service health, logs, and failure recovery workflows
+4. Define SLI/SLO thresholds and alert routes
+5. Execute backup and restore rehearsal before production sign-off
+
+## Go-Live Readiness Checklist
+
+| Area | Required Check | Status Template |
+|---|---|---|
+| Application Health | /api/v1/health reports healthy for API, DB, Redis, worker, model | Pass or Fail |
+| Build Integrity | Frontend production build completes without errors | Pass or Fail |
+| Schema State | Alembic migrations applied and consistent across environments | Pass or Fail |
+| E2E Behavior | Wiring suite passes for health, API, websocket, and error handling | Pass or Fail |
+| Security | Secret management, CORS, and host policies reviewed | Pass or Fail |
+| Observability | Metrics, logs, and alerting paths validated | Pass or Fail |
+| Recovery | Backup and restore procedure tested with evidence | Pass or Fail |
+| Release Control | Rollback strategy documented and rehearsal completed | Pass or Fail |
+
+> [!IMPORTANT]
+> Promote to production only after all checklist rows are marked Pass with reviewer sign-off.
+
+## Roadmap and Remaining Work
+
+Priority next steps:
+
+1. Production authentication and RBAC hardening review
+2. Full observability implementation: dashboards, alerts, and SLI/SLOs
+3. CI/CD release gates for backend, frontend, and E2E workflows
+4. Model promotion governance with rollback automation
+5. Worker scaling and queue backpressure tuning
+6. DR runbooks and periodic recovery drills
+
+## Documentation Index
+
+- docs/START_HERE.md
+- docs/DEVELOPER_GUIDE.md
+- docs/architecture.md
+- docs/ML_SYSTEM.md
+- docs/LEARNING_SYSTEM.md
+- docs/MLOPS_DEPLOYMENT.md
+- docs/PRODUCTION_OPERATIONS_GUIDE.md
+- docs/SECURITY_BEST_PRACTICES.md
+
+## License
+
+MIT License. See LICENSE.

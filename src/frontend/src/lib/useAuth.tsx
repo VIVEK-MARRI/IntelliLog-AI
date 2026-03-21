@@ -40,16 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const formData = new FormData();
-    formData.append('username', email);
-    formData.append('password', password);
-
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/token`, {
       method: 'POST',
-      body: formData,
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
@@ -60,8 +57,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const data = await response.json();
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('refresh_token', data.refresh_token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    setUser(data.user);
+
+    const meResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${data.access_token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (meResponse.ok) {
+      const me = await meResponse.json();
+      localStorage.setItem('user', JSON.stringify(me));
+      setUser(me);
+    } else {
+      localStorage.removeItem('user');
+      setUser(null);
+    }
   };
 
   const logout = () => {

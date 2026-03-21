@@ -145,7 +145,7 @@ class SHAPExplainer:
         # Generate "what would help" suggestion
         what_would_help = self._generate_what_would_help(top_factors, feature_values)
 
-        return {
+        explanation = {
             "summary": summary,
             "factors": [f.to_dict() for f in top_factors],
             "what_would_help": what_would_help,
@@ -153,6 +153,9 @@ class SHAPExplainer:
             "actual_prediction": round(actual_prediction, 1),
             "top_k_factors": top_k,
         }
+
+        # Validate that no raw Python field names appear in human-visible text
+        return self._validate_explanation(explanation)
 
     def _generate_sentence(
         self, feature_name: str, shap_value: float, feature_value: Optional[float] = None
@@ -288,7 +291,7 @@ class SHAPExplainer:
             return f"Predicted {eta_int} min based on delivery characteristics"
 
     def _generate_what_would_help(
-        self, top_factors: List[ExplanationFactor], feature_values: Dict[str, float]
+        self, top_factors: List[ExplanationFactor], feature_values: Dict[str, Any]
     ) -> Optional[str]:
         """Generate actionable suggestion to reduce delivery time."""
 
@@ -300,19 +303,132 @@ class SHAPExplainer:
                 if factor.feature == "driver_zone_familiarity":
                     familiarity = feature_values.get("driver_zone_familiarity", 0.5)
                     if familiarity < 0.7:
-                        return f"Assigning a driver familiar with this zone would save ~{int(factor.impact_minutes)} min"
-
-                elif factor.feature == "current_traffic_ratio":
-                    traffic_ratio = feature_values.get("current_traffic_ratio", 1.0)
-                    if traffic_ratio > 1.5:
-                        return f"Delivery soon (off-peak) would save ~{int(factor.impact_minutes)} min"
-
-                elif factor.feature == "distance_km":
-                    distance = feature_values.get("distance_km", 10)
-                    if distance > 20:
-                        return f"Alternative route might save ~{int(factor.impact_minutes)} min"
+                        driver_name = self._coalesce_text(
+                            feature_values,
+                            [
+                                "recommended_driver_name",
+                                "suggested_driver_name",
+                                "best_driver_name",
+                                "alternate_driver_name",
+                            ],
+                        )
+                        zone = self._coalesce_text(
+                            feature_values,
+                            [
+                                "recommended_driver_zone",
+                                "suggested_driver_zone",
+                                "best_driver_zone",
+                                "target_zone_name",
+                                "zone_name",
+                            ],
+                        )
+                        if driver_name and zone:
+                            return self._format_assignment_suggestion(
+                                driver_name, zone, factor.impact_minutes
+                            )
 
         return None
+
+    def _coalesce_text(self, values: Dict[str, Any], keys: List[str]) -> Optional[str]:
+        """Return first non-empty string from a candidate key list."""
+        for key in keys:
+            value = values.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return None
+
+    def _format_assignment_suggestion(self, driver_name: str, zone: str, minutes: float) -> str:
+        """Generate standardized driver reassignment suggestion copy."""
+        minute_count = max(1, int(round(abs(minutes))))
+        return (
+            f"Assigning {driver_name} ({zone} expert) would save approximately {minute_count} minutes"
+        )
+
+    def _validate_explanation(self, explanation: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Ensure no raw Python field names appear in human-visible text fields.
+        Catches cases where sentence generation falls back to raw feature names.
+        
+        This is a safety net to catch backend issues before they reach the frontend.
+        """
+        FORBIDDEN_PATTERNS = [
+            "_ratio",
+            "_km",
+            "_encoded",
+            "_min",
+            "_score",
+            "_severity",
+            "_familiarity",
+            "_avg_",
+            "_std_",
+            "_condition",
+        ]
+
+        # Validate factors
+        for factor in explanation.get("factors", []):
+            sentence = factor.get("sentence", "")
+            for pattern in FORBIDDEN_PATTERNS:
+                if pattern in sentence:
+                    # Sentence contains a raw field name — regenerate it
+                    logger.warning(
+                        f"Raw field name pattern '{pattern}' found in sentence: {sentence}. "
+                        f"Regenerating fallback for feature: {factor.get('feature')}"
+                    )
+                    factor["sentence"] = self._generate_fallback_sentence(
+                        factor.get("feature", "unknown"),
+                        factor.get("impact_minutes", 0),
+                        factor.get("feature_value"),
+                    )
+                    break
+
+        # Validate what_would_help
+        what_would_help = explanation.get("what_would_help", "")
+        if what_would_help:
+            for pattern in FORBIDDEN_PATTERNS:
+                if pattern in what_would_help:
+                    # Strip the bad suggestion rather than show a technical string
+                    logger.warning(
+                        f"Raw field name pattern '{pattern}' found in what_would_help: {what_would_help}. "
+                        f"Removing suggestion to prevent confusing dispatcher."
+                    )
+                    explanation["what_would_help"] = None
+                    break
+
+        return explanation
+
+    def _generate_fallback_sentence(
+        self,
+        feature: str,
+        impact_minutes: float,
+        feature_value: Optional[float] = None,
+    ) -> str:
+        """
+        Generate human-readable fallback sentence when normal generation fails.
+        Used by _validate_explanation to fix sentences with raw field names.
+        """
+        READABLE = {
+            "current_traffic_ratio": "Traffic conditions",
+            "is_peak_hour": "Rush hour",
+            "driver_zone_familiarity": "Driver familiarity with area",
+            "zone_familiarity": "Driver familiarity with area",
+            "distance_km": "Delivery distance",
+            "weight": "Package weight",
+            "weather_severity": "Weather conditions",
+            "vehicle_type_encoded": "Vehicle type",
+            "historical_avg_traffic_same_hour": "Typical traffic at this time",
+            "historical_std_traffic_same_hour": "Traffic unpredictability",
+            "effective_travel_time_min": "Travel time",
+            "time_of_day_encoded": "Time of day",
+            "day_of_week": "Day of week",
+            "package_weight": "Package weight",
+            "vehicle_capacity": "Vehicle capacity",
+            "weather_condition": "Weather conditions",
+        }
+
+        label = READABLE.get(feature, feature.replace("_", " ").title())
+        direction = "adding" if impact_minutes > 0 else "saving"
+        mins = abs(round(impact_minutes))
+        return f"{label} is {direction} ~{mins} minute{'s' if mins != 1 else ''}"
 
 
 def explain_prediction(

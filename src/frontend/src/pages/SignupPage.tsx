@@ -65,6 +65,18 @@ export const SignupPage: React.FC = () => {
         localStorage.setItem('refresh_token', data.refresh_token);
       }
 
+      // Backend auth returns tokens only; fetch profile separately.
+      const meResponse = await fetch('http://localhost:8000/api/v1/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${data.access_token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (meResponse.ok) {
+        const me = await meResponse.json();
+        localStorage.setItem('user', JSON.stringify(me));
+      }
+
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (err: any) {

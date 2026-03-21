@@ -1,0 +1,57 @@
+/* Custom scrollbar - dark themed */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0A0A0F; }
+::-webkit-scrollbar-thumb {
+  background: #1E2A42;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: #00D4AA; }
+
+/* Selection color */
+::selection { background: rgba(0,212,170,0.2); color: #F1F5F9; }
+
+/* Focus ring - replaces default blue with teal */
+*:focus-visible {
+  outline: 2px solid #00D4AA;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Cursor crosshair on map area */
+.leaflet-container { cursor: crosshair !important; }
+.leaflet-marker-icon { cursor: pointer !important; }
+
+/* Global interaction polish */
+button {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+button:hover {
+  transform: scale(1.02);
+}
+button:active {
+  transform: scale(0.97);
+}
+
+/* Tooltip polish */
+.ds-tooltip {
+  background: #1E2A42 !important;
+  color: #F1F5F9 !important;
+  border: 1px solid rgba(0,212,170,0.4) !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: ds-tooltip-in 150ms ease-out;
+  transform-origin: center;
+}
+
+@keyframes ds-tooltip-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

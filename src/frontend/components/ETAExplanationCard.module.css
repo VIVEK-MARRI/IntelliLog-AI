@@ -162,6 +162,13 @@
   border-radius: 6px;
   padding: 12px;
   transition: all 0.2s ease;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.factorVisible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .factor:hover {
@@ -224,6 +231,26 @@
   line-height: 1.4;
 }
 
+.factorBarTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.factorBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4aa, #2dd4bf);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.5s ease;
+}
+
+.factorBarFillVisible {
+  transform: scaleX(1);
+}
+
 .factorIcon {
   margin-right: 4px;
 }
@@ -274,6 +301,26 @@
   font-size: 13px;
   color: #78350f;
   line-height: 1.4;
+  position: relative;
+}
+
+.suggestion p::after {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 2px;
+  background: #78350f;
+  animation: blink-caret 1s step-end infinite;
+}
+
+@keyframes blink-caret {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Collapsible Details */

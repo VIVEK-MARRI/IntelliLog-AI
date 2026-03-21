@@ -28,12 +28,25 @@ async def websocket_dispatch_endpoint(websocket: WebSocket, tenant_id: str):
     - Graceful disconnection cleanup
     """
     authorization = websocket.headers.get("authorization")
-    if not authorization or not authorization.startswith("Bearer "):
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+
+    # Browser WebSocket clients cannot set custom Authorization headers.
+    # Accept token from query param or subprotocol as a fallback.
+    if not token:
+        token = websocket.query_params.get("token")
+
+    if not token:
+        raw_protocol = websocket.headers.get("sec-websocket-protocol", "")
+        token = raw_protocol.split(",")[0].strip() if raw_protocol else None
+
+    if not token:
         await websocket.close(code=4401)
         return
 
     try:
-        payload = decode_jwt_token(authorization.split(" ", 1)[1])
+        payload = decode_jwt_token(token)
     except Exception:
         await websocket.close(code=4401)
         return
@@ -140,3 +153,5 @@ async def websocket_dispatch_endpoint(websocket: WebSocket, tenant_id: str):
                 await redis_client.close()
             except Exception as e:
                 logger.error(f"Failed to close redis client: {e}")
+
+

@@ -19,17 +19,23 @@ class RedisGeoTracker:
 
     def __init__(self, redis_url: str = settings.REDIS_FEATURE_STORE_URL):
         """Initialize Redis connection pool."""
-        self.redis: Redis = redis.from_url(
+        pool = redis.ConnectionPool.from_url(
             redis_url,
+            max_connections=50,
             decode_responses=True,
-            connection_pool=redis.ConnectionPool.from_url(
-                redis_url,
-                max_connections=50,
-                decode_responses=True,
-            ),
         )
+        self.redis: Redis = Redis(connection_pool=pool)
         self.position_ttl = 120  # seconds
         self.active_driver_ttl = 3600  # seconds
+
+    def _geoadd_driver(self, geo_key: str, driver_id: str, longitude: float, latitude: float) -> None:
+        """Add driver location in a redis-py version-compatible way."""
+        try:
+            # redis-py >= 4 supports mapping keyword.
+            self.redis.geoadd(geo_key, mapping={driver_id: (longitude, latitude)})
+        except TypeError:
+            # redis-py 3 expects positional values: lon, lat, member.
+            self.redis.geoadd(geo_key, [longitude, latitude, driver_id])
 
     def store_position(
         self, tenant_id: str, position: DriverPositionUpdate
@@ -40,9 +46,11 @@ class RedisGeoTracker:
             hash_key = f"driver:{position.driver_id}:position"
 
             # GEOADD to sorted set for geo queries
-            self.redis.geoadd(
+            self._geoadd_driver(
                 geo_key,
-                mapping={position.driver_id: (position.longitude, position.latitude)},
+                position.driver_id,
+                position.longitude,
+                position.latitude,
             )
 
             # Store full position data in hash with TTL
