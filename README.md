@@ -144,187 +144,262 @@ The platform continuously:
 ### High-Level Architecture
 
 ```mermaid
-flowchart LR
-  subgraph Clients
-    DR[Driver Devices]
-    DS[Dispatchers / Ops]
-    EX[Executives]
-  end
+flowchart TB
+    %% IntelliLog AI — Premium Architecture Styling
+    classDef ui fill:#0F172A,stroke:#3B82F6,stroke-width:2px,color:#F8FAFC,rx:10,ry:10
+    classDef edge fill:#1E293B,stroke:#64748B,stroke-width:2px,color:#F1F5F9,rx:10,ry:10
+    classDef api fill:#1E1B4B,stroke:#6366F1,stroke-width:2px,color:#EEF2FF,rx:10,ry:10
+    classDef ml fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#ECFDF5,rx:10,ry:10
+    classDef xai fill:#134E4A,stroke:#14B8A6,stroke-width:2px,color:#F0FDFA,rx:10,ry:10
+    classDef agent fill:#4C1D95,stroke:#A78BFA,stroke-width:2px,color:#F5F3FF,rx:10,ry:10
+    classDef opt fill:#7C2D12,stroke:#FB923C,stroke-width:2px,color:#FFF7ED,rx:10,ry:10
+    classDef db fill:#1E3A8A,stroke:#60A5FA,stroke-width:2px,color:#EFF6FF,rx:10,ry:10
+    classDef cache fill:#7F1D1D,stroke:#F87171,stroke-width:2px,color:#FEF2F2,rx:10,ry:10
+    classDef obs fill:#451A03,stroke:#F59E0B,stroke-width:2px,color:#FEF3C7,rx:10,ry:10
+    classDef sim fill:#374151,stroke:#9CA3AF,stroke-width:2px,color:#F9FAFB,rx:10,ry:10
+    classDef cluster fill:none,stroke:#475569,stroke-width:1px,stroke-dasharray:5 5,color:#94A3B8
 
-  subgraph Edge
-    NG[Nginx Reverse Proxy]
-  end
+    subgraph EdgeLayer["Edge Layer"]
+        NG["Nginx Reverse Proxy<br/>TLS • Routing • Caching"]:::edge
+    end
 
-  subgraph Frontend
-    FD[React + TypeScript UI]
-  end
+    subgraph PresentationLayer["Presentation Layer"]
+        UI["React 18 + TypeScript<br/>Glassmorphism Dashboard<br/>Live WebSocket Channels"]:::ui
+    end
 
-  subgraph Backend
-    API[FastAPI REST + WebSocket]
-    FE[Feature Engineering]
-    ML[Prediction Service]
-    SHAP[SHAP Engine]
-    AG[LangGraph Delay Agent]
-    RO[OR-Tools Optimizer]
-    SIM[Delivery Simulator]
-  end
+    subgraph ApplicationLayer["Application Layer"]
+        API["FastAPI<br/>REST + WebSocket Gateway"]:::api
+        FE["Feature Engineering<br/>Real-time Pipeline"]:::api
+    end
 
-  subgraph Data
-    PG[(PostgreSQL + TimescaleDB)]
-    RD[(Redis Cache + Pub/Sub)]
-  end
+    subgraph IntelligenceEngine["Dual-AI Intelligence Engine"]
+        direction LR
+        ML["Predictive ML<br/>XGBoost Classifier"]:::ml
+        XAI["SHAP Engine<br/>Explainable AI"]:::xai
+        AGENT["LangGraph Agent<br/>Delay Prevention Workflow"]:::agent
+        RO["OR-Tools<br/>Route Optimizer"]:::opt
+    end
 
-  subgraph Observability
-    PROM[Prometheus]
-    GRAF[Grafana]
-  end
+    subgraph DataLayer["Persistence Layer"]
+        DB[("PostgreSQL 15<br/>+ TimescaleDB Hypertable")]:::db
+        CACHE[("Redis 7<br/>Cache + Pub/Sub")]:::cache
+    end
 
-  DR -->|GPS Stream| NG
-  NG --> API
-  DS --> FD
-  EX --> FD
-  FD <-->|WS + REST| API
-  API --> FE --> ML
-  ML --> SHAP
-  ML --> AG
-  AG --> RO
-  AG --> PG
-  AG --> RD
-  API --> PG
-  API --> RD
-  SIM --> PG
-  SIM --> RD
-  API --> PROM --> GRAF
-  RD -.->|Pub/Sub| API
-  API -.->|Broadcast| FD
+    subgraph Observability["Observability Stack"]
+        PROM["Prometheus<br/>Metrics Scraping"]:::obs
+        GRAF["Grafana<br/>Operational Dashboards"]:::obs
+    end
+
+    subgraph Simulator["Simulation"]
+        SIM["Delivery Simulator<br/>Realistic GPS Streams"]:::sim
+    end
+
+    %% Connections
+    UI <-->|WS + REST| NG
+    NG <-->|JSON Payloads| API
+    API --> FE
+    FE -->|Feature Vector| ML
+    ML -->|Risk Score| XAI
+    XAI -->|Top Factors| AGENT
+    AGENT -->|Reroute Request| RO
+    RO -->|Optimized Plan| AGENT
+    AGENT -->|Persist Decisions| DB
+    AGENT <-->|Live State| CACHE
+    FE <-->|Feature Cache| CACHE
+    API -->|Telemetry| PROM
+    PROM --> GRAF
+    CACHE -.->|Pub/Sub Broadcast| API
+    API -.->|Live Updates| UI
+    SIM -->|Training Data| DB
+    SIM -->|Synthetic Events| CACHE
+
+    class EdgeLayer,PresentationLayer,ApplicationLayer,IntelligenceEngine,DataLayer,Observability,Simulator cluster
 ```
 
 ### Real-Time Event Pipeline
 
 ```mermaid
 flowchart LR
-  A[GPS Ping] --> B[FastAPI Ingest]
-  B --> C{Feature Builder}
-  C -->|Cache Hit| D[Redis Feature Cache]
-  C -->|Cache Miss| E[Compute Features]
-  E --> D
-  D --> F[XGBoost Predict]
-  F --> G[SHAP Explain]
-  G --> H{Risk Threshold}
-  H -->|Low| I[Log + Continue]
-  H -->|Medium| J[LangGraph Agent]
-  H -->|High| J
-  J --> K[Decision]
-  K -->|Reroute| L[OR-Tools Optimizer]
-  K -->|Alert| M[Customer Notification]
-  K -->|Escalate| N[Ops Console]
-  J --> O[(PostgreSQL)]
-  J --> P[Redis Pub/Sub]
-  P --> Q[WebSocket Fan-out]
-  Q --> R[Live Dashboard]
+    %% Premium Pipeline Styling
+    classDef ingest fill:#0F172A,stroke:#3B82F6,stroke-width:2px,color:#F8FAFC,rx:10,ry:10
+    classDef cache fill:#7F1D1D,stroke:#F87171,stroke-width:2px,color:#FEF2F2,rx:10,ry:10
+    classDef ml fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#ECFDF5,rx:10,ry:10
+    classDef xai fill:#134E4A,stroke:#14B8A6,stroke-width:2px,color:#F0FDFA,rx:10,ry:10
+    classDef decision fill:#4C1D95,stroke:#A78BFA,stroke-width:2px,color:#F5F3FF,rx:10,ry:10
+    classDef opt fill:#7C2D12,stroke:#FB923C,stroke-width:2px,color:#FFF7ED,rx:10,ry:10
+    classDef action fill:#1E1B4B,stroke:#6366F1,stroke-width:2px,color:#EEF2FF,rx:10,ry:10
+    classDef db fill:#1E3A8A,stroke:#60A5FA,stroke-width:2px,color:#EFF6FF,rx:10,ry:10
+    classDef ui fill:#374151,stroke:#9CA3AF,stroke-width:2px,color:#F9FAFB,rx:10,ry:10
+
+    A["📡 GPS Ping"]:::ingest --> B["FastAPI Ingest"]:::ingest
+    B --> C{"Feature Builder"}:::ingest
+    C -->|Cache Hit| D["Redis Feature Cache<br/>5m TTL"]:::cache
+    C -->|Cache Miss| E["Compute Features"]:::ingest
+    E --> D
+    D --> F["XGBoost Predict"]:::ml
+    F --> G["SHAP Explain"]:::xai
+    G --> H{"Risk Threshold"}:::decision
+    H -->|Low Risk| I["Log + Continue"]:::ingest
+    H -->|Medium Risk| J["LangGraph Agent"]:::decision
+    H -->|High Risk| J
+    J --> K{"Decision"}:::decision
+    K -->|Reroute| L["OR-Tools Optimizer"]:::opt
+    K -->|Alert Customer| M["Notification Service"]:::action
+    K -->|Escalate| N["Ops Console"]:::action
+    J --> O[("PostgreSQL")]:::db
+    J --> P["Redis Pub/Sub"]:::cache
+    P --> Q["WebSocket Fan-out"]:::ingest
+    Q --> R["🖥️ Live Dashboard"]:::ui
 ```
 
 ### Data & Storage Architecture
 
 ```mermaid
 flowchart TB
-  subgraph PostgreSQL[PostgreSQL 15 + TimescaleDB]
-    T1[(tenants)]
-    T2[(drivers)]
-    T3[(orders)]
-    T4[(gps_pings - Hypertable)]
-    T5[(agent_decisions)]
-    T6[(route_plans)]
-  end
+    %% Premium Data Layer Styling
+    classDef db fill:#1E3A8A,stroke:#60A5FA,stroke-width:2px,color:#EFF6FF,rx:10,ry:10
+    classDef cache fill:#7F1D1D,stroke:#F87171,stroke-width:2px,color:#FEF2F2,rx:10,ry:10
+    classDef ml fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#ECFDF5,rx:10,ry:10
+    classDef agent fill:#4C1D95,stroke:#A78BFA,stroke-width:2px,color:#F5F3FF,rx:10,ry:10
+    classDef stream fill:#0F172A,stroke:#3B82F6,stroke-width:2px,color:#F8FAFC,rx:10,ry:10
+    classDef cluster fill:none,stroke:#475569,stroke-width:1px,stroke-dasharray:5 5,color:#94A3B8
 
-  subgraph Redis[Redis 7]
-    R1[order:state:{id} - 4h TTL]
-    R2[fleet:{tenant}:positions - 30m TTL]
-    R3[features:{order_id} - 5m TTL]
-    R4[Pub/Sub Channels]
-  end
+    subgraph PostgreSQL["🗄️ PostgreSQL 15 + TimescaleDB"]
+        T1[("tenants")]:::db
+        T2[("drivers")]:::db
+        T3[("orders")]:::db
+        T4[("gps_pings — Hypertable")]:::db
+        T5[("agent_decisions")]:::db
+        T6[("route_plans")]:::db
+    end
 
-  FE[Feature Engineering] --> R3
-  R3 --> ML[ML Service]
-  ML --> AG[Agent]
-  AG --> T5
-  AG --> T6
-  AG --> R1
-  AG --> R2
-  AG --> R4
-  GPS[GPS Stream] --> T4
-  GPS --> FE
+    subgraph Redis["⚡ Redis 7"]
+        R1["order:state:{id}<br/>4h TTL"]:::cache
+        R2["fleet:{tenant}:positions<br/>30m TTL"]:::cache
+        R3["features:{order_id}<br/>5m TTL"]:::cache
+        R4["Pub/Sub Channels"]:::cache
+    end
+
+    FE["Feature Engineering"]:::ml
+    MLSVC["ML Service"]:::ml
+    AGSVC["LangGraph Agent"]:::agent
+    GPS["📡 GPS Stream"]:::stream
+
+    FE <--> R3
+    R3 --> MLSVC
+    MLSVC --> AGSVC
+    AGSVC --> T5
+    AGSVC --> T6
+    AGSVC <--> R1
+    AGSVC <--> R2
+    AGSVC --> R4
+    GPS --> T4
+    GPS --> FE
+
+    class PostgreSQL,Redis cluster
 ```
 
 ### End-to-End Sequence
 
 ```mermaid
 sequenceDiagram
-  autonumber
-  participant D as Driver Device
-  participant API as FastAPI
-  participant FE as Feature Engineering
-  participant ML as Prediction Service
-  participant SH as SHAP Engine
-  participant AG as Delay Prevention Agent
-  participant RO as Route Optimizer
-  participant RD as Redis
-  participant PG as PostgreSQL
-  participant WS as WebSocket Layer
-  participant UI as Dashboard
+    autonumber
+    participant D as 📡 Driver Device
+    participant API as 🐍 FastAPI
+    participant FE as ⚙️ Feature Engineering
+    participant ML as 🧠 XGBoost
+    participant SH as 🔍 SHAP
+    participant AG as 🤖 LangGraph Agent
+    participant RO as 🗺️ OR-Tools
+    participant RD as ⚡ Redis
+    participant PG as 🗄️ PostgreSQL
+    participant WS as 📡 WebSocket
+    participant UI as 🖥️ Dashboard
 
-  D->>API: Order created / GPS update
-  API->>FE: Build operational features
-  FE->>RD: Read/Write feature cache
-  FE->>ML: Score delay risk
-  ML->>SH: Explain top risk factors
-  ML->>AG: Emit risk score + context
-  AG->>RO: Request route optimization (if needed)
-  RO-->>AG: Optimized sequence
-  AG->>PG: Persist decision + plan
-  AG->>RD: Publish live state
-  RD->>WS: Broadcast event
-  WS->>UI: Push live update
-  UI->>API: Refresh order / fleet view
+    D->>+API: Order created / GPS update
+    API->>+FE: Build operational features
+    FE->>+RD: Read/Write feature cache
+    FE->>+ML: Score delay risk
+    ML->>+SH: Explain top risk factors
+    ML->>+AG: Emit risk score + context
+    AG->>+RO: Request route optimization (if needed)
+    RO-->>-AG: Optimized sequence
+    AG->>+PG: Persist decision + plan
+    AG->>+RD: Publish live state
+    RD->>+WS: Broadcast event
+    WS-->>UI: Push live update
+    UI->>+API: Refresh order / fleet view
+    API-->>-UI: Updated state
 ```
 
 ### ML Inference Pipeline
 
 ```mermaid
 flowchart LR
-  H[Historical Data<br/>10K records] --> T[Train XGBoost]
-  T --> M[(model.pkl)]
-  M --> P[Predict API]
-  F[Live Features] --> P
-  P --> S[SHAP Values]
-  S --> E[Explanation]
-  P --> R[Risk Score 0-1]
-  R --> AG[Agent]
-  E --> AG
+    %% Premium ML Pipeline Styling
+    classDef data fill:#374151,stroke:#9CA3AF,stroke-width:2px,color:#F9FAFB,rx:10,ry:10
+    classDef ml fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#ECFDF5,rx:10,ry:10
+    classDef xai fill:#134E4A,stroke:#14B8A6,stroke-width:2px,color:#F0FDFA,rx:10,ry:10
+    classDef agent fill:#4C1D95,stroke:#A78BFA,stroke-width:2px,color:#F5F3FF,rx:10,ry:10
+    classDef feature fill:#1E1B4B,stroke:#6366F1,stroke-width:2px,color:#EEF2FF,rx:10,ry:10
+
+    H["📊 Historical Data<br/>10K records • 21% late rate"]:::data
+    T["🧠 Train XGBoost"]:::ml
+    M[("💾 model.pkl")]:::ml
+    P["⚡ Predict API"]:::ml
+    F["⚙️ Live Features"]:::feature
+    S["🔍 SHAP Values"]:::xai
+    E["📋 Top Factors"]:::xai
+    R["📈 Risk Score 0–1"]:::ml
+    AG["🤖 LangGraph Agent"]:::agent
+
+    H --> T
+    T --> M
+    M --> P
+    F --> P
+    P --> S
+    S --> E
+    P --> R
+    R --> AG
+    E --> AG
 ```
 
 ### Deployment Topology
 
 ```mermaid
 flowchart TB
-  subgraph Docker[Docker Compose Stack]
-    N[Nginx<br/>:80/:443]
-    FE[Frontend<br/>Static SPA]
-    BE[FastAPI Backend<br/>:8000]
-    PG[(PostgreSQL<br/>+ TimescaleDB)]
-    RD[(Redis 7)]
-    PR[Prometheus<br/>:9090]
-    GR[Grafana<br/>:3000]
-  end
+    %% Premium Deployment Styling
+    classDef edge fill:#1E293B,stroke:#64748B,stroke-width:2px,color:#F1F5F9,rx:10,ry:10
+    classDef ui fill:#0F172A,stroke:#3B82F6,stroke-width:2px,color:#F8FAFC,rx:10,ry:10
+    classDef api fill:#1E1B4B,stroke:#6366F1,stroke-width:2px,color:#EEF2FF,rx:10,ry:10
+    classDef db fill:#1E3A8A,stroke:#60A5FA,stroke-width:2px,color:#EFF6FF,rx:10,ry:10
+    classDef cache fill:#7F1D1D,stroke:#F87171,stroke-width:2px,color:#FEF2F2,rx:10,ry:10
+    classDef obs fill:#451A03,stroke:#F59E0B,stroke-width:2px,color:#FEF3C7,rx:10,ry:10
+    classDef user fill:#374151,stroke:#9CA3AF,stroke-width:2px,color:#F9FAFB,rx:10,ry:10
+    classDef cluster fill:none,stroke:#475569,stroke-width:1px,stroke-dasharray:5 5,color:#94A3B8
 
-  U[User Browser] --> N
-  N --> FE
-  N --> BE
-  BE --> PG
-  BE --> RD
-  BE --> PR
-  PR --> GR
-  GR --> U
+    USER["👤 User Browser"]:::user
+
+    subgraph DockerStack["🐳 Docker Compose Stack"]
+        N["Nginx<br/>:80 / :443"]:::edge
+        FE["Frontend<br/>Static SPA"]:::ui
+        BE["FastAPI Backend<br/>:8000"]:::api
+        PG[("PostgreSQL<br/>+ TimescaleDB")]:::db
+        RD[("Redis 7<br/>Cache + Pub/Sub")]:::cache
+        PR["Prometheus<br/>:9090"]:::obs
+        GR["Grafana<br/>:3000"]:::obs
+    end
+
+    USER --> N
+    N --> FE
+    N --> BE
+    BE <--> PG
+    BE <--> RD
+    BE --> PR
+    PR --> GR
+    GR -.->|Dashboards| USER
+
+    class DockerStack cluster
 ```
 
 ---
