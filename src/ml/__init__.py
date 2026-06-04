@@ -1,6 +1,11 @@
-"""
-ML Module for IntelliLog-AI
-Top 1% ML System Implementation
-"""
+"""Machine learning module for IntelliLog-AI."""
 
-__version__ = "0.1.0"
+from .feature_engineering import FeatureBuilder, FeatureStats
+from .inference import PredictionResult, PredictionService
+
+__all__ = [
+    "FeatureBuilder",
+    "FeatureStats",
+    "PredictionService",
+    "PredictionResult",
+]

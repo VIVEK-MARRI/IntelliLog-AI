@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>IntelliLog-AI — Demo Readiness</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; margin: 0; padding: 2rem; max-width: 1200px; margin: 0 auto; background: #0b1020; color: #e6e8ee; }
+  h1 { margin: 0 0 0.5rem 0; font-size: 1.6rem; }
+  h2 { font-size: 1.1rem; margin: 0 0 0.75rem 0; color: #b8c0d0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .meta { color: #8b94a8; font-size: 0.85rem; margin-bottom: 1.5rem; }
+  .score-card { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; border-radius: 12px; background: linear-gradient(135deg, #ef444422, transparent); border: 1px solid #ef444455; margin-bottom: 1.5rem; }
+  .score { font-size: 4rem; font-weight: 800; color: #ef4444; line-height: 1; }
+  .classification { font-size: 1.4rem; font-weight: 600; }
+  .class-detail { color: #b8c0d0; }
+  .card { background: #131a30; border: 1px solid #1f2a4a; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+  th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #1f2a4a; }
+  th { color: #8b94a8; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pass { color: #22c55e; font-weight: 700; }
+  .fail { color: #ef4444; font-weight: 700; }
+  .sev { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+  .sev-critical { background: #ef4444; color: white; }
+  .sev-high { background: #f59e0b; color: black; }
+  .sev-medium { background: #3b82f6; color: white; }
+  .sev-low { background: #6b7280; color: white; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .stat { background: #0b1020; padding: 0.75rem; border-radius: 8px; border: 1px solid #1f2a4a; }
+  .stat-label { color: #8b94a8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; }
+</style>
+</head>
+<body>
+  <h1>IntelliLog-AI — Demo Readiness</h1>
+  <div class="meta">Generated 2026-06-04T07:39:01.728Z · 0.1s</div>
+
+  <div class="score-card">
+    <div class="score">0<span style="font-size:1.5rem;color:#8b94a8">/100</span></div>
+    <div>
+      <div class="classification">🔴 Not Ready</div>
+      <div class="class-detail">0/3 checks passed · 0 critical defects</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Smoke checks</h2>
+    <table>
+      <thead><tr><th>Check</th><th>Pass</th><th>Status</th><th>Latency</th><th>Detail</th></tr></thead>
+      <tbody>
+    <tr>
+      <td>api.health</td>
+      <td class="fail">✗</td>
+      <td>0</td>
+      <td>52ms</td>
+      <td>fetch failed</td>
+    </tr>
+    <tr>
+      <td>ws.health</td>
+      <td class="fail">✗</td>
+      <td>0</td>
+      <td>11ms</td>
+      <td>error event</td>
+    </tr>
+    <tr>
+      <td>copilot.health</td>
+      <td class="fail">✗</td>
+      <td>0</td>
+      <td>10ms</td>
+      <td>fetch failed</td>
+    </tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Playwright E2E</h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Specs</div><div class="stat-value">0</div></div>
+      <div class="stat"><div class="stat-label">Passed</div><div class="stat-value pass">0</div></div>
+      <div class="stat"><div class="stat-label">Failed</div><div class="stat-value fail">0</div></div>
+    </div>
+    <p style="color:#22c55e;margin-top:1rem">All Playwright specs passed.</p>
+  </div>
+
+  
+
+  <div class="card">
+    <h2>Critical defects</h2>
+    <p class="pass">No critical defects.</p>
+  </div>
+</body>
+</html>

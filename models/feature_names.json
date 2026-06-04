@@ -1,0 +1,16 @@
+[
+  "stops_remaining_ratio",
+  "time_elapsed_ratio",
+  "pace_ratio",
+  "avg_stop_dwell_minutes",
+  "current_speed_kmh",
+  "speed_ratio",
+  "route_deviation_meters",
+  "speed_trend",
+  "driver_on_time_rate",
+  "hour_of_day_sin",
+  "hour_of_day_cos",
+  "is_peak_hour",
+  "day_of_week_sin",
+  "day_of_week_cos"
+]

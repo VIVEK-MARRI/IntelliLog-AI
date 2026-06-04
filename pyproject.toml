@@ -1,0 +1,64 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "intelligog-ai"
+version = "0.1.0"
+description = "Production-grade logistics delay-prevention platform"
+authors = [{name = "Your Name", email = "you@example.com"}]
+requires-python = ">=3.10"
+
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.12.0",
+    "redis>=5.0.0",
+    "fakeredis>=2.23.0",
+    "psycopg2-binary>=2.9.0",  # PostgreSQL adapter
+    "pyarrow>=13.0.0",  # For Parquet support
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+    "fakeredis>=2.23.0",
+    "factory-boy>=3.3.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+markers = [
+    "integration: tests that touch real service boundaries",
+    "websocket: websocket-specific tests",
+    "performance: latency and throughput checks",
+    "e2e: end-to-end workflow scenarios",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

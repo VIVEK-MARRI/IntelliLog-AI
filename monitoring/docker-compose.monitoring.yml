@@ -1,0 +1,207 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: intelliglog-postgres
+    environment:
+      POSTGRES_USER: intelliglog
+      POSTGRES_PASSWORD: intelliglog-pass-dev
+      POSTGRES_DB: intelliglog_db
+      POSTGRES_INITDB_ARGS: '-c log_statement=all -c log_duration=on'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - intelliglog-monitoring
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U intelliglog']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      service: postgres
+      component: database
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: intelliglog-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - intelliglog-monitoring
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      service: redis
+      component: cache
+
+  # Redis Exporter (for Prometheus)
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: intelliglog-redis-exporter
+    environment:
+      REDIS_ADDR: redis:6379
+    ports:
+      - '9121:9121'
+    depends_on:
+      - redis
+    networks:
+      - intelliglog-monitoring
+    labels:
+      service: redis-exporter
+      component: monitoring
+
+  # PostgreSQL Exporter (for Prometheus)
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: intelliglog-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: 'postgresql://intelliglog:intelliglog-pass-dev@postgres:5432/intelliglog_db?sslmode=disable'
+    ports:
+      - '9187:9187'
+    depends_on:
+      - postgres
+    networks:
+      - intelliglog-monitoring
+    labels:
+      service: postgres-exporter
+      component: monitoring
+
+  # Node Exporter (for host metrics)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: intelliglog-node-exporter
+    ports:
+      - '9100:9100'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - intelliglog-monitoring
+    labels:
+      service: node-exporter
+      component: monitoring
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: intelliglog-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - ./prometheus/recording_rules.yml:/etc/prometheus/recording_rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - postgres-exporter
+      - redis-exporter
+      - node-exporter
+    networks:
+      - intelliglog-monitoring
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:9090/-/healthy']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      service: prometheus
+      component: monitoring
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: intelliglog-grafana
+    ports:
+      - '3000:3000'
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+      GF_INSTALL_PLUGINS: grafana-worldmap-panel
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/files
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - intelliglog-monitoring
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      service: grafana
+      component: monitoring
+
+  # Backend API (IntelliLog-AI)
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: intelliglog-backend
+    ports:
+      - '8000:8000'
+    environment:
+      DATABASE_URL: postgresql://intelliglog:intelliglog-pass-dev@postgres:5432/intelliglog_db
+      REDIS_URL: redis://redis:6379
+      ENVIRONMENT: development
+      LOG_LEVEL: info
+      PROMETHEUS_METRICS_ENABLED: 'true'
+      PROMETHEUS_METRICS_PORT: '8000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    networks:
+      - intelliglog-monitoring
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      service: backend
+      component: api
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  intelliglog-monitoring:
+    driver: bridge

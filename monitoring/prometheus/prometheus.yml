@@ -1,0 +1,112 @@
+# Prometheus Configuration for IntelliLog-AI
+# Enterprise-grade monitoring stack
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'intelliglog-ai'
+    environment: 'production'
+  query_log_file: /var/log/prometheus/queries.log
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load rules for alerts
+rule_files:
+  - '/etc/prometheus/alert_rules.yml'
+  - '/etc/prometheus/recording_rules.yml'
+
+scrape_configs:
+  # Backend API
+  - job_name: 'backend'
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: http
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['backend:8000']
+        labels:
+          service: 'intelliglog-backend'
+          component: 'api'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: http
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          component: 'monitoring'
+
+  # Grafana
+  - job_name: 'grafana'
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: http
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: 'grafana'
+          component: 'dashboards'
+
+  # Redis
+  - job_name: 'redis'
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: http
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'redis'
+          component: 'cache'
+
+  # PostgreSQL
+  - job_name: 'postgres'
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: http
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'postgres'
+          component: 'database'
+
+  # Node Exporter (Host Metrics)
+  - job_name: 'node'
+    honor_labels: true
+    metrics_path: '/metrics'
+    scheme: http
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node'
+          component: 'infrastructure'
+
+# Remote storage configuration (optional)
+# remote_write:
+#   - url: 'https://your-remote-storage-endpoint'
+#     basic_auth:
+#       username: 'your-username'
+#       password: 'your-password'
+#     write_relabel_configs:
+#       - source_labels: [__name__]
+#         regex: 'intelliglog_.*'
+#         action: keep

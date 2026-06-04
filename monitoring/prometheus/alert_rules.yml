@@ -1,0 +1,310 @@
+# Prometheus Alert Rules for IntelliLog-AI
+# Enterprise-grade alerting
+
+groups:
+  - name: 'intelliglog_alerts'
+    interval: 30s
+    rules:
+      # API Alerts
+      - alert: HighAPIErrorRate
+        expr: |
+          (
+            sum(rate(api_errors_total[5m])) by (endpoint)
+            /
+            sum(rate(api_requests_total[5m])) by (endpoint)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+          component: api
+        annotations:
+          summary: 'High API error rate on {{ $labels.endpoint }}'
+          description: 'Error rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+          dashboard: 'http://grafana:3000/d/system-health'
+          runbook: 'https://docs.intelliglobal.com/runbooks/api-errors'
+
+      - alert: APILatencyHigh
+        expr: |
+          histogram_quantile(0.99, sum(rate(api_request_duration_seconds_bucket[5m])) by (le, endpoint))
+          > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+          component: api
+        annotations:
+          summary: 'High API latency on {{ $labels.endpoint }}'
+          description: 'p99 latency is {{ $value }}s (threshold: 1s)'
+          dashboard: 'http://grafana:3000/d/system-health'
+
+      - alert: APIDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+          component: api
+        annotations:
+          summary: 'Backend API is down'
+          description: 'Backend has been unreachable for more than 1 minute'
+          runbook: 'https://docs.intelliglobal.com/runbooks/backend-down'
+
+      # Prediction Service Alerts
+      - alert: PredictionServiceDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+          component: predictions
+        annotations:
+          summary: 'Prediction service is unavailable'
+          description: 'Cannot generate predictions'
+          runbook: 'https://docs.intelliglobal.com/runbooks/predictions-down'
+
+      - alert: HighPredictionLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(prediction_latency_seconds_bucket[5m])) by (le))
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+          component: predictions
+        annotations:
+          summary: 'High prediction latency'
+          description: 'p95 prediction latency is {{ $value }}s (threshold: 0.5s)'
+          dashboard: 'http://grafana:3000/d/prediction-monitoring'
+
+      - alert: HighRiskPredictionVolume
+        expr: |
+          rate(high_risk_predictions_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+          component: predictions
+        annotations:
+          summary: 'High volume of high-risk predictions'
+          description: 'Rate: {{ $value }}/sec (threshold: 10/sec)'
+          dashboard: 'http://grafana:3000/d/prediction-monitoring'
+
+      # Agent Alerts
+      - alert: AgentDecisionFailureRate
+        expr: |
+          (
+            sum(rate(agent_failures_total[5m]))
+            /
+            sum(rate(agent_decisions_total[5m]))
+          ) > 0.01
+        for: 3m
+        labels:
+          severity: warning
+          service: backend
+          component: agent
+        annotations:
+          summary: 'High agent decision failure rate'
+          description: 'Failure rate is {{ $value | humanizePercentage }} (threshold: 1%)'
+          dashboard: 'http://grafana:3000/d/agent-monitoring'
+
+      - alert: AgentDecisionLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum(rate(agent_decision_latency_seconds_bucket[5m])) by (le))
+          > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+          component: agent
+        annotations:
+          summary: 'High agent decision latency'
+          description: 'p95 latency is {{ $value }}s (threshold: 2s)'
+          dashboard: 'http://grafana:3000/d/agent-monitoring'
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+          component: cache
+        annotations:
+          summary: 'Redis is down'
+          description: 'Redis cache has been unreachable for 1 minute'
+          runbook: 'https://docs.intelliglobal.com/runbooks/redis-down'
+
+      - alert: RedisHighFailureRate
+        expr: |
+          (
+            sum(rate(redis_failures_total[5m]))
+            /
+            (sum(rate(redis_publish_total[5m])) + sum(rate(redis_subscribe_total[5m])))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: redis
+          component: cache
+        annotations:
+          summary: 'High Redis operation failure rate'
+          description: 'Failure rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+
+      # Database Alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgres
+          component: database
+        annotations:
+          summary: 'PostgreSQL is down'
+          description: 'Database has been unreachable for 1 minute'
+          runbook: 'https://docs.intelliglobal.com/runbooks/postgres-down'
+
+      - alert: DatabaseQueryLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum(rate(database_query_latency_seconds_bucket[5m])) by (le, query_type))
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: postgres
+          component: database
+        annotations:
+          summary: 'High database query latency'
+          description: 'p95 query latency is {{ $value }}s (threshold: 0.5s)'
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          database_connections_in_use / database_connection_pool_size > 0.9
+        for: 2m
+        labels:
+          severity: critical
+          service: postgres
+          component: database
+        annotations:
+          summary: 'Database connection pool nearly exhausted'
+          description: 'Using {{ $value | humanizePercentage }} of available connections'
+          runbook: 'https://docs.intelliglobal.com/runbooks/db-connections'
+
+      # WebSocket Alerts
+      - alert: WebSocketHighFailureRate
+        expr: |
+          (
+            sum(rate(websocket_failures_total[5m]))
+            /
+            (sum(rate(websocket_connections_total[5m])))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+          component: websocket
+        annotations:
+          summary: 'High WebSocket connection failure rate'
+          description: 'Failure rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+
+      # Business Alerts
+      - alert: HighDelayedShipmentsCount
+        expr: delayed_shipments_total / active_shipments_total > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          service: intelliglog
+          component: logistics
+        annotations:
+          summary: 'High percentage of delayed shipments'
+          description: '{{ $value | humanizePercentage }} of shipments are delayed (threshold: 20%)'
+          dashboard: 'http://grafana:3000/d/logistics-operations'
+
+      - alert: LowFleetHealthScore
+        expr: fleet_health_score < 60
+        for: 15m
+        labels:
+          severity: warning
+          service: intelliglog
+          component: logistics
+        annotations:
+          summary: 'Fleet health score is low'
+          description: 'Fleet health score is {{ $value }} (threshold: 60)'
+          dashboard: 'http://grafana:3000/d/logistics-operations'
+
+      - alert: LowOperationalEfficiency
+        expr: operational_efficiency_score < 70
+        for: 15m
+        labels:
+          severity: warning
+          service: intelliglog
+          component: logistics
+        annotations:
+          summary: 'Operational efficiency is below target'
+          description: 'Efficiency score is {{ $value }} (threshold: 70)'
+          dashboard: 'http://grafana:3000/d/logistics-operations'
+
+  - name: 'intelliglog_infrastructure'
+    interval: 30s
+    rules:
+      # System Alerts
+      - alert: HighCPUUsage
+        expr: |
+          (
+            1 - (
+              avg(rate(node_cpu_seconds_total{mode="idle"}[5m]))
+            )
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+          component: system
+        annotations:
+          summary: 'High CPU usage'
+          description: 'CPU usage is {{ $value | humanizePercentage }} (threshold: 85%)'
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            1 - (
+              node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
+            )
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+          component: system
+        annotations:
+          summary: 'High memory usage'
+          description: 'Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)'
+
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{fstype=~"ext4|xfs"} / node_filesystem_size_bytes
+          ) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: infrastructure
+          component: storage
+        annotations:
+          summary: 'Low disk space'
+          description: 'Available disk space is {{ $value | humanizePercentage }} (threshold: 10%)'
+          runbook: 'https://docs.intelliglobal.com/runbooks/disk-space'
+
+      - alert: PrometheusDataFull
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/prometheus"} / node_filesystem_size_bytes{mountpoint="/prometheus"})
+          < 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: monitoring
+          component: prometheus
+        annotations:
+          summary: 'Prometheus storage is nearly full'
+          description: 'Available space is {{ $value | humanizePercentage }}'
+          runbook: 'https://docs.intelliglobal.com/runbooks/prometheus-storage'

@@ -1,0 +1,113 @@
+# Prometheus Recording Rules for IntelliLog-AI
+# Pre-computed metrics for faster queries
+
+groups:
+  - name: 'intelliglog_recording_rules'
+    interval: 30s
+    rules:
+      # API metrics
+      - record: 'api:request_rate:1m'
+        expr: 'sum(rate(api_requests_total[1m])) by (method, endpoint)'
+
+      - record: 'api:error_rate:1m'
+        expr: |
+          sum(rate(api_errors_total[1m])) by (endpoint)
+          /
+          sum(rate(api_requests_total[1m])) by (endpoint)
+
+      - record: 'api:p99_latency:1m'
+        expr: |
+          histogram_quantile(0.99, sum(rate(api_request_duration_seconds_bucket[1m])) by (le, endpoint))
+
+      - record: 'api:p95_latency:1m'
+        expr: |
+          histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[1m])) by (le, endpoint))
+
+      - record: 'api:p50_latency:1m'
+        expr: |
+          histogram_quantile(0.50, sum(rate(api_request_duration_seconds_bucket[1m])) by (le, endpoint))
+
+      # Prediction metrics
+      - record: 'predictions:rate:1m'
+        expr: 'sum(rate(predictions_total[1m]))'
+
+      - record: 'predictions:high_risk_rate:1m'
+        expr: |
+          sum(rate(high_risk_predictions_total[1m]))
+          /
+          sum(rate(predictions_total[1m]))
+
+      - record: 'predictions:p99_latency:1m'
+        expr: |
+          histogram_quantile(0.99, sum(rate(prediction_latency_seconds_bucket[1m])) by (le))
+
+      # Agent metrics
+      - record: 'agent:decision_rate:1m'
+        expr: 'sum(rate(agent_decisions_total[1m])) by (decision_type)'
+
+      - record: 'agent:failure_rate:1m'
+        expr: |
+          sum(rate(agent_failures_total[1m]))
+          /
+          sum(rate(agent_decisions_total[1m]))
+
+      - record: 'agent:reroute_rate:1m'
+        expr: 'sum(rate(agent_reroutes_total[1m]))'
+
+      - record: 'agent:alert_rate:1m'
+        expr: 'sum(rate(agent_alerts_total[1m])) by (severity)'
+
+      # Redis metrics
+      - record: 'redis:publish_rate:1m'
+        expr: 'sum(rate(redis_publish_total[1m])) by (channel)'
+
+      - record: 'redis:failure_rate:1m'
+        expr: |
+          sum(rate(redis_failures_total[1m]))
+          /
+          (sum(rate(redis_publish_total[1m])) + sum(rate(redis_subscribe_total[1m])))
+
+      # WebSocket metrics
+      - record: 'websocket:message_rate:1m'
+        expr: 'sum(rate(websocket_messages_sent_total[1m])) by (message_type)'
+
+      - record: 'websocket:failure_rate:1m'
+        expr: |
+          sum(rate(websocket_failures_total[1m]))
+          /
+          sum(rate(websocket_connections_total[1m]))
+
+      # Database metrics
+      - record: 'database:query_rate:1m'
+        expr: 'sum(rate(database_queries_total[1m])) by (query_type, table)'
+
+      - record: 'database:error_rate:1m'
+        expr: |
+          sum(rate(database_errors_total[1m]))
+          /
+          sum(rate(database_queries_total[1m]))
+
+      - record: 'database:p99_latency:1m'
+        expr: |
+          histogram_quantile(0.99, sum(rate(database_query_latency_seconds_bucket[1m])) by (le, query_type))
+
+      # Business metrics
+      - record: 'business:delay_rate:1m'
+        expr: 'delayed_shipments_total / active_shipments_total'
+
+      - record: 'business:high_risk_rate:1m'
+        expr: 'high_risk_shipments_total / active_shipments_total'
+
+      - record: 'business:on_time_rate:1m'
+        expr: |
+          on_time_deliveries_total
+          /
+          (on_time_deliveries_total + failed_deliveries_total)
+
+      # Composite health metrics
+      - record: 'system:health_score'
+        expr: |
+          min(
+            (1 - api:error_rate:1m{endpoint="/predict"}) * 100,
+            100
+          )

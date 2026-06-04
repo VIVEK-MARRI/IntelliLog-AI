@@ -1,0 +1,200 @@
+name: frontend-validate
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-validate.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: 'Run Playwright E2E suite (requires live backend)'
+        required: false
+        default: 'false'
+      run_load:
+        description: 'Run k6 load test'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: frontend-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Always-on job: build + unit tests + type-check. Fast feedback on every PR.
+  build:
+    name: Build & unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests (Zod schemas)
+        run: npm run test:unit
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  # Playwright E2E: only when explicitly requested. Needs a running backend.
+  e2e:
+    name: Playwright E2E
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.run_e2e == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_NO_SERVER: '1'
+      PLAYWRIGHT_BASE_URL: ${{ secrets.E2E_FRONTEND_URL || 'http://localhost:5173' }}
+      VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+      VITE_WS_URL: ${{ secrets.E2E_WS_URL || 'ws://localhost:8000/ws' }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL || 'qa@intellilog.ai' }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD || 'TestPassword!23' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright
+        run: npx playwright test --reporter=line,json
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+            frontend/reports/playwright-results.json
+          retention-days: 14
+
+  # Smoke + report: always runs when backend is available via workflow_dispatch
+  full:
+    name: Demo validation (full)
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VITE_API_URL: ${{ secrets.E2E_API_URL || 'http://localhost:8000' }}
+      VITE_WS_URL: ${{ secrets.E2E_WS_URL || 'ws://localhost:8000/ws' }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL || 'qa@intellilog.ai' }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD || 'TestPassword!23' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install k6
+        if: inputs.run_load == 'true'
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run demo:validate
+        run: |
+          ARGS="--no-e2e"
+          if [ "${{ inputs.run_load }}" != "true" ]; then
+            ARGS="$ARGS --no-load"
+          fi
+          npm run demo:validate -- $ARGS || true
+
+      - name: Upload readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-readiness-report
+          path: |
+            frontend/reports/demo-readiness.json
+            frontend/reports/demo-readiness.md
+            frontend/reports/demo-readiness.html
+          retention-days: 30
+
+      - name: Comment PR with readiness summary
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'frontend/reports/demo-readiness.json';
+            if (!fs.existsSync(path)) {
+              console.log('No report found, skipping comment');
+              return;
+            }
+            const r = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const emoji = r.summary.score >= 90 ? '🟢' : r.summary.score >= 75 ? '🔵' : r.summary.score >= 60 ? '🟡' : '🔴';
+            const body = [
+              `## ${emoji} Demo Readiness: ${r.summary.score}/100 — ${r.summary.classification}`,
+              '',
+              `**Passed:** ${r.summary.passed}/${r.summary.total} · **Critical defects:** ${r.knownDefects.length}`,
+              '',
+              '| Section | Result |',
+              '|---------|--------|',
+              `| Smoke checks | ${r.smoke.filter(s => s.pass).length}/${r.smoke.length} passed |`,
+              `| Playwright E2E | ${r.playwright.passed}/${r.playwright.total} passed |`,
+              `| Load test (k6) | ${r.k6 ? (r.k6.passed ? 'PASS' : 'FAIL') : 'skipped'} |`,
+              '',
+              r.knownDefects.length > 0
+                ? '### Critical defects\n' + r.knownDefects.map(d => `- **${d.severity}** ${d.check} — ${d.detail}`).join('\n')
+                : '_No critical defects._'
+            ].join('\n');
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });

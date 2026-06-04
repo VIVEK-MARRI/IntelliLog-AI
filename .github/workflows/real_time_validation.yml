@@ -1,0 +1,41 @@
+name: Real-Time Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  realtime-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+
+      - name: Build and run test stack
+        env:
+          CI: 'true'
+        run: |
+          docker compose -f docker-compose.test.yml up --build --exit-code-from playwright --abort-on-container-exit
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose -f docker-compose.test.yml down --volumes --remove-orphans || true
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realtime-playwright-artifacts
+          path: |
+            tests/playwright/artifacts/**
+            tests/playwright/playwright-report/**
+            tests/playwright/screenshots/**

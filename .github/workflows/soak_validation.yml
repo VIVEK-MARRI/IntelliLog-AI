@@ -1,0 +1,39 @@
+name: Soak Validation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # daily at 02:00 UTC
+
+jobs:
+  soak-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 720
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Docker Compose plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+
+      - name: Run soak stack
+        env:
+          CI: 'true'
+          SOAK_DURATION_S: ${{ env.SOAK_DURATION_S || '3600' }}
+        run: |
+          docker compose -f docker-compose.soak.yml up --build --exit-code-from soakrunner --abort-on-container-exit
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose -f docker-compose.soak.yml down --volumes --remove-orphans || true
+
+      - name: Upload Soak artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soak-playwright-artifacts
+          path: |
+            tests/playwright/artifacts/**

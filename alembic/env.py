@@ -1,25 +1,36 @@
-import sys
-import os
-from logging.config import fileConfig
+"""Alembic configuration."""
 
+from logging.config import fileConfig
+from pathlib import Path
+import os
+
+from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
-
-# Add project root to path
-sys.path.append(os.getcwd())
-
-# Import config and models
-from src.backend.app.core.config import settings
-from src.backend.app.db.base import Base
-# Import all models to ensure they are registered
-# Pylance might complain but this is necessary for Alembic to see the tables
-from src.backend.app.db.models import Tenant, User, Driver, Order, Route
-
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# This is the Alembic Config object, which provides
+# the values of various Alembic directives to access
+# database attributes as well as change the
+# template_args, etc.
 config = context.config
+
+
+def _load_env_file() -> None:
+    env_path = Path(__file__).resolve().parents[1] / ".env"
+    if not env_path.exists():
+        return
+
+    with env_path.open("r", encoding="utf-8") as env_file:
+        for raw_line in env_file:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_env_file()
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -28,32 +39,19 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-target_metadata = Base.metadata
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
+target_metadata = None
 
-def include_object(object, name, type_, reflected, compare_to):
-    if type_ == "table" and reflected:
-        return name in target_metadata.tables
-    return True
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
-    url = settings.SQLALCHEMY_DATABASE_URI
+    """Run migrations in 'offline' mode."""
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -61,16 +59,13 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode."""
+    configuration = config.get_section(config.config_ini_section)
+    env_url = os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+    if not env_url:
+        env_url = "postgresql+psycopg2://postgres:postgres@localhost:5432/intelliglog"
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-    # Overwrite sqlalchemy.url with the one from our settings
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.SQLALCHEMY_DATABASE_URI
-    
+    configuration["sqlalchemy.url"] = env_url.replace("+asyncpg", "+psycopg2")
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
@@ -79,9 +74,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
-            target_metadata=target_metadata,
-            include_object=include_object,
+            connection=connection, target_metadata=target_metadata
         )
 
         with context.begin_transaction():

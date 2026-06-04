@@ -1,79 +1,224 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: intelliglog-postgres
     environment:
-      POSTGRES_DB: intellog_ai_dev
+      POSTGRES_DB: intelliglog
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intelliglog
 
+  # Redis Cache & Message Broker
   redis:
     image: redis:7-alpine
+    container_name: intelliglog-redis
     ports:
       - "6379:6379"
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intelliglog
 
-  backend:
-    build: .
+  # Redis Exporter (for Prometheus monitoring)
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: intelliglog-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - intelliglog
+
+  # Prometheus (Metrics Collection & Storage)
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: intelliglog-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    environment:
+      TZ: UTC
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - redis-exporter
+    networks:
+      - intelliglog
+
+  # Grafana (Visualization & Dashboards)
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: intelliglog-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      TZ: UTC
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intelliglog
+
+  # Celery Redis (separate Redis for Celery task queue)
+  celery-redis:
+    image: redis:7-alpine
+    container_name: intelliglog-celery-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - celery_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intelliglog
+
+  # Celery Worker (Background Task Processing)
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intelliglog-celery-worker
+    command: celery -A src.tasks worker --loglevel=info --concurrency=4
+    environment:
+      CELERY_BROKER_URL: redis://celery-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://celery-redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/intelliglog
+      REDIS_URL: redis://redis:6379
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery-redis:
+        condition: service_healthy
+    networks:
+      - intelliglog
+    volumes:
+      - ./src:/app/src
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intelliglog-api
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/intellog_ai_dev
-      REDIS_URL: redis://redis:6379/0
-      REDIS_FEATURE_STORE_URL: redis://redis:6379/2
-      CELERY_BROKER_URL: redis://redis:6379/0
-      FRONTEND_URL: http://localhost:5173
-      POSTGRES_SERVER: db
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: intellog_ai_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/intelliglog
+      REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://celery-redis:6379/0
+      LOG_FORMAT: console
+      LOG_LEVEL: DEBUG
+      ENVIRONMENT: development
+      PYTHONUNBUFFERED: "1"
     depends_on:
-      - db
-      - redis
-    command: uvicorn src.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery-redis:
+        condition: service_healthy
     volumes:
-      - .:/app
+      - ./src:/app/src
+      - ./models:/app/models
+    networks:
+      - intelliglog
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  celery_worker:
-    build: .
+  # Agent Worker (LangGraph Execution)
+  agent-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intelliglog-agent-worker
+    command: python src/core/agent_worker.py
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/intellog_ai_dev
-      REDIS_URL: redis://redis:6379/0
-      REDIS_FEATURE_STORE_URL: redis://redis:6379/2
-      CELERY_BROKER_URL: redis://redis:6379/0
-      POSTGRES_SERVER: db
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: intellog_ai_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/intelliglog
+      LOG_FORMAT: console
+      LOG_LEVEL: DEBUG
+      ENVIRONMENT: development
+      PYTHONUNBUFFERED: "1"
     depends_on:
-      - db
-      - redis
-      - backend
-    command: celery -A src.backend.worker.celery_app worker --loglevel=info
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
-      - .:/app
-
-  frontend:
-    build: src/frontend
-    ports:
-      - "5173:5173"
-    environment:
-      VITE_API_URL: http://localhost:8000
-      VITE_WS_URL: ws://localhost:8000
-      VITE_TENANT_ID: demo-tenant-001
-      VITE_ENVIRONMENT: development
-    depends_on:
-      - backend
-    command: npm run dev -- --host 0.0.0.0
-    volumes:
-      - ./src/frontend:/app
+      - ./src:/app/src
+      - ./models:/app/models
+    networks:
+      - intelliglog
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  celery_redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  intelliglog:
+    driver: bridge

@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-06-04T07:39:01.728Z",
+  "durationMs": 55,
+  "summary": {
+    "total": 3,
+    "passed": 0,
+    "failed": 3,
+    "score": 0,
+    "classification": "Not Ready"
+  },
+  "smoke": [
+    {
+      "name": "api.health",
+      "pass": false,
+      "status": 0,
+      "ms": 52,
+      "detail": "fetch failed"
+    },
+    {
+      "name": "ws.health",
+      "pass": false,
+      "status": 0,
+      "ms": 11,
+      "detail": "error event"
+    },
+    {
+      "name": "copilot.health",
+      "pass": false,
+      "status": 0,
+      "ms": 10,
+      "detail": "fetch failed"
+    }
+  ],
+  "playwright": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "failures": []
+  },
+  "k6": null,
+  "knownDefects": []
+}

@@ -1,0 +1,159 @@
+# Alert rules for IntelliLog-AI
+
+groups:
+  - name: intelliglog_alerts
+    interval: 15s
+    rules:
+      # High-risk orders spiking
+      - alert: HighRiskOrdersSpiking
+        expr: active_high_risk_orders > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: agent
+        annotations:
+          summary: "High-risk orders spiking ({{ $value | humanize }})"
+          description: "More than 10 high-risk orders detected for tenant {{ $labels.tenant_id }}"
+
+      # Agent decision latency high
+      - alert: AgentDecisionLatencyHigh
+        expr: histogram_quantile(0.95, agent_graph_duration_seconds) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: agent
+        annotations:
+          summary: "Agent decision latency high (p95: {{ $value | humanizeDuration }})"
+          description: "Agent graph p95 latency exceeds 2 seconds for tenant {{ $labels.tenant_id }}"
+
+      # Model predictions dropped
+      - alert: ModelPredictionsDropped
+        expr: rate(model_predictions_total[5m]) == 0
+        for: 3m
+        labels:
+          severity: critical
+          service: ml
+        annotations:
+          summary: "Model predictions have stopped"
+          description: "No predictions made in the last 5 minutes"
+
+      # High API error rate
+      - alert: HighAPIErrorRate
+        expr: (sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "High API error rate ({{ $value | humanizePercentage }})"
+          description: "API error rate exceeded 5% for more than 5 minutes"
+
+      # Database connection pool exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: database_connections_active / database_connections_max > 0.9
+        for: 2m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database connection pool {{ $value | humanizePercentage }} utilized"
+          description: "Database connection pool over 90% full"
+
+      # Redis queue depth high
+      - alert: OptimizationQueueDeepHigh
+        expr: optimization_queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: optimization
+        annotations:
+          summary: "Route optimization queue backed up ({{ $value | humanize }} jobs)"
+          description: "More than 100 optimization jobs waiting in queue"
+
+      # Redis operations failing
+      - alert: RedisOperationsFailing
+        expr: rate(redis_operations_total{status="error"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis operations failing ({{ $value | humanize }}/sec)"
+          description: "Redis operation error rate exceeded 0.1/sec"
+
+      # Model accuracy degradation
+      - alert: ModelAccuracyDegraded
+        expr: model_accuracy_score < 0.35
+        for: 1h
+        labels:
+          severity: warning
+          service: ml
+        annotations:
+          summary: "Model accuracy degraded to {{ $value | humanizePercentage }}"
+          description: "Model F1 score below 0.35 threshold. May need retraining."
+
+      # High prediction latency
+      - alert: HighPredictionLatency
+        expr: histogram_quantile(0.99, prediction_latency_seconds) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: ml
+        annotations:
+          summary: "High prediction latency (p99: {{ $value | humanizeDuration }})"
+          description: "ML inference p99 latency exceeds 100ms"
+
+      # Celery worker down
+      - alert: CeleryWorkersDown
+        expr: optimization_active_workers == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: optimization
+        annotations:
+          summary: "No active Celery workers"
+          description: "Route optimization workers are not running"
+
+      # WebSocket connections dropping
+      - alert: WebSocketConnectionsDegraded
+        expr: rate(websocket_connections_total{outcome="rejected"}[5m]) / rate(websocket_connections_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "WebSocket connection rejection rate high ({{ $value | humanizePercentage }})"
+          description: "WebSocket connections being rejected at high rate"
+
+      # Agent tool failures
+      - alert: AgentToolFailures
+        expr: rate(agent_tool_invocations_total{outcome="failure"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: agent
+        annotations:
+          summary: "Agent tool {{ $labels.tool_name }} failing frequently"
+          description: "Tool invocation failure rate exceeds 5%"
+
+      # High database query latency
+      - alert: HighDatabaseLatency
+        expr: histogram_quantile(0.95, database_query_duration_seconds) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database query latency high (p95: {{ $value | humanizeDuration }})"
+          description: "Database query p95 latency exceeds 500ms"
+
+      # Reroute effectiveness low
+      - alert: RerouteEffectivenessLow
+        expr: reroute_success_rate < 0.5
+        for: 1h
+        labels:
+          severity: warning
+          service: agent
+        annotations:
+          summary: "Route optimization success rate below 50%"
+          description: "Less than 50% of reroutes are preventing delays"

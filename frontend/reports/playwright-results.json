@@ -1,0 +1,767 @@
+{
+  "config": {
+    "configFile": "C:\\vivek\\Intelligent logistics_ai\\frontend\\playwright.config.ts",
+    "rootDir": "C:/vivek/Intelligent logistics_ai/frontend/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/vivek/Intelligent logistics_ai/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/vivek/Intelligent logistics_ai/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/playwright-results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/playwright-html",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.60.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth-cycle.spec.ts",
+      "file": "auth-cycle.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Auth cycle — no stale state",
+          "file": "auth-cycle.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "G.1 — Logout returns to /login and clears token",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "818b738f128a559e780f-640d24b7cba6ec8d33c1",
+              "file": "auth-cycle.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "G.2 — Login after logout shows clean dashboard (no stale orders)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "818b738f128a559e780f-0b3ef4261a0da3623a47",
+              "file": "auth-cycle.spec.ts",
+              "line": 23,
+              "column": 3
+            },
+            {
+              "title": "G.3 — Stale websocket connections are closed across cycles",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "818b738f128a559e780f-857719a649e927a78818",
+              "file": "auth-cycle.spec.ts",
+              "line": 37,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "copilot.spec.ts",
+      "file": "copilot.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "AI Copilot",
+          "file": "copilot.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "F.1 — Copilot button opens the panel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "968c3adb0e465cd16288-8c6fea1bcf5a2f0b8c3d",
+              "file": "copilot.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "F.2 — Query returns a response with confidence, evidence, recommendations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "968c3adb0e465cd16288-fca8b1f3bffb53a08dde",
+              "file": "copilot.spec.ts",
+              "line": 23,
+              "column": 3
+            },
+            {
+              "title": "F.3 — No placeholder text in copilot response",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "968c3adb0e465cd16288-1ade9e4094e0fff0d48b",
+              "file": "copilot.spec.ts",
+              "line": 43,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "dashboard.spec.ts",
+      "file": "dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dashboard load",
+          "file": "dashboard.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "B.1 — Dashboard shell renders under 2s on slow network",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-193d0bc3ac17b0f517f1",
+              "file": "dashboard.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "B.2 — KPI cards load independently with skeleton placeholders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-0cf2d3ceebdbd57dfc0e",
+              "file": "dashboard.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "B.3 — No blank screen at any point",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-28a47a9b89747be37273",
+              "file": "dashboard.spec.ts",
+              "line": 30,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "fleet-map.spec.ts",
+      "file": "fleet-map.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Fleet map",
+          "file": "fleet-map.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "C.1 — Map container mounts with tile layer loaded",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "042824d91972d798d05a-8c389dde31e1f8be63de",
+              "file": "fleet-map.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "C.2 — Map respects user pan and zoom after initial fit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "042824d91972d798d05a-7720a59b029ce4187f06",
+              "file": "fleet-map.spec.ts",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "C.3 — Vehicle markers appear for seeded orders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "042824d91972d798d05a-f956a2295dd660d6a097",
+              "file": "fleet-map.spec.ts",
+              "line": 41,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "fleet-validation.spec.ts",
+      "file": "fleet-validation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Fleet validation against seeded data",
+          "file": "fleet-validation.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "H.1 — Backend reports expected driver count (15) and order count (50)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "36e855499c4b00a84354-55eec0556f5b72b0280b",
+              "file": "fleet-validation.spec.ts",
+              "line": 11,
+              "column": 3
+            },
+            {
+              "title": "H.2 — Frontend renders same order count as backend",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "36e855499c4b00a84354-5f7905a96b5d317655c0",
+              "file": "fleet-validation.spec.ts",
+              "line": 41,
+              "column": 3
+            },
+            {
+              "title": "H.3 — Every driver in backend has at least one order visible on map",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "36e855499c4b00a84354-33c340433035c774f13b",
+              "file": "fleet-validation.spec.ts",
+              "line": 53,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "login.spec.ts",
+      "file": "login.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Login flow",
+          "file": "login.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "A.1 — Login form renders at /login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "41d3fd2474a19feb00a1-9c7d4d32a71fdbcc03b7",
+              "file": "login.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "A.2 — Valid credentials redirect to /dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "41d3fd2474a19feb00a1-018973e7364c29608c9b",
+              "file": "login.spec.ts",
+              "line": 20,
+              "column": 3
+            },
+            {
+              "title": "A.3 — Invalid credentials show error and stay on /login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "41d3fd2474a19feb00a1-17062d7932959dcf6218",
+              "file": "login.spec.ts",
+              "line": 36,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "route-optimization.spec.ts",
+      "file": "route-optimization.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Route optimization",
+          "file": "route-optimization.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "E.1 — Optimization API accepts POST and returns a route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0833f1b7d7ad8631267-de55019d97dee7585038",
+              "file": "route-optimization.spec.ts",
+              "line": 6,
+              "column": 3
+            },
+            {
+              "title": "E.2 — Triggering optimization updates the map with polylines",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0833f1b7d7ad8631267-72364f2c0e52133208ce",
+              "file": "route-optimization.spec.ts",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "E.3 — No duplicate polylines after repeated selection changes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0833f1b7d7ad8631267-b185debf3813fbf50f3e",
+              "file": "route-optimization.spec.ts",
+              "line": 41,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "vehicle-panel.spec.ts",
+      "file": "vehicle-panel.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Vehicle details panel",
+          "file": "vehicle-panel.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "D.1 — Clicking a marker opens the details panel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e0ca7516abd04db40739-ef372bf75e6660042f66",
+              "file": "vehicle-panel.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "D.2 — Panel shows driver, ETA, risk, speed, heading, distance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e0ca7516abd04db40739-1cfa5010e0aecc921920",
+              "file": "vehicle-panel.spec.ts",
+              "line": 27,
+              "column": 3
+            },
+            {
+              "title": "D.3 — Close button dismisses the panel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e0ca7516abd04db40739-773aeea0bcaca5244ed4",
+              "file": "vehicle-panel.spec.ts",
+              "line": 42,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "websocket.spec.ts",
+      "file": "websocket.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "WebSocket validation",
+          "file": "websocket.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "I.1 — Single active websocket after login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "58e8dc1668882f4daf0d-e9d03d99c5828aadbccc",
+              "file": "websocket.spec.ts",
+              "line": 6,
+              "column": 3
+            },
+            {
+              "title": "I.2 — No duplicate websocket on navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "58e8dc1668882f4daf0d-8b8137c86f58592031c2",
+              "file": "websocket.spec.ts",
+              "line": 23,
+              "column": 3
+            },
+            {
+              "title": "I.3 — Reconnect after server kill",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "58e8dc1668882f4daf0d-4f2f6194bf5241de6551",
+              "file": "websocket.spec.ts",
+              "line": 41,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-06-04T07:32:56.663Z",
+    "duration": 450.01699999999994,
+    "expected": 0,
+    "skipped": 27,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
