@@ -89,7 +89,13 @@ async def get_redis() -> redis.Redis:
         return _fakeredis_instance
 
     if not REDIS_URL:
-        raise RuntimeError("REDIS_URL is not configured")
+        try:
+            import fakeredis.aioredis
+            _fakeredis_instance = fakeredis.aioredis.FakeRedis(decode_responses=True)
+            logger.warning("redis_using_fakeredis", reason="REDIS_URL not configured")
+            return _fakeredis_instance
+        except ImportError:
+            raise RuntimeError("REDIS_URL is not configured and fakeredis is not available")
 
     try:
         client = await redis.from_url(

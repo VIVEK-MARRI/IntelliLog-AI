@@ -1,6 +1,3 @@
-# Grafana Provisioning: Dashboards Configuration
-# This file auto-provisions all 4 IntelliLog-AI dashboards into Grafana
-
 apiVersion: 1
 
 providers:
@@ -12,4 +9,4 @@ providers:
     updateIntervalSeconds: 10
     allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/dashboards

@@ -1,18 +1,23 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useOrdersArray } from '@/store/fleetStore'
 import { LiveOrder } from '@/types/api'
 import { RiskBadge } from '../shared/RiskBadge'
 import clsx from 'clsx'
 
+const DEFAULT_PAGE_SIZE = 25
+
 interface OrderTableProps {
   onOrderSelect?: (orderId: string) => void
   sortBy?: 'risk_score' | 'eta' | 'driver'
+  pageSize?: number
+  total?: number
 }
 
-export const OrderTable: React.FC<OrderTableProps> = ({ onOrderSelect, sortBy = 'risk_score' }) => {
+export const OrderTable: React.FC<OrderTableProps> = ({ onOrderSelect, sortBy = 'risk_score', pageSize = DEFAULT_PAGE_SIZE, total }) => {
   const navigate = useNavigate()
   const orders = useOrdersArray()
+  const [currentPage, setCurrentPage] = useState(1)
 
   const sortedOrders = useMemo(() => {
     const sorted = [...orders]
@@ -21,6 +26,17 @@ export const OrderTable: React.FC<OrderTableProps> = ({ onOrderSelect, sortBy = 
     else if (sortBy === 'driver') sorted.sort((a, b) => a.driver_id.localeCompare(b.driver_id))
     return sorted
   }, [orders, sortBy])
+
+  const totalPages = Math.max(1, Math.ceil(sortedOrders.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const pageStart = (safePage - 1) * pageSize
+  const pageEnd = pageStart + pageSize
+  const pageOrders = sortedOrders.slice(pageStart, pageEnd)
+  const displayTotal = total ?? sortedOrders.length
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+  }
 
   if (sortedOrders.length === 0) {
     return (
@@ -44,7 +60,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ onOrderSelect, sortBy = 
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-steel-grey/20">
-        {sortedOrders.map((order) => (
+        {pageOrders.map((order) => (
           <OrderTableRow
             key={order.id}
             order={order}
@@ -54,8 +70,45 @@ export const OrderTable: React.FC<OrderTableProps> = ({ onOrderSelect, sortBy = 
         ))}
       </div>
 
-      <div className="shrink-0 bg-obsidian/50 border-t border-steel-grey/30 px-4 py-2 text-[10px] text-mist">
-        {sortedOrders.length} active orders · Sorted by {sortBy}
+      <div className="shrink-0 bg-obsidian/50 border-t border-steel-grey/30 px-4 py-2 text-[10px] text-mist flex items-center justify-between">
+        <span>
+          {pageOrders.length} of {displayTotal} orders · Sorted by {sortBy}
+        </span>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => goToPage(safePage - 1)}
+              disabled={safePage <= 1}
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-navy text-mist hover:text-pearl disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const startPage = Math.max(1, Math.min(safePage - 2, totalPages - 4))
+              const page = startPage + i
+              if (page > totalPages) return null
+              return (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={clsx(
+                    'px-1.5 py-0.5 rounded text-[10px] font-medium',
+                    page === safePage ? 'bg-accent text-white' : 'bg-navy text-mist hover:text-pearl'
+                  )}
+                >
+                  {page}
+                </button>
+              )
+            })}
+            <button
+              onClick={() => goToPage(safePage + 1)}
+              disabled={safePage >= totalPages}
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-navy text-mist hover:text-pearl disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

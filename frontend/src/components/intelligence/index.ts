@@ -1,4 +1,10 @@
 export { DashboardIntelligence } from './DashboardIntelligence';
-export { UsageAnalytics } from './UsageAnalytics';
-export { WorkflowInsights } from './WorkflowInsights';
-export { OptimizationRecommendations } from './OptimizationRecommendations';
+export { FleetIntelligence } from './FleetIntelligence';
+export { AgentIntelligence } from './AgentIntelligence';
+export { OptimizationIntelligence } from './OptimizationIntelligence';
+export { OperationalIntelligence } from './OperationalIntelligence';
+export { AICommandCenter } from './AICommandCenter';
+export { ActivityFeed } from './ActivityFeed';
+export { ModelInsights } from './ModelInsights';
+export { DecisionTimeline } from './DecisionTimeline';
+export { RouteOptimizationCenter } from './RouteOptimizationCenter';

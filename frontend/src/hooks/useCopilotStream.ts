@@ -2,6 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { API_CONFIG } from '@/utils/constants'
 import type { CopilotStage, CopilotStreamState, CopilotResponse } from '@/types/copilot'
 
+const MAX_RECONNECT_ATTEMPTS = 20
+
+function getBackoffDelay(attempt: number): number {
+  const jitter = Math.random() * 1000
+  return Math.min(1000 * Math.pow(2, attempt - 1) + jitter, 30000)
+}
+
 export function useCopilotStream() {
   const [state, setState] = useState<CopilotStreamState>({
     stage: 'idle',
@@ -14,8 +21,57 @@ export function useCopilotStream() {
 
   const wsRef = useRef<WebSocket | null>(null)
   const abortRef = useRef<boolean>(false)
+  const reconnectAttemptsRef = useRef<number>(0)
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tenantIdRef = useRef<string | null>(null)
+  const queryRef = useRef<string | null>(null)
+  const tokenBufferRef = useRef<string[]>([])
+  let parseErrors = 0
+  let invalidMessages = 0
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current)
+      reconnectTimerRef.current = null
+    }
+  }, [])
+
+  const closeSocket = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.onopen = null
+      wsRef.current.onmessage = null
+      wsRef.current.onerror = null
+      wsRef.current.onclose = null
+      wsRef.current.close()
+      wsRef.current = null
+    }
+  }, [])
+
+  const cancel = useCallback(() => {
+    abortRef.current = true
+    clearReconnectTimer()
+    reconnectAttemptsRef.current = 0
+    tenantIdRef.current = null
+    queryRef.current = null
+    tokenBufferRef.current = []
+    closeSocket()
+    setState({
+      stage: 'cancelled',
+      stageContent: 'Cancelled',
+      streamedContent: '',
+      response: null,
+      error: null,
+      isConnected: false,
+    })
+  }, [clearReconnectTimer, closeSocket])
 
   const reset = useCallback(() => {
+    abortRef.current = true
+    clearReconnectTimer()
+    reconnectAttemptsRef.current = 0
+    tenantIdRef.current = null
+    queryRef.current = null
+    tokenBufferRef.current = []
     setState({
       stage: 'idle',
       stageContent: '',
@@ -24,22 +80,31 @@ export function useCopilotStream() {
       error: null,
       isConnected: false,
     })
-  }, [])
+  }, [clearReconnectTimer])
 
   const disconnect = useCallback(() => {
     abortRef.current = true
-    if (wsRef.current) {
-      wsRef.current.onclose = null
-      wsRef.current.onmessage = null
-      wsRef.current.onerror = null
-      wsRef.current.close()
-      wsRef.current = null
-    }
+    clearReconnectTimer()
+    reconnectAttemptsRef.current = 0
+    tenantIdRef.current = null
+    queryRef.current = null
+    tokenBufferRef.current = []
+    closeSocket()
     setState((prev) => ({ ...prev, isConnected: false, stage: 'idle' }))
-  }, [])
+  }, [clearReconnectTimer, closeSocket])
 
   const connect = useCallback((tenantId: string, query: string) => {
+    abortRef.current = true
+    clearReconnectTimer()
+    closeSocket()
+    tokenBufferRef.current = []
+    parseErrors = 0
+    invalidMessages = 0
+
     abortRef.current = false
+    reconnectAttemptsRef.current = 0
+    tenantIdRef.current = tenantId
+    queryRef.current = query
 
     setState({
       stage: 'connecting',
@@ -56,6 +121,7 @@ export function useCopilotStream() {
 
     ws.onopen = () => {
       if (abortRef.current) { ws.close(); return }
+      reconnectAttemptsRef.current = 0
       setState((prev) => ({ ...prev, isConnected: true }))
       ws.send(JSON.stringify({ query }))
     }
@@ -77,17 +143,19 @@ export function useCopilotStream() {
           }
 
           case 'token': {
+            tokenBufferRef.current.push(msg.content || '')
             setState((prev) => ({
               ...prev,
               stage: 'streaming',
               stageContent: 'Receiving response...',
-              streamedContent: prev.streamedContent + (msg.content || ''),
+              streamedContent: tokenBufferRef.current.join(''),
             }))
             break
           }
 
           case 'copilot_response': {
             const response = msg.content as CopilotResponse
+            tokenBufferRef.current = []
             setState((prev) => ({
               ...prev,
               stage: 'complete',
@@ -99,6 +167,7 @@ export function useCopilotStream() {
           }
 
           case 'error': {
+            tokenBufferRef.current = []
             setState((prev) => ({
               ...prev,
               stage: 'error',
@@ -110,42 +179,68 @@ export function useCopilotStream() {
           }
         }
       } catch {
+        parseErrors++
+        invalidMessages++
+        tokenBufferRef.current = []
         setState((prev) => ({
           ...prev,
-          streamedContent: prev.streamedContent + event.data,
+          stage: 'error',
+          stageContent: '',
+          error: `Invalid response from server (${parseErrors} parse error${parseErrors !== 1 ? 's' : ''})`,
+          isConnected: false,
         }))
       }
     }
 
     ws.onerror = () => {
       if (abortRef.current) return
-      setState((prev) => ({
-        ...prev,
-        stage: 'error',
-        error: 'WebSocket connection failed',
-        isConnected: false,
-      }))
     }
 
     ws.onclose = () => {
       if (abortRef.current) return
-      setState((prev) => ({
-        ...prev,
-        stage: prev.stage === 'complete' ? 'complete' : 'error',
-        isConnected: false,
-      }))
+
+      setState((prev) => {
+        if (prev.stage === 'complete') {
+          return { ...prev, isConnected: false }
+        }
+
+        if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          tokenBufferRef.current = []
+          return {
+            ...prev,
+            stage: 'error',
+            error: 'Connection lost. Max reconnection attempts exceeded.',
+            isConnected: false,
+          }
+        }
+
+        reconnectAttemptsRef.current++
+        const delay = getBackoffDelay(reconnectAttemptsRef.current)
+        reconnectTimerRef.current = setTimeout(() => {
+          reconnectTimerRef.current = null
+          if (!abortRef.current && tenantIdRef.current && queryRef.current) {
+            tokenBufferRef.current = []
+            connect(tenantIdRef.current, queryRef.current)
+          }
+        }, delay)
+
+        return {
+          ...prev,
+          stage: 'reconnecting',
+          stageContent: `Reconnecting (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})...`,
+          isConnected: false,
+        }
+      })
     }
-  }, [])
+  }, [clearReconnectTimer, closeSocket])
 
   useEffect(() => {
     return () => {
       abortRef.current = true
-      if (wsRef.current) {
-        wsRef.current.onclose = null
-        wsRef.current.close()
-      }
+      clearReconnectTimer()
+      closeSocket()
     }
-  }, [])
+  }, [clearReconnectTimer, closeSocket])
 
-  return { state, connect, disconnect, reset }
+  return { state, connect, disconnect, reset, cancel }
 }

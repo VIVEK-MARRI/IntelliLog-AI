@@ -52,32 +52,32 @@
 
 @layer base {
   * {
-    border-color: #2A3A5C;
+    border-color: theme('colors.border');
   }
 
   body {
-    @apply bg-obsidian text-pearl antialiased;
+    @apply bg-charcoal text-bgSilverMuted antialiased;
     font-family: 'Geist', system-ui, sans-serif;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background: rgba(59, 130, 246, 0.3);
-    color: #F1F5F9;
+    background: rgba(37, 99, 235, 0.15);
+    color: inherit;
   }
 
   :focus-visible {
-    outline: 2px solid #3B82F6;
+    outline: 2px solid theme('colors.accent.DEFAULT');
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
@@ -85,16 +85,16 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2A3A5C;
-    border-radius: 3px;
+    background: theme('colors.border');
+    border-radius: 2px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #3B82F6;
+    background: theme('colors.text-muted');
   }
 
   input, textarea, select {
-    @apply bg-navy border border-steel-grey rounded-panel px-3 py-2 text-pearl placeholder:text-mist;
+    @apply bg-surface border border-border rounded-panel px-3.5 py-2.5 text-text-primary placeholder:text-text-muted;
     font-family: 'Geist', system-ui, sans-serif;
     font-size: 13px;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -102,18 +102,18 @@
 
   input:focus, textarea:focus, select:focus {
     @apply border-accent;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
     outline: none;
   }
 
   label {
-    @apply text-cloud text-xs font-medium mb-1.5 block;
+    @apply text-text-secondary text-xs font-medium mb-1.5 block;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-abyss border border-steel-grey/50 rounded-card shadow-card;
+    @apply bg-surface border border-border rounded-card shadow-card;
   }
 
   .card-hover {
@@ -121,42 +121,80 @@
   }
 
   .card-hover:hover {
-    @apply border-steel-grey shadow-elevated;
+    @apply border-border-hover shadow-elevated;
     transform: translateY(-1px);
   }
 
+  .card-elevated {
+    @apply bg-elevated border border-border/80 rounded-card shadow-elevated;
+  }
+
   .panel {
-    @apply bg-navy border border-steel-grey/50 rounded-panel;
+    @apply bg-background border border-border rounded-panel;
   }
 
-  .kpi-value {
-    @apply font-mono text-2xl font-semibold text-pearl tracking-tight;
+  /* Floating panel — the key visual depth element */
+  .floating-panel {
+    @apply bg-surface/95 backdrop-blur-sm border border-border/80 rounded-card;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.10), 0 0 0 1px rgba(255,255,255,0.5);
   }
 
-  .kpi-label {
-    @apply text-xs text-mist font-medium uppercase tracking-wider;
+  .floating-panel-lg {
+    @apply bg-surface/95 backdrop-blur-sm border border-border/80 rounded-card;
+    box-shadow: 0 8px 32px rgba(15,23,42,0.12), 0 0 0 1px rgba(255,255,255,0.5);
   }
 
+  .floating-panel-elevated {
+    box-shadow: 0 8px 32px rgba(15,23,42,0.15), 0 0 0 1px rgba(255,255,255,0.6);
+  }
+
+  /* Sidebar nav items */
+  .sidebar-nav-item {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150;
+  }
+
+  .sidebar-nav-item:hover {
+    background-color: theme('colors.sidebar.hover');
+    color: theme('colors.sidebar.text-hover');
+  }
+
+  .sidebar-nav-item.active {
+    background-color: theme('colors.sidebar.active-bg');
+    color: theme('colors.sidebar.text-active');
+  }
+
+  /* Page header accent bar */
+  .accent-bar {
+    @apply w-1 h-4 rounded-full shrink-0;
+  }
+
+  .accent-bar--blue { @apply bg-accent; }
+  .accent-bar--purple { @apply bg-purple; }
+  .accent-bar--teal { @apply bg-teal; }
+  .accent-bar--emerald { @apply bg-success; }
+
+  /* Status dots */
   .status-dot {
     @apply w-2 h-2 rounded-full inline-block;
   }
 
   .status-dot--success {
-    @apply bg-success shadow-[0_0_6px_rgba(14,165,233,0.4)];
+    @apply bg-success shadow-[0_0_6px_rgba(16,185,129,0.3)];
   }
 
   .status-dot--warning {
-    @apply bg-warning shadow-[0_0_6px_rgba(245,158,11,0.4)];
+    @apply bg-warning shadow-[0_0_6px_rgba(245,158,11,0.3)];
   }
 
   .status-dot--critical {
-    @apply bg-critical shadow-[0_0_6px_rgba(239,68,68,0.4)];
+    @apply bg-critical shadow-[0_0_6px_rgba(239,68,68,0.3)];
   }
 
   .status-dot--info {
-    @apply bg-info shadow-[0_0_6px_rgba(6,182,212,0.4)];
+    @apply bg-info shadow-[0_0_6px_rgba(14,165,233,0.3)];
   }
 
+  /* Badges */
   .badge {
     @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded;
   }
@@ -177,23 +215,36 @@
     @apply bg-info-bg text-info border border-info-border;
   }
 
+  .badge--purple {
+    @apply bg-purple-bg text-purple border border-purple-border;
+  }
+
+  .badge--teal {
+    @apply bg-teal-bg text-teal border border-teal-border;
+  }
+
+  .badge--sidebar {
+    @apply bg-sidebar-active-bg text-sidebar-text-active text-[10px] px-1.5 py-0.5 rounded;
+  }
+
+  /* Buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-panel
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-panel
            transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
            focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2;
   }
 
   .btn--primary {
-    @apply bg-accent text-white hover:bg-accent-hover shadow-glow;
+    @apply bg-accent text-white hover:bg-accent-hover shadow-[0_4px_12px_rgba(37,99,235,0.2)];
   }
 
   .btn--secondary {
-    @apply border border-steel-grey text-cloud hover:bg-slate-blue hover:text-pearl;
+    @apply bg-surface border border-border text-text-secondary hover:bg-surface-hover hover:text-text-primary;
   }
 
   .btn--ghost {
-    @apply text-mist hover:bg-slate-blue hover:text-pearl;
+    @apply text-text-secondary hover:bg-surface-hover hover:text-text-primary;
   }
 
   .btn--danger {
@@ -208,23 +259,24 @@
     @apply px-6 py-3 text-base;
   }
 
+  /* Skeleton */
   .skeleton {
-    @apply bg-navy rounded-panel animate-shimmer;
+    @apply bg-surface-hover rounded-panel animate-shimmer;
     background: linear-gradient(
       90deg,
-      #151E2F 25%,
-      #1E2A45 50%,
-      #151E2F 75%
+      #F0F2F5 25%,
+      #E4E7EC 50%,
+      #F0F2F5 75%
     );
     background-size: 200% 100%;
   }
 
   .divider {
-    @apply border-t border-steel-grey/30;
+    @apply border-t border-border;
   }
 
   .glass {
-    @apply backdrop-blur-xl bg-abyss/80;
+    @apply backdrop-blur-xl bg-surface/80;
   }
 }
 
@@ -249,4 +301,248 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Leaflet popup overrides */
+.fleet-map-popup .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+}
+
+.fleet-map-popup .leaflet-popup-content {
+  margin: 0 !important;
+  min-width: 220px;
+}
+
+.fleet-map-popup .leaflet-popup-tip {
+  display: none;
+}
+
+.fleet-command-map .leaflet-container {
+  background: #e8ebee;
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.fleet-command-map .leaflet-control-zoom {
+  border: 1px solid rgb(17 19 21 / 0.12) !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgb(17 19 21 / 0.18);
+}
+
+.fleet-command-map .leaflet-control-zoom a {
+  width: 38px !important;
+  height: 38px !important;
+  border: 0 !important;
+  background: rgb(255 255 255 / 0.96) !important;
+  color: #111315 !important;
+  line-height: 38px !important;
+}
+
+.fleet-driver-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 82px;
+  height: 38px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid rgb(17 19 21 / 0.14);
+  border-left: 4px solid var(--marker-color);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff 0%, #eef1f4 100%);
+  box-shadow: 0 16px 30px rgb(17 19 21 / 0.24), 0 2px 4px rgb(17 19 21 / 0.18);
+  color: #111315;
+  transform: translate3d(0, 0, 0);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.fleet-driver-marker:hover,
+.fleet-driver-marker.is-selected {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 42px rgb(17 19 21 / 0.3), 0 0 0 3px color-mix(in srgb, var(--marker-color) 22%, transparent);
+}
+
+.fleet-driver-avatar {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--marker-color);
+  color: #111315;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.fleet-driver-meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.fleet-driver-meta strong {
+  max-width: 44px;
+  overflow: hidden;
+  color: #111315;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fleet-driver-meta span {
+  margin-top: 3px;
+  color: #6b7280;
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.fleet-driver-heading {
+  position: absolute;
+  left: 13px;
+  top: -9px;
+  width: 0;
+  height: 0;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid var(--marker-color);
+  border-left: 5px solid transparent;
+  filter: drop-shadow(0 2px 2px rgb(17 19 21 / 0.22));
+  transform-origin: 50% 18px;
+}
+
+.fleet-destination-pin {
+  position: relative;
+  width: 28px;
+  height: 34px;
+}
+
+.fleet-destination-pin > div {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  display: flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 9px 9px 9px 2px;
+  background: var(--pin-color);
+  box-shadow: 0 12px 26px rgb(17 19 21 / 0.22);
+  transform: rotate(-45deg);
+}
+
+.fleet-destination-pin span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.fleet-stop-marker {
+  display: flex;
+  min-width: 44px;
+  height: 38px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(17 19 21 / 0.16);
+  border-bottom: 3px solid var(--stop-color, #a8b0bb);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff 0%, #eef1f4 100%);
+  box-shadow: 0 12px 26px rgb(17 19 21 / 0.18), 0 2px 4px rgb(17 19 21 / 0.12);
+  color: #111315;
+}
+
+.fleet-stop-marker strong {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.fleet-stop-marker span {
+  margin-top: 3px;
+  color: #6b7280;
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fleet-stop-marker.is-warehouse {
+  --stop-color: #111315;
+}
+
+.fleet-stop-marker.is-customer {
+  --stop-color: #f4c542;
+}
+
+.fleet-stop-marker.is-completed {
+  --stop-color: #27c281;
+}
+
+.fleet-stop-marker.is-pending {
+  --stop-color: #a8b0bb;
+}
+
+.fleet-map-popover {
+  min-width: 220px;
+  border: 1px solid rgb(42 48 56 / 0.9);
+  border-radius: 14px;
+  background: #1a1d21;
+  padding: 12px;
+  box-shadow: 0 18px 46px rgb(0 0 0 / 0.36);
+  color: #d9dde3;
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.fleet-popover-head,
+.fleet-popover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.fleet-popover-head {
+  margin-bottom: 10px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+}
+
+.fleet-popover-head span,
+.fleet-popover-head strong {
+  font-weight: 800;
+}
+
+.fleet-popover-row {
+  padding: 4px 0;
+  font-size: 11px;
+}
+
+.fleet-popover-row span {
+  color: #a8b0bb;
+}
+
+.fleet-popover-row strong {
+  max-width: 130px;
+  overflow: hidden;
+  color: #d9dde3;
+  font-weight: 650;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

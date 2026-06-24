@@ -4,14 +4,23 @@ import { useAuthStore } from '@/store/authStore'
 import { SignIn, Eye, EyeSlash, Compass, MapPin, Lightning, ChartBar } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
-export const Login: React.FC = () => {
+interface LoginProps {
+  from?: string | null
+}
+
+export const Login: React.FC<LoginProps> = ({ from }) => {
   const login = useAuthStore((state) => state.login)
   const navigate = useNavigate()
-  const [email, setEmail] = useState('admin@intelliglog.com')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Demo credentials only in development
+  const isDev = import.meta.env.DEV
+  const demoEmail = isDev ? 'admin@intelliglog.com' : ''
+  const demoPassword = isDev ? 'admin123' : ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +28,9 @@ export const Login: React.FC = () => {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/', { replace: true })
+      // Return-to redirect: use 'from' prop or default to '/'
+      const redirectTo = from || '/'
+      navigate(redirectTo, { replace: true })
     } catch {
       setError('Invalid credentials or server error')
     } finally {
@@ -120,13 +131,15 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-steel-grey/30">
-            <p className="text-[10px] text-mist uppercase tracking-wider font-semibold mb-2">Demo credentials</p>
-            <div className="space-y-1">
-              <p className="text-xs text-mist">Email: <span className="text-cloud font-mono">admin@intelliglog.com</span></p>
-              <p className="text-xs text-mist">Password: <span className="text-cloud font-mono">admin123</span></p>
+          {isDev && (
+            <div className="mt-8 pt-6 border-t border-steel-grey/30">
+              <p className="text-[10px] text-mist uppercase tracking-wider font-semibold mb-2">Demo credentials (dev only)</p>
+              <div className="space-y-1">
+                <p className="text-xs text-mist">Email: <span className="text-cloud font-mono">{demoEmail}</span></p>
+                <p className="text-xs text-mist">Password: <span className="text-cloud font-mono">{demoPassword}</span></p>
+              </div>
             </div>
-          </div>
+          )}
         </motion.div>
       </div>
 

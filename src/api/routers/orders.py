@@ -5,6 +5,7 @@ High-frequency GPS position updates and order management.
 
 import hashlib
 import json
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -18,6 +19,7 @@ from src.api.auth import AuthenticatedTenant, get_current_tenant
 from src.api.deps import get_db, get_redis
 from src.api.rate_limit import check_rate_limit
 from src.core.config import get_settings
+from src.core.metrics import orders_created_total
 from src.api.schemas import (
     CreateOrderRequest,
     OrderListResponse,
@@ -43,11 +45,21 @@ def _get_risk_level(risk_score: float) -> RiskLevel:
         return RiskLevel.HIGH
 
 
-async def _set_tenant_context(db: AsyncSession, tenant_id: str) -> None:
+async def _set_tenant_context(db: AsyncSession, tenant_id: str, request_id: str | None = None) -> None:
+    # SQLite does not support set_config().
+    # The connection binding tells us which dialect we are on.
+    bind = db.get_bind()
+    if bind and hasattr(bind, "dialect") and bind.dialect.name == "sqlite":
+        return
     await db.execute(
         text("SELECT set_config('app.current_tenant_id', :tenant_id, true)"),
         {"tenant_id": tenant_id},
     )
+    if request_id:
+        await db.execute(
+            text("SELECT set_config('app.request_id', :request_id, true)"),
+            {"request_id": request_id},
+        )
 
 
 def _seed_api_key_hash(tenant_id: str) -> str:
@@ -61,7 +73,7 @@ async def list_orders(
     redis_client: redis.Redis = Depends(get_redis),
     status_filter: Optional[str] = Query(None, alias="status"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
 ) -> OrderListResponse:
     """
     List active orders for tenant with pagination.
@@ -242,20 +254,21 @@ async def create_order(
     redis_client: redis.Redis = Depends(get_redis),
 ) -> dict:
     """
-    Create new order.
+    Create new order from flat frontend fields.
 
-    Validates that driver belongs to tenant and planned_eta is in future.
-    Publishes order_created event to Redis Streams for agent initialization.
+    Accepts driver_id, origin_lat/lng, destination_lat/lng, planned_eta.
+    Generates order_id if omitted, builds internal stops array from lat/lng pairs.
     """
+    order_id = request.order_id or str(uuid.uuid4())
+
     logger.info(
         "create_order",
-        order_id=request.orderId,
+        order_id=order_id,
         tenant_id=current_tenant.tenant_id,
-        driver_id=request.driverId,
+        driver_id=request.driver_id,
     )
 
-    # Validate planned_eta is in future
-    if request.plannedEta < datetime.now(timezone.utc):
+    if request.planned_eta < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="planned_eta must be in the future",
@@ -263,9 +276,20 @@ async def create_order(
 
     await _set_tenant_context(db, current_tenant.tenant_id)
 
-    planned_stops = len(request.stops)
-    first_stop = request.stops[0] if request.stops else None
-    last_stop = request.stops[-1] if request.stops else None
+    origin_stop = {
+        "lat": request.origin_lat,
+        "lng": request.origin_lng,
+        "type": "origin",
+        "sequence": 0,
+    }
+    destination_stop = {
+        "lat": request.destination_lat,
+        "lng": request.destination_lng,
+        "type": "destination",
+        "sequence": 1,
+    }
+    stops = [origin_stop, destination_stop]
+    planned_stops = len(stops)
 
     await db.execute(
         text(
@@ -276,9 +300,9 @@ async def create_order(
             """
         ),
         {
-            "driver_id": request.driverId,
+            "driver_id": request.driver_id,
             "tenant_id": current_tenant.tenant_id,
-            "name": f"Driver {request.driverId[:8]}",
+            "name": f"Driver {request.driver_id[:8]}",
         },
     )
 
@@ -301,40 +325,36 @@ async def create_order(
             """
         ),
         {
-            "order_id": request.orderId,
+            "order_id": order_id,
             "tenant_id": current_tenant.tenant_id,
-            "driver_id": request.driverId,
+            "driver_id": request.driver_id,
             "planned_stops": planned_stops,
-            "planned_eta": request.plannedEta,
+            "planned_eta": request.planned_eta,
         },
     )
     await db.commit()
 
-    # Store order in Redis for quick access
-    current_latitude = float(first_stop.get("lat", 0.0)) if first_stop else 0.0
-    current_longitude = float(first_stop.get("lng", 0.0)) if first_stop else 0.0
     await redis_client.hset(
-        f"order:{request.orderId}",
+        f"order:{order_id}",
         mapping={
-            "driver_id": request.driverId,
+            "driver_id": request.driver_id,
             "tenant_id": current_tenant.tenant_id,
             "status": "pending",
             "risk_score": 0.0,
             "planned_stops": planned_stops,
-            "stops": json.dumps(request.stops),
-            "latitude": current_latitude,
-            "longitude": current_longitude,
+            "stops": json.dumps(stops),
+            "latitude": request.origin_lat,
+            "longitude": request.origin_lng,
             "speed": 0.0,
         },
     )
 
-    # Publish to Redis Streams for agent
     await redis_client.xadd(
         "orders",
         {
             "event": "order_created",
-            "order_id": request.orderId,
-            "driver_id": request.driverId,
+            "order_id": order_id,
+            "driver_id": request.driver_id,
             "tenant_id": current_tenant.tenant_id,
         },
     )
@@ -344,25 +364,26 @@ async def create_order(
         json.dumps(
             {
                 "type": "order_created",
-                "order_id": request.orderId,
-                "driver_id": request.driverId,
+                "order_id": order_id,
+                "driver_id": request.driver_id,
                 "tenant_id": current_tenant.tenant_id,
-                "planned_eta": request.plannedEta.isoformat(),
+                "planned_eta": request.planned_eta.isoformat(),
                 "risk_score": 0.0,
-                "latitude": current_latitude,
-                "longitude": current_longitude,
+                "latitude": request.origin_lat,
+                "longitude": request.origin_lng,
                 "speed_kmh": 0.0,
-                "stops": request.stops,
+                "stops": stops,
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }
         ),
     )
 
-    logger.info("order_created", order_id=request.orderId)
+    orders_created_total.labels(tenant_id=current_tenant.tenant_id).inc()
+    logger.info("order_created", order_id=order_id)
 
     return {
-        "orderId": request.orderId,
+        "orderId": order_id,
         "status": "created",
         "message": "Order created and agent initialized",
     }
@@ -451,3 +472,52 @@ async def update_position(
         current_risk_score=risk_score,
         request_id=request_id,
     )
+
+
+@router.get("/{order_id}/route", response_model=dict)
+async def get_order_route(
+    order_id: str,
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Get current route for an order. Redirects internally to route data.
+    """
+    logger.info(
+        "get_order_route",
+        order_id=order_id,
+        tenant_id=current_tenant.tenant_id,
+    )
+    result = await db.execute(
+        text("""
+            SELECT order_id::text, waypoints, total_distance_km, total_duration_minutes,
+                   solver_status, created_at
+            FROM route_plans
+            WHERE tenant_id = :tenant_id AND order_id = :order_id
+            ORDER BY created_at DESC
+            LIMIT 1
+        """),
+        {"tenant_id": current_tenant.tenant_id, "order_id": order_id},
+    )
+    row = result.mappings().first()
+    if not row:
+        return {
+            "order_id": order_id,
+            "waypoints": [],
+            "total_distance_km": 0.0,
+            "total_duration_minutes": 0.0,
+            "solver_status": "not_optimized",
+        }
+
+    waypoints_raw = row.get("waypoints") or []
+    if isinstance(waypoints_raw, str):
+        waypoints_raw = json.loads(waypoints_raw)
+
+    return {
+        "order_id": row["order_id"],
+        "waypoints": waypoints_raw,
+        "total_distance_km": float(row["total_distance_km"] or 0.0),
+        "total_duration_minutes": float(row["total_duration_minutes"] or 0.0),
+        "solver_status": str(row["solver_status"] or "unknown"),
+        "route_optimized_at": row["created_at"].isoformat() if row.get("created_at") else None,
+    }

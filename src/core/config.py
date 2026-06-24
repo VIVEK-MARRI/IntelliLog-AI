@@ -124,7 +124,10 @@ def get_settings(*, allow_defaults: bool = False) -> AppSettings:
         redis_url=redis_url,
         celery_broker_url=celery_broker_url,
         celery_result_backend=celery_result_backend,
-        skip_external_startup_checks=os.getenv("SKIP_EXTERNAL_STARTUP_CHECKS", "false").lower() == "true",
+        skip_external_startup_checks=(
+            os.getenv("SKIP_EXTERNAL_STARTUP_CHECKS", "false").lower() == "true"
+            or (environment == "development" and "sqlite" in database_url)
+        ),
         rate_limit_auth_per_minute=rate_limit_auth_per_minute,
         rate_limit_position_per_minute=rate_limit_position_per_minute,
         rate_limit_copilot_per_minute=rate_limit_copilot_per_minute,

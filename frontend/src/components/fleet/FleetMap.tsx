@@ -1,10 +1,20 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
+import clsx from 'clsx'
+import {
+  Crosshair,
+  EyeSlash,
+  MagnifyingGlass,
+  MapTrifold,
+  TrafficSign,
+  Truck,
+  Warning,
+  X,
+} from '@phosphor-icons/react'
+import { syntheticPosition } from '@/api/orders'
 import { useOrdersArray } from '@/store/fleetStore'
-import { LiveOrder } from '@/types/api'
-import { MagnifyingGlass, Funnel, X } from '@phosphor-icons/react'
-import { buildClusters } from './MarkerCluster'
-import type { ClusterState } from './MarkerCluster'
+import type { LiveOrder, Stop } from '@/types/api'
+import { buildClusters, type ClusterState } from './MarkerCluster'
 
 interface FleetMapProps {
   onOrderSelect?: (orderId: string) => void
@@ -12,455 +22,924 @@ interface FleetMapProps {
 }
 
 interface DriverMarker {
-  marker: L.CircleMarker
-  ring?: L.CircleMarker
+  marker: L.Marker
+  ring: L.CircleMarker
   order: LiveOrder
-  animating?: boolean
-  animStartLat?: number
-  animStartLng?: number
-  animTargetLat?: number
-  animTargetLng?: number
-  animStartTime?: number
-  animDuration?: number
+  visible: boolean
 }
 
-function smoothMoveMarker(dm: DriverMarker, targetLat: number, targetLng: number, speedKmh: number) {
-  const speedMs = Math.max(speedKmh, 1) / 3.6
-  const dist = L.latLng(dm.marker.getLatLng()).distanceTo(L.latLng(targetLat, targetLng)) / 1000
-  let duration = (dist / speedMs) * 1000
-  duration = Math.max(200, Math.min(3000, duration))
-  dm.animStartLat = dm.marker.getLatLng().lat
-  dm.animStartLng = dm.marker.getLatLng().lng
-  dm.animTargetLat = targetLat
-  dm.animTargetLng = targetLng
-  dm.animStartTime = performance.now()
-  dm.animDuration = duration
-  if (!dm.animating) {
-    dm.animating = true
-  }
+interface RouteGeometry {
+  points: [number, number][]
+  cumulativeMeters: number[]
+  totalMeters: number
+  durationSeconds: number
+  stopIndices: number[]
+  source: 'osrm' | 'fallback'
 }
 
-function processAnimations(markers: Map<string, DriverMarker>) {
-  const now = performance.now()
-  markers.forEach((dm) => {
-    if (!dm.animating || dm.animStartTime === undefined || dm.animDuration === undefined) return
-    const elapsed = now - dm.animStartTime
-    const t = Math.min(elapsed / dm.animDuration, 1)
-    const eased = t * (2 - t)
-    const lat = dm.animStartLat! + (dm.animTargetLat! - dm.animStartLat!) * eased
-    const lng = dm.animStartLng! + (dm.animTargetLng! - dm.animStartLng!) * eased
-    dm.marker.setLatLng([lat, lng])
-    if (dm.ring) dm.ring.setLatLng([lat, lng])
-    if (t >= 1) {
-      dm.marker.setLatLng([dm.animTargetLat!, dm.animTargetLng!])
-      if (dm.ring) dm.ring.setLatLng([dm.animTargetLat!, dm.animTargetLng!])
-      dm.animating = false
-    }
-  })
+interface RouteVisual {
+  halo?: L.Polyline
+  completed?: L.Polyline
+  remaining?: L.Polyline
 }
+
+interface VehicleRuntime {
+  progressMeters: number
+  speedMps: number
+  lastFrame: number
+  bearing: number
+}
+
+interface LayerState {
+  traffic: boolean
+  route: boolean
+  risk: boolean
+  driver: boolean
+}
+
+type FilterKey = 'all' | 'active' | 'delayed' | 'highRisk' | 'optimized'
 
 const DEFAULT_CENTER: [number, number] = [39.8283, -98.5795]
 const DEFAULT_ZOOM = 4
+const ZOOM_THRESHOLD = 9
+const OSRM_ENDPOINT = 'https://router.project-osrm.org/route/v1/driving'
 
-const getRiskColor = (riskScore: number): string => {
-  if (riskScore < 0.3) return '#22c55e'
-  if (riskScore < 0.7) return '#f59e0b'
-  return '#ef4444'
+const COLORS = {
+  charcoal: '#111315',
+  onSchedule: '#27C281',
+  atRisk: '#F4C542',
+  critical: '#EF4444',
+  selected: '#2563EB',
+  normalRoute: '#94A3B8',
+  completedRoute: '#27C281',
+  selectedRoute: '#F4C542',
+  freeTraffic: '#27C281',
+  moderateTraffic: '#F4C542',
+  heavyTraffic: '#EF4444',
 }
 
-const buildPopupHtml = (order: LiveOrder): string => {
-  const color = getRiskColor(order.risk_score)
-  const riskLabel = order.risk_score < 0.3 ? 'Low' : order.risk_score < 0.7 ? 'Medium' : 'High'
-  const delayColor = order.delay_minutes > 10 ? '#EF4444' : order.delay_minutes > 0 ? '#F59E0B' : '#22c55e'
-  return `<div style="background:#0F1729;border:1px solid #2A3A5C;border-radius:12px;padding:14px;min-width:220px;font-family:system-ui,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <span style="color:#F1F5F9;font-weight:600;font-size:14px;font-family:monospace;">${order.id}</span>
-      <span style="background:${color};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;">${(order.risk_score * 100).toFixed(0)}% ${riskLabel}</span>
+function getCoordinates(order: LiveOrder): [number, number] {
+  const candidates: Array<[number | undefined | null, number | undefined | null]> = [
+    [order.current_position?.lat, order.current_position?.lng],
+    [(order as any).latitude, (order as any).longitude],
+    [(order as any).lat, (order as any).lng],
+    [(order as any).current_location?.lat, (order as any).current_location?.lng],
+    [(order as any).origin_lat, (order as any).origin_lng],
+  ]
+
+  for (const [lat, lng] of candidates) {
+    const nlat = Number(lat)
+    const nlng = Number(lng)
+    if (Number.isFinite(nlat) && Number.isFinite(nlng) && (nlat !== 0 || nlng !== 0)) {
+      return [nlat, nlng]
+    }
+  }
+
+  const fallback = syntheticPosition(order.id)
+  return [fallback.lat, fallback.lng]
+}
+
+function getDestination(order: LiveOrder): [number, number] | null {
+  const lat = Number(order.destination_lat)
+  const lng = Number(order.destination_lng)
+  if (Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0)) return [lat, lng]
+  const lastStop = order.stops?.[order.stops.length - 1]
+  if (lastStop && Number.isFinite(lastStop.lat) && Number.isFinite(lastStop.lng)) return [lastStop.lat, lastStop.lng]
+  return null
+}
+
+function routeWaypoints(order: LiveOrder): [number, number][] {
+  const points: [number, number][] = []
+  if (Number.isFinite(order.origin_lat) && Number.isFinite(order.origin_lng) && (order.origin_lat !== 0 || order.origin_lng !== 0)) {
+    points.push([order.origin_lat, order.origin_lng])
+  }
+
+  if (order.stops?.length) {
+    order.stops
+      .filter((stop) => Number.isFinite(stop.lat) && Number.isFinite(stop.lng))
+      .sort((a, b) => a.sequence - b.sequence)
+      .forEach((stop) => points.push([stop.lat, stop.lng]))
+  }
+
+  const destination = getDestination(order)
+  if (destination) points.push(destination)
+
+  if (points.length < 2) {
+    points.unshift(getCoordinates(order))
+  }
+
+  return dedupePoints(points).slice(0, 24)
+}
+
+function dedupePoints(points: [number, number][]): [number, number][] {
+  const result: [number, number][] = []
+  points.forEach((point) => {
+    const previous = result[result.length - 1]
+    if (!previous || L.latLng(previous).distanceTo(point) > 15) result.push(point)
+  })
+  return result
+}
+
+function statusFor(order: LiveOrder): 'onSchedule' | 'atRisk' | 'critical' {
+  if (order.risk_score >= 0.7 || order.delay_minutes >= 20) return 'critical'
+  if (order.risk_score >= 0.3 || order.delay_minutes > 0) return 'atRisk'
+  return 'onSchedule'
+}
+
+function statusColor(order: LiveOrder, selected = false): string {
+  if (selected) return COLORS.selected
+  return COLORS[statusFor(order)]
+}
+
+function routeStateColor(order: LiveOrder, selected = false): string {
+  if (selected) return COLORS.selectedRoute
+  if (statusFor(order) === 'critical') return COLORS.critical
+  if (statusFor(order) === 'atRisk') return COLORS.atRisk
+  return COLORS.onSchedule
+}
+
+function formatId(id: string): string {
+  return id.length > 8 ? id.slice(0, 8).toUpperCase() : id.toUpperCase()
+}
+
+function driverInitials(order: LiveOrder): string {
+  const source = order.driver_name || order.driver_id || order.id
+  const parts = source.replace(/[-_]/g, ' ').split(' ').filter(Boolean)
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  return source.slice(0, 2).toUpperCase()
+}
+
+function bearingBetween(from: [number, number], to: [number, number]): number {
+  const lat1 = from[0] * Math.PI / 180
+  const lat2 = to[0] * Math.PI / 180
+  const lngDelta = (to[1] - from[1]) * Math.PI / 180
+  const y = Math.sin(lngDelta) * Math.cos(lat2)
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lngDelta)
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
+function vehicleIcon(order: LiveOrder, selected: boolean, bearing: number, remainingMeters: number, etaMinutes: number): L.DivIcon {
+  const color = statusColor(order, selected)
+  const speed = Math.round(order.current_position?.speed_kmh ?? 0)
+
+  return L.divIcon({
+    className: '',
+    html: `<div class="fleet-driver-marker ${selected ? 'is-selected' : ''}" style="--marker-color:${color};">
+      <div class="fleet-driver-heading" style="transform:rotate(${bearing}deg);"></div>
+      <div class="fleet-driver-avatar">${driverInitials(order)}</div>
+      <div class="fleet-driver-meta">
+        <strong>${formatId(order.driver_id || order.id)}</strong>
+        <span>${speed} km/h · ${Math.max(1, etaMinutes)}m · ${(remainingMeters / 1000).toFixed(1)}km</span>
+      </div>
+    </div>`,
+    iconSize: [126, 42],
+    iconAnchor: [22, 22],
+  })
+}
+
+function stopIcon(_stop: Stop | null, index: number, etaMinutes: number, status: 'warehouse' | 'pending' | 'completed' | 'customer'): L.DivIcon {
+  const label = status === 'warehouse' ? 'WH' : status === 'customer' ? 'C' : String(index)
+  return L.divIcon({
+    className: '',
+    html: `<div class="fleet-stop-marker is-${status}">
+      <strong>${label}</strong>
+      <span>${status === 'completed' ? 'Done' : `${Math.max(1, etaMinutes)}m`}</span>
+    </div>`,
+    iconSize: [46, 42],
+    iconAnchor: [23, 36],
+  })
+}
+
+function hoverHtml(order: LiveOrder, remainingMeters: number, etaMinutes: number, progress: number): string {
+  const color = statusColor(order)
+  const risk = Math.round(order.risk_score * 100)
+  return `<div class="fleet-map-popover">
+    <div class="fleet-popover-head">
+      <span>${formatId(order.id)}</span>
+      <strong style="color:${color}">${risk}% risk</strong>
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:#5A6B8A;font-size:11px;">Driver</span>
-        <span style="color:#94A3B8;font-size:11px;font-family:monospace;">${order.driver_id}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:#5A6B8A;font-size:11px;">Status</span>
-        <span style="color:#0EA5E9;font-size:11px;text-transform:capitalize;">${order.status.replace('_', ' ')}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:#5A6B8A;font-size:11px;">ETA</span>
-        <span style="color:#94A3B8;font-size:11px;">${order.current_eta ? new Date(order.current_eta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:#5A6B8A;font-size:11px;">Distance</span>
-        <span style="color:#94A3B8;font-size:11px;">${order.distance_remaining_km.toFixed(0)} km</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:#5A6B8A;font-size:11px;">Delay</span>
-        <span style="color:${delayColor};font-size:11px;">${order.delay_minutes > 0 ? `${order.delay_minutes} min` : 'On time'}</span>
-      </div>
-    </div>
-    <div style="display:flex;gap:4px;">
-      <span style="background:rgba(59,130,246,0.12);color:#60A5FA;font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;">${order.current_position?.speed_kmh.toFixed(0) || '0'} km/h</span>
-      <span style="background:rgba(139,92,246,0.12);color:#A78BFA;font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;">${order.stops.length} stops</span>
-    </div>
+    <div class="fleet-popover-row"><span>Driver</span><strong>${order.driver_name || formatId(order.driver_id || 'unassigned')}</strong></div>
+    <div class="fleet-popover-row"><span>ETA</span><strong>${Math.max(1, etaMinutes)} min remaining</strong></div>
+    <div class="fleet-popover-row"><span>Distance</span><strong>${(remainingMeters / 1000).toFixed(1)} km remaining</strong></div>
+    <div class="fleet-popover-row"><span>Progress</span><strong>${Math.round(progress * 100)}%</strong></div>
   </div>`
 }
 
+function geometryHash(order: LiveOrder): string {
+  return routeWaypoints(order).map(([lat, lng]) => `${lat.toFixed(5)},${lng.toFixed(5)}`).join('|')
+}
+
+function cumulativeDistances(points: [number, number][]): number[] {
+  const distances = [0]
+  for (let i = 1; i < points.length; i++) {
+    distances.push(distances[i - 1] + L.latLng(points[i - 1]).distanceTo(points[i]))
+  }
+  return distances
+}
+
+function projectPointAtDistance(route: RouteGeometry, distanceMeters: number): { point: [number, number]; bearing: number; index: number } {
+  if (route.points.length === 0) return { point: DEFAULT_CENTER, bearing: 0, index: 0 }
+  if (route.points.length === 1) return { point: route.points[0], bearing: 0, index: 0 }
+
+  const clamped = Math.max(0, Math.min(distanceMeters, route.totalMeters))
+  const nextIndex = route.cumulativeMeters.findIndex((distance) => distance >= clamped)
+  const i = Math.max(1, nextIndex === -1 ? route.points.length - 1 : nextIndex)
+  const previousDistance = route.cumulativeMeters[i - 1]
+  const segmentDistance = Math.max(1, route.cumulativeMeters[i] - previousDistance)
+  const t = (clamped - previousDistance) / segmentDistance
+  const from = route.points[i - 1]
+  const to = route.points[i]
+  return {
+    point: [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t],
+    bearing: bearingBetween(from, to),
+    index: i,
+  }
+}
+
+function splitRoute(route: RouteGeometry, progressMeters: number): { completed: [number, number][]; remaining: [number, number][] } {
+  const projected = projectPointAtDistance(route, progressMeters)
+  const completed = route.points.slice(0, projected.index)
+  completed.push(projected.point)
+  return {
+    completed,
+    remaining: [projected.point, ...route.points.slice(projected.index)],
+  }
+}
+
+function initialProgress(order: LiveOrder, route: RouteGeometry): number {
+  const live = getCoordinates(order)
+  let bestIndex = 0
+  let bestDistance = Number.POSITIVE_INFINITY
+  route.points.forEach((point, index) => {
+    const distance = L.latLng(point).distanceTo(live)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      bestIndex = index
+    }
+  })
+  const ratio = order.status === 'completed' || order.status === 'delivered'
+    ? 0.98
+    : Math.min(0.78, Math.max(0.05, bestIndex / Math.max(1, route.points.length - 1)))
+  return route.cumulativeMeters[bestIndex] || route.totalMeters * ratio
+}
+
+function fallbackRoute(points: [number, number][]): RouteGeometry {
+  const densified: [number, number][] = []
+  points.forEach((point, index) => {
+    if (index === 0) {
+      densified.push(point)
+      return
+    }
+    const previous = points[index - 1]
+    const steps = Math.max(8, Math.ceil(L.latLng(previous).distanceTo(point) / 30000))
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps
+      const curve = Math.sin(t * Math.PI) * 0.04
+      densified.push([
+        previous[0] + (point[0] - previous[0]) * t + curve * (point[1] - previous[1]) * 0.12,
+        previous[1] + (point[1] - previous[1]) * t - curve * (point[0] - previous[0]) * 0.12,
+      ])
+    }
+  })
+  const cumulativeMeters = cumulativeDistances(densified)
+  const totalMeters = cumulativeMeters[cumulativeMeters.length - 1] || 1
+  return {
+    points: densified,
+    cumulativeMeters,
+    totalMeters,
+    durationSeconds: totalMeters / 15,
+    stopIndices: points.map((point) => {
+      let closest = 0
+      let best = Number.POSITIVE_INFINITY
+      densified.forEach((candidate, index) => {
+        const distance = L.latLng(candidate).distanceTo(point)
+        if (distance < best) {
+          best = distance
+          closest = index
+        }
+      })
+      return closest
+    }),
+    source: 'fallback',
+  }
+}
+
+async function fetchRoadRoute(points: [number, number][], signal?: AbortSignal): Promise<RouteGeometry> {
+  if (points.length < 2) return fallbackRoute(points)
+  const coords = points.map(([lat, lng]) => `${lng},${lat}`).join(';')
+  const response = await fetch(`${OSRM_ENDPOINT}/${coords}?overview=full&geometries=geojson&steps=false&annotations=false`, { signal })
+  if (!response.ok) throw new Error(`OSRM route failed: ${response.status}`)
+  const payload = await response.json()
+  const route = payload?.routes?.[0]
+  const coordinates = route?.geometry?.coordinates
+  if (!Array.isArray(coordinates) || coordinates.length < 2) throw new Error('OSRM route missing geometry')
+  const routePoints = coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
+  const cumulativeMeters = cumulativeDistances(routePoints)
+  const stopIndices = points.map((point) => {
+    let closest = 0
+    let best = Number.POSITIVE_INFINITY
+    routePoints.forEach((candidate, index) => {
+      const distance = L.latLng(candidate).distanceTo(point)
+      if (distance < best) {
+        best = distance
+        closest = index
+      }
+    })
+    return closest
+  })
+  return {
+    points: routePoints,
+    cumulativeMeters,
+    totalMeters: route.distance || cumulativeMeters[cumulativeMeters.length - 1] || 1,
+    durationSeconds: route.duration || (cumulativeMeters[cumulativeMeters.length - 1] || 1) / 15,
+    stopIndices,
+    source: 'osrm',
+  }
+}
+
 export const FleetMap: React.FC<FleetMapProps> = ({ onOrderSelect, selectedOrderId }) => {
-  const mapRef = useRef<L.Map | null>(null)
-  const markersRef = useRef<Map<string, DriverMarker>>(new Map())
-  const polylinesRef = useRef<Map<string, { glow: L.Polyline; main: L.Polyline }>>(new Map())
-  const warehouseMarkersRef = useRef<L.Marker[]>([])
-  const destinationMarkersRef = useRef<L.Marker[]>([])
-  const initialBoundsSet = useRef(false)
-  const clusterStateRef = useRef<ClusterState | null>(null)
   const orders = useOrdersArray()
+  const mapContainerId = useMemo(() => `fleet-map-${Math.random().toString(36).slice(2)}`, [])
+  const mapRef = useRef<L.Map | null>(null)
+  const markerRef = useRef<Map<string, DriverMarker>>(new Map())
+  const routeCacheRef = useRef<Map<string, RouteGeometry>>(new Map())
+  const routeHashRef = useRef<Map<string, string>>(new Map())
+  const routeVisualRef = useRef<Map<string, RouteVisual>>(new Map())
+  const vehicleRuntimeRef = useRef<Map<string, VehicleRuntime>>(new Map())
+  const destinationRef = useRef<L.Marker[]>([])
+  const stopRef = useRef<L.Marker[]>([])
+  const riskRef = useRef<L.Circle[]>([])
+  const trafficRef = useRef<L.Polyline[]>([])
+  const clusterRef = useRef<ClusterState | null>(null)
+  const animationRef = useRef<number | null>(null)
+  const initializedBoundsRef = useRef(false)
+
   const [searchQuery, setSearchQuery] = useState('')
-  const [riskFilter, setRiskFilter] = useState<string | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
+  const [quickFilter, setQuickFilter] = useState<FilterKey>('all')
+  const [layers, setLayers] = useState<LayerState>({ traffic: false, route: true, risk: true, driver: true })
+  const [, setEtaTick] = useState(0)
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      if (riskFilter === 'low' && o.risk_score >= 0.3) return false
-      if (riskFilter === 'medium' && (o.risk_score < 0.3 || o.risk_score >= 0.7)) return false
-      if (riskFilter === 'high' && o.risk_score < 0.7) return false
-      if (searchQuery && !o.id.toLowerCase().includes(searchQuery.toLowerCase()) && !o.driver_id?.toLowerCase().includes(searchQuery.toLowerCase())) return false
+    return orders.filter((order) => {
+      const query = searchQuery.trim().toLowerCase()
+      if (query) {
+        const haystack = `${order.id} ${order.driver_id} ${order.driver_name ?? ''} ${order.origin ?? ''} ${order.destination ?? ''}`.toLowerCase()
+        if (!haystack.includes(query)) return false
+      }
+      if (quickFilter === 'active') return order.status !== 'completed' && order.status !== 'cancelled'
+      if (quickFilter === 'delayed') return (order.delay_minutes ?? 0) > 0
+      if (quickFilter === 'highRisk') return order.is_high_risk || order.risk_score >= 0.7
+      if (quickFilter === 'optimized') return (order as any).is_optimized || order.route_efficiency >= 0.9
       return true
     })
-  }, [orders, riskFilter, searchQuery])
+  }, [orders, quickFilter, searchQuery])
+
+  const stats = useMemo(() => ({
+    active: orders.filter((o) => o.status !== 'completed' && o.status !== 'cancelled').length,
+    delayed: orders.filter((o) => (o.delay_minutes ?? 0) > 0).length,
+    risk: orders.filter((o) => o.is_high_risk || o.risk_score >= 0.7).length,
+    optimized: orders.filter((o) => (o as any).is_optimized || o.route_efficiency >= 0.9).length,
+  }), [orders])
 
   useEffect(() => {
-    if (!mapRef.current) {
-      const map = L.map('fleet-map', { zoomControl: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(map)
-      map.attributionControl.setPrefix(false)
-      L.control.zoom({ position: 'bottomright' }).addTo(map)
-      mapRef.current = map
-    }
-    let animFrameId: number
-    const tick = () => {
-      processAnimations(markersRef.current)
-      animFrameId = requestAnimationFrame(tick)
-    }
-    animFrameId = requestAnimationFrame(tick)
+    if (mapRef.current) return
+    const map = L.map(mapContainerId, {
+      zoomControl: false,
+      preferCanvas: true,
+      worldCopyJump: true,
+    }).setView(DEFAULT_CENTER, DEFAULT_ZOOM)
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      maxZoom: 19,
+    }).addTo(map)
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map)
+    map.attributionControl.setPrefix(false)
+    mapRef.current = map
+
+    const observer = new ResizeObserver(() => map.invalidateSize())
+    observer.observe(map.getContainer())
+    ;(map as any).__resizeObserver = observer
+
     return () => {
-      cancelAnimationFrame(animFrameId)
-      if (mapRef.current) {
-        initialBoundsSet.current = false
-        mapRef.current.remove()
-        mapRef.current = null
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current)
+      const resizeObserver = (map as any).__resizeObserver
+      if (resizeObserver) resizeObserver.disconnect()
+      map.remove()
+      mapRef.current = null
+    }
+  }, [mapContainerId])
+
+  useEffect(() => {
+    const abort = new AbortController()
+    filteredOrders.slice(0, 60).forEach((order) => {
+      const hash = geometryHash(order)
+      if (routeHashRef.current.get(order.id) === hash && routeCacheRef.current.has(order.id)) return
+
+      routeHashRef.current.set(order.id, hash)
+      const points = routeWaypoints(order)
+      fetchRoadRoute(points, abort.signal)
+        .then((route) => {
+          routeCacheRef.current.set(order.id, route)
+          const runtime = vehicleRuntimeRef.current.get(order.id)
+          if (!runtime) {
+            vehicleRuntimeRef.current.set(order.id, {
+              progressMeters: initialProgress(order, route),
+              speedMps: Math.max(7, (order.current_position?.speed_kmh ?? 42) / 3.6),
+              lastFrame: performance.now(),
+              bearing: 0,
+            })
+          }
+          syncMapRef.current()
+        })
+        .catch(() => {
+          const route = fallbackRoute(points)
+          routeCacheRef.current.set(order.id, route)
+          if (!vehicleRuntimeRef.current.has(order.id)) {
+            vehicleRuntimeRef.current.set(order.id, {
+              progressMeters: initialProgress(order, route),
+              speedMps: Math.max(7, (order.current_position?.speed_kmh ?? 42) / 3.6),
+              lastFrame: performance.now(),
+              bearing: 0,
+            })
+          }
+          syncMapRef.current()
+        })
+    })
+    return () => abort.abort()
+  }, [filteredOrders])
+
+  const clearGeneratedLayers = useCallback(() => {
+    routeVisualRef.current.forEach((visual) => {
+      visual.halo?.remove()
+      visual.completed?.remove()
+      visual.remaining?.remove()
+    })
+    destinationRef.current.forEach((marker) => marker.remove())
+    stopRef.current.forEach((marker) => marker.remove())
+    riskRef.current.forEach((circle) => circle.remove())
+    trafficRef.current.forEach((route) => route.remove())
+    clusterRef.current?.markers.forEach((marker) => marker.remove())
+    routeVisualRef.current.clear()
+    destinationRef.current = []
+    stopRef.current = []
+    riskRef.current = []
+    trafficRef.current = []
+    clusterRef.current = null
+  }, [])
+
+  const updateRouteVisual = useCallback((order: LiveOrder) => {
+    const route = routeCacheRef.current.get(order.id)
+    const visual = routeVisualRef.current.get(order.id)
+    const runtime = vehicleRuntimeRef.current.get(order.id)
+    if (!route || !visual || !runtime) return
+    const split = splitRoute(route, runtime.progressMeters)
+    visual.completed?.setLatLngs(split.completed)
+    visual.remaining?.setLatLngs(split.remaining)
+  }, [])
+
+  const syncMap = useCallback(() => {
+    const map = mapRef.current
+    if (!map) return
+    clearGeneratedLayers()
+
+    const showIndividual = map.getZoom() >= ZOOM_THRESHOLD
+    const remaining = new Set(markerRef.current.keys())
+
+    filteredOrders.forEach((order) => {
+      const route = routeCacheRef.current.get(order.id)
+      const runtime = vehicleRuntimeRef.current.get(order.id)
+      const selected = order.id === selectedOrderId
+      const projected = route && runtime
+        ? projectPointAtDistance(route, runtime.progressMeters)
+        : { point: getCoordinates(order), bearing: order.current_position?.heading ?? 0, index: 0 }
+      const remainingMeters = route && runtime ? Math.max(0, route.totalMeters - runtime.progressMeters) : order.distance_remaining_km * 1000
+      const etaMinutes = Math.max(1, Math.round(remainingMeters / Math.max(1, runtime?.speedMps ?? 12) / 60))
+
+      remaining.delete(order.id)
+      const existing = markerRef.current.get(order.id)
+      const color = statusColor(order, selected)
+
+      if (existing) {
+        existing.order = order
+        existing.marker.setLatLng(projected.point)
+        existing.marker.setIcon(vehicleIcon(order, selected, projected.bearing, remainingMeters, etaMinutes))
+        existing.marker.setPopupContent(hoverHtml(order, remainingMeters, etaMinutes, route ? (runtime?.progressMeters ?? 0) / route.totalMeters : 0))
+        existing.ring.setLatLng(projected.point)
+        existing.ring.setStyle({ color, opacity: selected ? 0.35 : 0.16, weight: selected ? 2 : 1 })
+        existing.ring.setRadius(selected ? 72000 : statusFor(order) === 'critical' ? 48000 : 32000)
+      } else {
+        const marker = L.marker(projected.point, {
+          icon: vehicleIcon(order, selected, projected.bearing, remainingMeters, etaMinutes),
+          zIndexOffset: selected ? 900 : statusFor(order) === 'critical' ? 500 : 200,
+        }).bindPopup(hoverHtml(order, remainingMeters, etaMinutes, route ? (runtime?.progressMeters ?? 0) / route.totalMeters : 0), {
+          closeButton: false,
+          className: 'fleet-map-popup',
+          offset: [18, -8],
+        })
+
+        marker.on('click', () => {
+          onOrderSelect?.(order.id)
+          const targetRoute = routeCacheRef.current.get(order.id)
+          if (targetRoute) {
+            const bounds = L.latLngBounds(targetRoute.points)
+            if (bounds.isValid()) map.flyToBounds(bounds, { padding: [90, 90], maxZoom: 13, duration: 0.75 })
+          } else {
+            map.flyTo(projected.point, Math.max(map.getZoom(), 11), { duration: 0.7 })
+          }
+        })
+
+        const ring = L.circle(projected.point, {
+          radius: selected ? 72000 : statusFor(order) === 'critical' ? 48000 : 32000,
+          color,
+          fillColor: color,
+          fillOpacity: selected ? 0.08 : 0.035,
+          opacity: selected ? 0.35 : 0.16,
+          weight: selected ? 2 : 1,
+          interactive: false,
+        })
+
+        markerRef.current.set(order.id, { marker, ring, order, visible: false })
       }
+
+      const entry = markerRef.current.get(order.id)!
+      const shouldShow = layers.driver && showIndividual
+      if (shouldShow && !entry.visible) {
+        entry.ring.addTo(map)
+        entry.marker.addTo(map)
+        entry.visible = true
+      } else if (!shouldShow && entry.visible) {
+        entry.marker.remove()
+        entry.ring.remove()
+        entry.visible = false
+      }
+
+      if (layers.route && route) {
+        const routeColor = routeStateColor(order, selected)
+        const split = splitRoute(route, runtime?.progressMeters ?? 0)
+        const halo = L.polyline(route.points, {
+          color: selected ? COLORS.selectedRoute : routeColor,
+          weight: selected ? 13 : 8,
+          opacity: selected ? 0.18 : 0.07,
+          interactive: false,
+        }).addTo(map)
+        const completed = L.polyline(split.completed, {
+          color: statusFor(order) === 'onSchedule' ? COLORS.completedRoute : routeColor,
+          weight: selected ? 6 : 4,
+          opacity: selected ? 0.98 : 0.82,
+        }).addTo(map)
+        const remaining = L.polyline(split.remaining, {
+          color: selected ? COLORS.selectedRoute : COLORS.normalRoute,
+          weight: selected ? 5 : 3,
+          opacity: selected ? 0.86 : 0.56,
+          dashArray: selected ? undefined : '8 10',
+        }).addTo(map)
+
+        ;[halo, completed, remaining].forEach((line) => {
+          line.on('click', () => {
+            onOrderSelect?.(order.id)
+            const bounds = L.latLngBounds(route.points)
+            if (bounds.isValid()) map.flyToBounds(bounds, { padding: [90, 90], maxZoom: 13, duration: 0.75 })
+          })
+        })
+
+        routeVisualRef.current.set(order.id, { halo, completed, remaining })
+      }
+
+      if (layers.risk && (order.risk_score >= 0.7 || order.delay_minutes >= 20)) {
+        riskRef.current.push(L.circle(projected.point, {
+          radius: 90000,
+          color: COLORS.critical,
+          fillColor: COLORS.critical,
+          fillOpacity: 0.06,
+          opacity: 0.18,
+          weight: 1,
+          interactive: false,
+        }).addTo(map))
+      }
+
+      if (route && showIndividual) {
+        const waypoints = routeWaypoints(order)
+        waypoints.forEach((point, index) => {
+          const stop = order.stops?.[index - 1] ?? null
+          const routeIndex = route.stopIndices[index] ?? 0
+          const stopDistance = route.cumulativeMeters[routeIndex] ?? route.totalMeters
+          const stopEta = runtime ? Math.max(1, Math.round(Math.max(0, stopDistance - runtime.progressMeters) / Math.max(1, runtime.speedMps) / 60)) : 1
+          const status = index === 0
+            ? 'warehouse'
+            : index === waypoints.length - 1
+            ? 'customer'
+            : stop?.status === 'completed'
+            ? 'completed'
+            : 'pending'
+          const marker = L.marker(point, { icon: stopIcon(stop, index, stopEta, status), interactive: true })
+            .bindPopup(`<div class="fleet-map-popover"><div class="fleet-popover-head"><span>${formatId(order.id)}</span><strong>Stop ${index}</strong></div><div class="fleet-popover-row"><span>Status</span><strong>${status}</strong></div><div class="fleet-popover-row"><span>ETA</span><strong>${Math.max(1, stopEta)} min</strong></div></div>`, {
+              closeButton: false,
+              className: 'fleet-map-popup',
+            })
+          marker.on('click', () => onOrderSelect?.(order.id))
+          stopRef.current.push(marker.addTo(map))
+        })
+      }
+    })
+
+    remaining.forEach((id) => {
+      const entry = markerRef.current.get(id)
+      entry?.marker.remove()
+      entry?.ring.remove()
+      markerRef.current.delete(id)
+      vehicleRuntimeRef.current.delete(id)
+    })
+
+    if (!showIndividual && filteredOrders.length > 0) {
+      clusterRef.current = buildClusters(filteredOrders, map, (clusterOrders) => {
+        const bounds = L.latLngBounds(clusterOrders.map(getCoordinates))
+        if (bounds.isValid()) map.flyToBounds(bounds, { padding: [80, 80], maxZoom: 12, duration: 0.65 })
+      })
+    }
+
+    if (layers.traffic) {
+      filteredOrders.slice(0, 18).forEach((order) => {
+        const route = routeCacheRef.current.get(order.id)
+        if (!route || route.points.length < 4) return
+        const stride = Math.max(3, Math.floor(route.points.length / 10))
+        for (let index = 0; index < route.points.length - stride; index += stride) {
+          const congestion = (index + order.id.length) % 3
+          trafficRef.current.push(L.polyline(route.points.slice(index, index + stride + 1), {
+            color: congestion === 0 ? COLORS.freeTraffic : congestion === 1 ? COLORS.moderateTraffic : COLORS.heavyTraffic,
+            weight: 9,
+            opacity: congestion === 0 ? 0.18 : congestion === 1 ? 0.24 : 0.3,
+            lineCap: 'round',
+            interactive: false,
+          }).addTo(map))
+        }
+      })
+    }
+
+    if (!initializedBoundsRef.current && filteredOrders.length > 0) {
+      const geometries = filteredOrders.map((order) => routeCacheRef.current.get(order.id)?.points ?? [getCoordinates(order)]).flat()
+      const bounds = L.latLngBounds(geometries)
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [70, 70], maxZoom: 11 })
+        initializedBoundsRef.current = true
+      }
+    }
+  }, [clearGeneratedLayers, filteredOrders, layers, onOrderSelect, selectedOrderId])
+
+  const syncMapRef = useRef(syncMap)
+  useEffect(() => {
+    syncMapRef.current = syncMap
+  }, [syncMap])
+
+  useEffect(() => {
+    syncMap()
+  }, [syncMap])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const handleZoom = () => syncMapRef.current()
+    map.on('zoomend', handleZoom)
+    return () => {
+      map.off('zoomend', handleZoom)
     }
   }, [])
 
-  const loadMarkers = useCallback(() => {
-    const map = mapRef.current
-    if (!map) return
-
-    const toDelete = new Set(markersRef.current.keys())
-    filteredOrders.forEach((order) => {
-      if (!order.current_position) return
-      const markerId = order.id
-      toDelete.delete(markerId)
-      const existing = markersRef.current.get(markerId)
-      const pos: [number, number] = [order.current_position.lat, order.current_position.lng]
-
-      if (existing) {
-        smoothMoveMarker(existing, pos[0], pos[1], order.current_position.speed_kmh)
-        existing.order = order
-        existing.marker.setStyle({
-          fillColor: getRiskColor(order.risk_score),
-          color: order.is_high_risk ? '#ef4444' : '#ffffff',
-        })
-        existing.marker.setRadius(order.is_high_risk ? 9 : 7)
-        if (existing.ring) {
-          existing.ring.setStyle({
-            color: getRiskColor(order.risk_score),
-            opacity: order.is_high_risk ? 0.5 : 0.25,
-          })
+  useEffect(() => {
+    const tick = (now: number) => {
+      filteredOrders.forEach((order) => {
+        const route = routeCacheRef.current.get(order.id)
+        if (!route) return
+        const runtime = vehicleRuntimeRef.current.get(order.id) ?? {
+          progressMeters: initialProgress(order, route),
+          speedMps: Math.max(7, (order.current_position?.speed_kmh ?? 42) / 3.6),
+          lastFrame: now,
+          bearing: 0,
         }
-      } else {
-        const color = getRiskColor(order.risk_score)
-        const marker = L.circleMarker(pos, {
-          radius: order.is_high_risk ? 9 : 7,
-          fillColor: color,
-          color: '#ffffff',
-          weight: 2.5,
-          opacity: 0.95,
-          fillOpacity: 0.85,
-          className: order.is_high_risk ? 'animate-marker-pulse' : '',
-        })
-        const ring = L.circleMarker(pos, {
-          radius: order.is_high_risk ? 18 : 14,
-          fillColor: 'transparent',
-          color: color,
-          weight: 1.5,
-          opacity: order.is_high_risk ? 0.5 : 0.25,
-          className: order.is_high_risk ? 'animate-status-pulse' : '',
-        })
-        marker.bindPopup(buildPopupHtml(order), {
-          closeButton: false,
-          className: 'fleet-map-popup',
-        })
-        marker.on('click', () => onOrderSelect?.(order.id))
-        ring.addTo(map)
-        marker.addTo(map)
-        markersRef.current.set(markerId, { marker, ring, order })
-      }
-    })
+        const elapsed = Math.min(2, Math.max(0, (now - runtime.lastFrame) / 1000))
+        runtime.lastFrame = now
+        runtime.speedMps = runtime.speedMps * 0.96 + Math.max(7, (order.current_position?.speed_kmh ?? 42) / 3.6) * 0.04
+        runtime.progressMeters = (runtime.progressMeters + runtime.speedMps * elapsed) % Math.max(route.totalMeters, 1)
+        const projected = projectPointAtDistance(route, runtime.progressMeters)
+        runtime.bearing = runtime.bearing * 0.82 + projected.bearing * 0.18
+        vehicleRuntimeRef.current.set(order.id, runtime)
 
-    toDelete.forEach((id) => {
-      const dm = markersRef.current.get(id)
-      if (dm) {
-        if (dm.ring) dm.ring.remove()
-        dm.marker.remove()
-        markersRef.current.delete(id)
-      }
-    })
-  }, [filteredOrders, onOrderSelect])
-
-  useEffect(() => {
-    loadMarkers()
-  }, [loadMarkers])
-
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
-    const zoomThreshold = 10
-    const updateClusters = () => {
-      if (clusterStateRef.current) {
-        clusterStateRef.current.markers.forEach((m) => m.remove())
-      }
-      if (map.getZoom() < zoomThreshold) {
-        clusterStateRef.current = buildClusters(filteredOrders, map)
-      } else {
-        clusterStateRef.current = null
-      }
+        const marker = markerRef.current.get(order.id)
+        if (marker) {
+          const remainingMeters = Math.max(0, route.totalMeters - runtime.progressMeters)
+          const etaMinutes = Math.max(1, Math.round(remainingMeters / Math.max(1, runtime.speedMps) / 60))
+          marker.marker.setLatLng(projected.point)
+          marker.ring.setLatLng(projected.point)
+          marker.marker.setIcon(vehicleIcon(order, order.id === selectedOrderId, runtime.bearing, remainingMeters, etaMinutes))
+          marker.marker.setPopupContent(hoverHtml(order, remainingMeters, etaMinutes, runtime.progressMeters / route.totalMeters))
+          updateRouteVisual(order)
+        }
+      })
+      animationRef.current = requestAnimationFrame(tick)
     }
-    updateClusters()
-    map.on('zoomend', updateClusters)
+    animationRef.current = requestAnimationFrame(tick)
+    const etaInterval = window.setInterval(() => setEtaTick((value) => value + 1), 1000)
     return () => {
-      map.off('zoomend', updateClusters)
-      if (clusterStateRef.current) {
-        clusterStateRef.current.markers.forEach((m) => m.remove())
-      }
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current)
+      window.clearInterval(etaInterval)
     }
-  }, [filteredOrders])
+  }, [filteredOrders, selectedOrderId, updateRouteVisual])
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map) return
-    if (initialBoundsSet.current) return
-    const bounds = L.latLngBounds([])
-    let hasValid = false
-    markersRef.current.forEach(({ marker }) => {
-      if (marker.getLatLng()) {
-        bounds.extend(marker.getLatLng())
-        hasValid = true
-      }
-    })
-    if (hasValid && bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
-      initialBoundsSet.current = true
+    if (!map || !selectedOrderId) return
+    const route = routeCacheRef.current.get(selectedOrderId)
+    if (route) {
+      const bounds = L.latLngBounds(route.points)
+      if (bounds.isValid()) map.flyToBounds(bounds, { padding: [90, 90], maxZoom: 13, duration: 0.75 })
+      return
     }
-  }, [filteredOrders])
+    const order = orders.find((item) => item.id === selectedOrderId)
+    if (order) map.flyTo(getCoordinates(order), Math.max(map.getZoom(), 11), { duration: 0.7 })
+  }, [orders, selectedOrderId])
 
-  const loadRoute = useCallback(() => {
-    const map = mapRef.current
-    if (!map) return
+  const filters: Array<{ key: FilterKey; label: string }> = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: 'Active' },
+    { key: 'delayed', label: 'Delayed' },
+    { key: 'highRisk', label: 'High Risk' },
+    { key: 'optimized', label: 'Optimized' },
+  ]
 
-    polylinesRef.current.forEach(({ glow, main }) => { glow.remove(); main.remove() })
-    polylinesRef.current.clear()
-
-    warehouseMarkersRef.current.forEach((m) => m.remove())
-    warehouseMarkersRef.current = []
-    destinationMarkersRef.current.forEach((m) => m.remove())
-    destinationMarkersRef.current = []
-
-    if (!selectedOrderId) return
-
-    const order = orders.find((o) => o.id === selectedOrderId)
-    if (!order) return
-
-    const risk = order.risk_score < 0.3 ? 'low' : order.risk_score < 0.7 ? 'medium' : 'high'
-    const routeColor = ROUTE_COLORS[risk]
-
-    if (order.stops.length > 1) {
-      const points: [number, number][] = order.stops.map((s) => [s.lat, s.lng])
-      const glow = L.polyline(points, {
-        color: routeColor, weight: 8, opacity: 0.12, smoothFactor: 1,
-      }).addTo(map)
-      const main = L.polyline(points, {
-        color: routeColor, weight: 2.5, opacity: 0.85, dashArray: '6, 4',
-      }).addTo(map)
-      polylinesRef.current.set(selectedOrderId, { glow, main })
-      for (let i = 0; i < points.length - 1; i++) {
-        const from = points[i]
-        const to = points[i + 1]
-        const mid: [number, number] = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2]
-        const angle = Math.atan2(to[0] - from[0], to[1] - from[1]) * (180 / Math.PI)
-        const arrowIcon = L.divIcon({
-          className: '',
-          html: `<div style="
-            width: 12px; height: 12px;
-            transform: rotate(${angle}deg);
-            color: ${routeColor};
-            font-size: 14px;
-            line-height: 12px;
-            text-align: center;
-            text-shadow: 0 0 4px rgba(0,0,0,0.8);
-          ">&#10132;</div>`,
-          iconSize: [12, 12],
-          iconAnchor: [6, 6],
-        })
-        L.marker(mid, { icon: arrowIcon, interactive: false }).addTo(map)
-      }
-    }
-
-    const visited = new Set<string>()
-    order.stops.forEach((s) => {
-      const key = `${s.lat.toFixed(4)}_${s.lng.toFixed(4)}`
-      if (visited.has(key)) return
-      visited.add(key)
-      const isWarehouse = s.status === 'completed' || s.sequence === 0
-      if (isWarehouse) {
-        const m = L.marker([s.lat, s.lng], { icon: createWarehouseIcon() }).addTo(map)
-        m.bindPopup(`<div style="background:#0F1729;border:1px solid #2A3A5C;border-radius:8px;padding:10px;font-family:system-ui,sans-serif;">
-          <span style="color:#CBD5E1;font-weight:600;font-size:12px;">${s.address || 'Warehouse'}</span>
-        </div>`, { closeButton: false })
-        warehouseMarkersRef.current.push(m)
-      } else {
-        const m = L.marker([s.lat, s.lng], { icon: createDestinationIcon() }).addTo(map)
-        m.bindPopup(`<div style="background:#0F1729;border:1px solid #2A3A5C;border-radius:8px;padding:10px;font-family:system-ui,sans-serif;">
-          <span style="color:#CBD5E1;font-weight:600;font-size:12px;">${s.address || 'Stop'}</span>
-          <div style="color:#5A6B8A;font-size:11px;margin-top:4px;">Stop #${s.sequence} — ${s.status}</div>
-        </div>`, { closeButton: false })
-        destinationMarkersRef.current.push(m)
-      }
-    })
-  }, [selectedOrderId, orders])
-
-  useEffect(() => {
-    loadRoute()
-  }, [loadRoute])
-
-  const activeCount = useMemo(() => orders.filter((o) => o.status !== 'completed' && o.status !== 'cancelled').length, [orders])
-  const highRiskCount = useMemo(() => orders.filter((o) => o.is_high_risk).length, [orders])
+  const layerOptions: Array<{ key: keyof LayerState; label: string; icon: React.ReactNode }> = [
+    { key: 'traffic', label: 'Traffic', icon: <TrafficSign size={14} weight="bold" /> },
+    { key: 'route', label: 'Routes', icon: <MapTrifold size={14} weight="bold" /> },
+    { key: 'risk', label: 'Risk', icon: <Warning size={14} weight="bold" /> },
+    { key: 'driver', label: 'Drivers', icon: <Truck size={14} weight="bold" /> },
+  ]
 
   return (
-    <div className="relative w-full h-full bg-abyss overflow-hidden">
-      <div id="fleet-map" className="w-full h-full" />
+    <div className="fleet-command-map relative h-full w-full overflow-hidden bg-[#E8EBEE]">
+      <div id={mapContainerId} className="h-full w-full" />
 
-      <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2">
-        <div className="flex items-center bg-abyss/90 backdrop-blur-sm border border-steel-grey/40 rounded-panel shadow-card overflow-hidden">
-          <div className="flex items-center gap-1.5 px-2.5">
-            <MagnifyingGlass size={12} className="text-mist" weight="bold" />
+      <div className="pointer-events-none absolute inset-x-5 top-5 z-[1000] flex items-start justify-between gap-4">
+        <div className="pointer-events-auto min-w-[320px] rounded-2xl border border-black/10 bg-white/95 p-3 shadow-[0_18px_46px_rgba(17,19,21,0.18)] backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-charcoal text-amber">
+              <Crosshair size={17} weight="bold" />
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">Live control tower</div>
+              <div className="text-sm font-semibold text-text-primary">{stats.active} active drivers across {orders.length} deliveries</div>
+            </div>
           </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search orders or drivers..."
-            className="bg-transparent border-none outline-none text-[11px] text-pearl placeholder-mist py-2 pr-3 w-40 focus:w-56 transition-all duration-200"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="pr-2 text-mist hover:text-pearl">
-              <X size={12} />
-            </button>
-          )}
+          <div className="mt-3 grid grid-cols-4 gap-1.5">
+            <StatPill label="Delayed" value={stats.delayed} tone={stats.delayed > 0 ? 'amber' : 'neutral'} />
+            <StatPill label="High Risk" value={stats.risk} tone={stats.risk > 0 ? 'red' : 'neutral'} />
+            <StatPill label="Optimized" value={stats.optimized} tone="green" />
+            <StatPill label="Shown" value={filteredOrders.length} tone="neutral" />
+          </div>
         </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-1.5 bg-abyss/90 backdrop-blur-sm border border-steel-grey/40 rounded-panel px-2.5 py-2 shadow-card text-mist hover:text-pearl transition-colors"
-        >
-          <Funnel size={12} weight={showFilters ? 'fill' : 'regular'} />
-        </button>
-      </div>
 
-      {showFilters && (
-        <div className="absolute top-14 left-3 z-[1000] bg-abyss/95 backdrop-blur-sm border border-steel-grey/40 rounded-panel shadow-card p-3 space-y-2 min-w-[160px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-mist">Risk Filter</span>
-          <div className="flex flex-col gap-1">
-            {[
-              { key: null, label: 'All' },
-              { key: 'low', label: 'Low Risk', color: '#22c55e' },
-              { key: 'medium', label: 'Medium Risk', color: '#f59e0b' },
-              { key: 'high', label: 'High Risk', color: '#ef4444' },
-            ].map((f) => (
+        <div className="pointer-events-auto flex max-w-[560px] flex-col items-end gap-2">
+          <div className="flex w-full items-center gap-2 rounded-2xl border border-black/10 bg-white/95 p-2 shadow-[0_18px_46px_rgba(17,19,21,0.18)] backdrop-blur-md">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F2F3F5] text-text-secondary">
+              <MagnifyingGlass size={16} weight="bold" />
+            </div>
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search orders, drivers, cities"
+              className="h-9 min-w-[260px] flex-1 border-none bg-transparent px-0 py-0 text-[13px] text-text-primary outline-none placeholder:text-text-muted focus:ring-0"
+            />
+            {searchQuery && (
               <button
-                key={f.key || 'all'}
-                onClick={() => setRiskFilter(f.key)}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] font-medium transition-all text-left ${
-                  riskFilter === f.key ? 'bg-accent/10 text-accent' : 'text-mist hover:text-pearl hover:bg-slate-blue'
-                }`}
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-[#ECEFF3] hover:text-text-primary"
               >
-                {f.color && <span className="w-2 h-2 rounded-full" style={{ background: f.color }} />}
-                {f.label}
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {filters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setQuickFilter(filter.key)}
+                className={clsx(
+                  'rounded-xl border px-3 py-2 text-[12px] font-semibold transition active:scale-[0.98]',
+                  quickFilter === filter.key
+                    ? 'border-amber/30 bg-amber text-charcoal shadow-[0_10px_24px_rgba(244,197,66,0.22)]'
+                    : 'border-black/10 bg-white/95 text-text-secondary hover:bg-[#F4F5F6] hover:text-text-primary',
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {layerOptions.map((layer) => (
+              <button
+                key={layer.key}
+                type="button"
+                onClick={() => setLayers((previous) => ({ ...previous, [layer.key]: !previous[layer.key] }))}
+                className={clsx(
+                  'flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-semibold transition active:scale-[0.98]',
+                  layers[layer.key]
+                    ? 'border-black/10 bg-charcoal text-silver'
+                    : 'border-black/10 bg-white/90 text-text-muted hover:text-text-primary',
+                )}
+              >
+                {layers[layer.key] ? layer.icon : <EyeSlash size={14} weight="bold" />}
+                {layer.label}
               </button>
             ))}
           </div>
         </div>
+      </div>
+
+      {orders.length === 0 && (
+        <MapEmptyState
+          title="No fleet data available"
+          body="Orders will appear here once live dispatch connects."
+          icon={<Truck size={36} weight="duotone" />}
+        />
       )}
 
-      <div className="absolute bottom-4 left-4 z-[1000] flex items-center gap-3 bg-abyss/90 backdrop-blur-sm border border-steel-grey/40 rounded-panel px-3 py-2 shadow-card">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
-          <span className="text-[11px] text-cloud font-medium">Low</span>
+      {orders.length > 0 && filteredOrders.length === 0 && (
+        <MapEmptyState
+          title="No results match this view"
+          body="Adjust the search or quick filters to restore deliveries."
+          icon={<MagnifyingGlass size={34} weight="duotone" />}
+        />
+      )}
+
+      {orders.length > 0 && stats.risk === 0 && (
+        <div className="absolute bottom-5 right-5 z-[1000] rounded-2xl border border-success/20 bg-white/95 px-4 py-3 shadow-[0_14px_34px_rgba(17,19,21,0.14)]">
+          <div className="text-sm font-semibold text-text-primary">All Deliveries Operating Normally</div>
+          <div className="text-xs text-text-muted">No high-risk routes are active.</div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#f59e0b] shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-          <span className="text-[11px] text-cloud font-medium">Med</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_6px_rgba(239,68,68,0.5)] animate-status-pulse" />
-          <span className="text-[11px] text-cloud font-medium">High</span>
-        </div>
-        <div className="w-px h-4 bg-steel-grey/50 mx-0.5" />
-        <span className="text-[11px] text-mist font-medium">{activeCount} active</span>
-        {highRiskCount > 0 && (
-          <>
-            <div className="w-px h-4 bg-steel-grey/50 mx-0.5" />
-            <span className="text-[11px] font-medium text-critical-DEFAULT">{highRiskCount} at risk</span>
-          </>
-        )}
+      )}
+
+      <div className="absolute bottom-5 left-5 z-[1000] flex flex-wrap items-center gap-3 rounded-2xl border border-black/10 bg-white/95 px-4 py-3 shadow-[0_14px_34px_rgba(17,19,21,0.14)]">
+        <LegendDot color={COLORS.onSchedule} label="On Time Route" />
+        <LegendDot color={COLORS.atRisk} label="At Risk" />
+        <LegendDot color={COLORS.critical} label="Critical" />
+        <LegendDot color={COLORS.selected} label="Selected Driver" />
+        <span className="mx-1 h-5 w-px bg-black/10" />
+        <LegendLine color={COLORS.completedRoute} label="Completed" />
+        <LegendLine color={COLORS.normalRoute} label="Remaining" />
+        <LegendLine color={COLORS.selectedRoute} label="Selected Route" />
       </div>
     </div>
   )
 }
 
-const ROUTE_COLORS: Record<string, string> = {
-  low: '#22c55e',
-  medium: '#f59e0b',
-  high: '#ef4444',
+function StatPill({ label, value, tone }: { label: string; value: number; tone: 'neutral' | 'amber' | 'red' | 'green' }) {
+  const toneClass = {
+    neutral: 'bg-[#F3F4F6] text-text-secondary',
+    amber: 'bg-amber/15 text-amber',
+    red: 'bg-danger/10 text-danger',
+    green: 'bg-success/10 text-success',
+  }[tone]
+  return (
+    <div className={clsx('rounded-xl px-2.5 py-2', toneClass)}>
+      <div className="font-mono text-base font-semibold leading-none">{value}</div>
+      <div className="mt-1 truncate text-[9px] font-semibold uppercase tracking-[0.12em]">{label}</div>
+    </div>
+  )
 }
 
-const createWarehouseIcon = () => L.divIcon({
-  className: '',
-  html: `<div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="2" y="8" width="24" height="18" rx="2" fill="#3B82F6" fill-opacity="0.2" stroke="#3B82F6" stroke-width="1.5"/>
-      <rect x="6" y="12" width="4" height="4" rx="1" fill="#3B82F6"/>
-      <rect x="12" y="12" width="4" height="4" rx="1" fill="#3B82F6"/>
-      <rect x="18" y="12" width="4" height="4" rx="1" fill="#3B82F6"/>
-      <path d="M14 2L4 8h20L14 2z" fill="#3B82F6" fill-opacity="0.3" stroke="#3B82F6" stroke-width="1"/>
-    </svg>
-  </div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-})
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ backgroundColor: color }} />
+      <span className="text-[11px] font-semibold text-text-secondary">{label}</span>
+    </div>
+  )
+}
 
-const createDestinationIcon = () => L.divIcon({
-  className: '',
-  html: `<div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" fill="#8B5CF6" fill-opacity="0.15" stroke="#8B5CF6" stroke-width="1.5"/>
-      <circle cx="12" cy="12" r="4" fill="#8B5CF6"/>
-      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#8B5CF6" stroke-width="1" stroke-opacity="0.5"/>
-    </svg>
-  </div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-})
+function LegendLine({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="h-0.5 w-6 rounded-full" style={{ backgroundColor: color }} />
+      <span className="text-[11px] font-semibold text-text-secondary">{label}</span>
+    </div>
+  )
+}
+
+function MapEmptyState({ title, body, icon }: { title: string; body: string; icon: React.ReactNode }) {
+  return (
+    <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-white/55 backdrop-blur-[2px]">
+      <div className="max-w-sm rounded-3xl border border-black/10 bg-white/95 p-6 text-center shadow-[0_24px_70px_rgba(17,19,21,0.2)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-charcoal text-amber">
+          {icon}
+        </div>
+        <div className="mt-4 text-lg font-semibold text-text-primary">{title}</div>
+        <p className="mt-1 text-sm text-text-muted">{body}</p>
+      </div>
+    </div>
+  )
+}
+
+export default FleetMap

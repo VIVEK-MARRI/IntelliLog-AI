@@ -16,6 +16,7 @@ interface FleetStore {
   // Actions
   setOrders: (orders: LiveOrder[]) => void
   updateOrderPosition: (orderId: string, update: any) => void
+  batchUpdatePositions: (updates: Array<{orderId: string; lat: number; lng: number; speed_kmh: number; heading: number; risk_score: number; timestamp: string}>) => void
   updateOrderRisk: (orderId: string, riskScore: number, updatedAt?: string) => void
   updateOrderETA: (orderId: string, eta: string) => void
   updateRouteWaypoints: (orderId: string, waypoints: Waypoint[]) => void
@@ -28,6 +29,41 @@ interface FleetStore {
 
 // Helper to calculate if order is high risk
 const isHighRisk = (riskScore: number): boolean => riskScore > 0.7
+
+// Pending position queue: buffers position updates for orders not yet in the store.
+// Tradeoff: pending entries for orders that never arrive consume memory.
+// Mitigation: queue is flushed on setOrders (initial_state, API load), and stale entries
+// are limited to MAX_PENDING_ENTRIES. Any remaining entries after flush are orphaned
+// only if an order_id is referenced in position updates but never delivered via API/WS.
+const MAX_PENDING_ENTRIES = 500
+const pendingPositionQueue = new Map<string, Array<{
+  lat: number; lng: number; speed_kmh: number; heading: number;
+  risk_score: number; timestamp: string;
+}>>()
+
+function enqueuePendingPosition(orderId: string, update: {
+  lat: number; lng: number; speed_kmh: number; heading: number;
+  risk_score: number; timestamp: string;
+}): void {
+  let updates = pendingPositionQueue.get(orderId)
+  if (!updates) {
+    if (pendingPositionQueue.size >= MAX_PENDING_ENTRIES) return
+    updates = []
+    pendingPositionQueue.set(orderId, updates)
+  }
+  updates.push(update)
+}
+
+function flushPendingForOrder(orderId: string): void {
+  const updates = pendingPositionQueue.get(orderId)
+  if (!updates || updates.length === 0) return
+  pendingPositionQueue.delete(orderId)
+  const latest = updates[updates.length - 1]
+  // Apply via existing update path to avoid setOrders re-entrance
+  fleetStore.getState().updateOrderPosition(orderId, latest)
+}
+
+
 
 export const fleetStore = create<FleetStore>((set) => ({
   orders: new Map(),
@@ -43,6 +79,7 @@ export const fleetStore = create<FleetStore>((set) => ({
           ...order,
           is_high_risk: isHighRisk(order.risk_score),
         })
+        flushPendingForOrder(order.id)
       })
       return { orders: newOrders }
     })
@@ -53,24 +90,54 @@ export const fleetStore = create<FleetStore>((set) => ({
       const orders = new Map(state.orders)
       const order = orders.get(orderId)
 
-      if (order) {
-        const updatedOrder: LiveOrder = {
-          ...order,
-          current_position: {
-            lat: update.lat,
-            lng: update.lng,
-            speed_kmh: update.speed_kmh,
-            heading: update.heading ?? 0,
-            event_type: 'position_update',
-            timestamp: update.timestamp,
-          },
-          risk_score: update.risk_score,
-          is_high_risk: isHighRisk(update.risk_score),
-          updated_at: update.timestamp,
-        }
-        orders.set(orderId, updatedOrder)
+      if (!order) {
+        enqueuePendingPosition(orderId, update)
+        return { orders }
       }
 
+      const updatedOrder: LiveOrder = {
+        ...order,
+        current_position: {
+          lat: update.lat,
+          lng: update.lng,
+          speed_kmh: update.speed_kmh,
+          heading: update.heading ?? 0,
+          event_type: 'position_update',
+          timestamp: update.timestamp,
+        },
+        risk_score: update.risk_score,
+        is_high_risk: isHighRisk(update.risk_score),
+        updated_at: update.timestamp,
+      }
+      orders.set(orderId, updatedOrder)
+      return { orders }
+    })
+  },
+
+  batchUpdatePositions: (updates: Array<{orderId: string; lat: number; lng: number; speed_kmh: number; heading: number; risk_score: number; timestamp: string}>) => {
+    set((state) => {
+      const orders = new Map(state.orders)
+      for (const u of updates) {
+        const order = orders.get(u.orderId)
+        if (order) {
+          orders.set(u.orderId, {
+            ...order,
+            current_position: {
+              lat: u.lat,
+              lng: u.lng,
+              speed_kmh: u.speed_kmh,
+              heading: u.heading ?? 0,
+              event_type: 'position_update',
+              timestamp: u.timestamp,
+            },
+            risk_score: u.risk_score,
+            is_high_risk: isHighRisk(u.risk_score),
+            updated_at: u.timestamp,
+          })
+        } else {
+          enqueuePendingPosition(u.orderId, u)
+        }
+      }
       return { orders }
     })
   },

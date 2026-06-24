@@ -61,10 +61,43 @@ export const FleetHealthSchema = z.object({
   trend: z.number(),
 })
 
+export const PredictionResponseSchema = z.object({
+  order_id: z.string(),
+  risk_score: z.number(),
+  is_high_risk: z.boolean(),
+  confidence: z.number(),
+  top_risk_factors: z.array(z.object({
+    feature: z.string(),
+    contribution: z.number(),
+    direction: z.string(),
+    human_readable: z.string(),
+  })),
+  predicted_delay_minutes: z.number(),
+  current_eta: z.string(),
+  model_version: z.string(),
+  prediction_timestamp: z.string(),
+})
+
 export function validateLiveOrders(value: unknown) {
   const result = z.array(LiveOrderSchema).safeParse(value)
   if (!result.success) {
     console.error('[Validation] Invalid LiveOrder payload:', result.error.issues)
+  }
+  return result
+}
+
+export function validatePredictions(value: unknown) {
+  const result = z.array(PredictionResponseSchema).safeParse(value)
+  if (!result.success) {
+    console.error('[Validation] Invalid PredictionResponse payload:', result.error.issues)
+  }
+  return result
+}
+
+export function validateMetrics(value: unknown) {
+  const result = OperationalMetricsSchema.safeParse(value)
+  if (!result.success) {
+    console.error('[Validation] Invalid OperationalMetrics payload:', result.error.issues)
   }
   return result
 }

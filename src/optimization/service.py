@@ -163,10 +163,12 @@ class OptimizationService:
                 },
             )
 
-        # Also run solver inline as background task.
-        # This ensures jobs complete even without a Celery worker running.
-        import asyncio
-        asyncio.create_task(self._execute_job(job_id, redis_key, problem, order_id, tenant_id))
+        # Run solver inline only if Celery is unavailable.
+        # When Celery is configured, the dispatched Celery task is the sole
+        # execution path — this avoids the dual-execution race.
+        if not self.celery_app or not getattr(self.celery_app.conf, "broker_url", None):
+            import asyncio
+            asyncio.create_task(self._execute_job(job_id, redis_key, problem, order_id, tenant_id))
 
         logger.info(
             "job_submitted",
@@ -188,7 +190,12 @@ class OptimizationService:
         from sqlalchemy.orm import sessionmaker
         from src.core.config import get_settings
 
-        db_url = get_settings(allow_defaults=True).database_url or "postgresql+asyncpg://postgres:admin@localhost:5432/intelliglog"
+        db_url = get_settings(allow_defaults=True).database_url
+        if not db_url:
+            raise RuntimeError(
+                "DATABASE_URL is not configured. "
+                "This is a security-critical setting that must be provided via environment variable."
+            )
 
         try:
             await self.redis_client.hset(redis_key, mapping={"status": JobStatus.RUNNING.value, "started_at": datetime.now(timezone.utc).isoformat()})

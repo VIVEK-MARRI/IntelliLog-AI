@@ -53,7 +53,7 @@ async def test_fastapi_postgres_and_redis_round_trip(test_redis, tenant_id, auth
     engine = create_async_engine(resolved_database_url, echo=False, future=True)
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
     order_request = OrderRequestFactory()
-    order_request["plannedEta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    order_request["planned_eta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
 
     async def override_get_db():
         async with session_maker() as session:
@@ -72,25 +72,26 @@ async def test_fastapi_postgres_and_redis_round_trip(test_redis, tenant_id, auth
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
             create_response = await client.post("/api/v1/orders", json=order_request, headers=auth_headers)
-            assert create_response.status_code == 200
+            assert create_response.status_code == 200, create_response.text
+            order_id = create_response.json()["orderId"]
 
             async with session_maker() as session:
                 result = await session.execute(
                     text("SELECT id, tenant_id, driver_id FROM orders WHERE id = :order_id"),
-                    {"order_id": order_request["orderId"]},
+                    {"order_id": order_id},
                 )
                 row = result.mappings().first()
                 assert row is not None
-                assert str(row["id"]) == order_request["orderId"]
-                assert str(row["driver_id"]) == order_request["driverId"]
+                assert str(row["id"]) == order_id
+                assert str(row["driver_id"]) == order_request["driver_id"]
 
             prediction_response = await client.get(
-                f"/api/v1/predictions/{order_request['orderId']}", headers=auth_headers
+                f"/api/v1/predictions/{order_id}", headers=auth_headers
             )
             assert prediction_response.status_code == 200
 
-            channel_message = await test_redis.hgetall(f"order:{order_request['orderId']}")
-            assert channel_message["driver_id"] == order_request["driverId"]
+            channel_message = await test_redis.hgetall(f"order:{order_id}")
+            assert channel_message["driver_id"] == order_request["driver_id"]
     finally:
         app.dependency_overrides.clear()
         await engine.dispose()

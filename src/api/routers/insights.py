@@ -46,31 +46,35 @@ async def get_fleet_health(
     if metrics.fleet_health_score < 50:
         status = "critical"
     # Compute simple delay trend: average delay in last 24h vs previous 24h
+    trend = 0.0
     try:
-        recent = await service.db.execute(
-            """
-            SELECT COALESCE(AVG(GREATEST(EXTRACT(EPOCH FROM (COALESCE(actual_eta, NOW()) - planned_eta)) / 60.0, 0)), 0) AS avg_delay
-            FROM orders
-            WHERE tenant_id = :tenant_id
-              AND created_at >= NOW() - INTERVAL '24 hours'
-            """,
-            {"tenant_id": current_tenant.tenant_id},
-        )
-        prev = await service.db.execute(
-            """
-            SELECT COALESCE(AVG(GREATEST(EXTRACT(EPOCH FROM (COALESCE(actual_eta, NOW()) - planned_eta)) / 60.0, 0)), 0) AS avg_delay
-            FROM orders
-            WHERE tenant_id = :tenant_id
-              AND created_at >= NOW() - INTERVAL '48 hours'
-              AND created_at < NOW() - INTERVAL '24 hours'
-            """,
-            {"tenant_id": current_tenant.tenant_id},
-        )
-        recent_row = recent.mappings().one()
-        prev_row = prev.mappings().one()
-        recent_avg = float(recent_row["avg_delay"] or 0.0)
-        prev_avg = float(prev_row["avg_delay"] or 0.0)
-        trend = recent_avg - prev_avg
+        bind = service.db.get_bind()
+        is_sqlite = bind is not None and hasattr(bind, "dialect") and bind.dialect.name == "sqlite"
+        if not is_sqlite:
+            recent = await service.db.execute(
+                """
+                SELECT COALESCE(AVG(GREATEST(EXTRACT(EPOCH FROM (COALESCE(actual_eta, NOW()) - planned_eta)) / 60.0, 0)), 0) AS avg_delay
+                FROM orders
+                WHERE tenant_id = :tenant_id
+                  AND created_at >= NOW() - INTERVAL '24 hours'
+                """,
+                {"tenant_id": current_tenant.tenant_id},
+            )
+            prev = await service.db.execute(
+                """
+                SELECT COALESCE(AVG(GREATEST(EXTRACT(EPOCH FROM (COALESCE(actual_eta, NOW()) - planned_eta)) / 60.0, 0)), 0) AS avg_delay
+                FROM orders
+                WHERE tenant_id = :tenant_id
+                  AND created_at >= NOW() - INTERVAL '48 hours'
+                  AND created_at < NOW() - INTERVAL '24 hours'
+                """,
+                {"tenant_id": current_tenant.tenant_id},
+            )
+            recent_row = recent.mappings().one()
+            prev_row = prev.mappings().one()
+            recent_avg = float(recent_row["avg_delay"] or 0.0)
+            prev_avg = float(prev_row["avg_delay"] or 0.0)
+            trend = recent_avg - prev_avg
     except Exception:
         trend = 0.0
 

@@ -44,3 +44,7 @@ venv/
 
 # --- Temp / Data ---
 tmp_pg_data/
+
+# --- Docker ---
+.env.docker.local
+docker-data/

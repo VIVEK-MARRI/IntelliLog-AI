@@ -1,8 +1,11 @@
 import React from 'react'
-import { ChartBar, MagnifyingGlass, Hash } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
+import { ChartBar, MagnifyingGlass, Hash, SealCheck, Warning } from '@phosphor-icons/react'
+import type { ValidatedEvidence } from '../../types/copilot'
 
 interface EvidenceCardProps {
   evidence: string[]
+  validatedEvidence?: ValidatedEvidence[]
   relatedOrderIds?: string[]
   relatedDriverIds?: string[]
   isExpanded?: boolean
@@ -27,8 +30,54 @@ function highlightEntities(text: string): React.ReactNode {
   })
 }
 
+interface ClickableEntityLinkProps {
+  id: string
+  validated: boolean
+}
+
+const ClickableEntityLink: React.FC<ClickableEntityLinkProps> = ({ id, validated }) => {
+  const navigate = useNavigate()
+  const isOrder = id.startsWith('ORD-')
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isOrder) {
+      navigate(`/orders/${id}`)
+    } else {
+      navigate(`/drivers/${id}`)
+    }
+  }
+  return (
+    <button
+      onClick={handleClick}
+      className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded font-mono text-[10px] leading-none transition-colors ${
+        validated
+          ? 'bg-accent/10 text-accent hover:bg-accent/20'
+          : 'bg-warning-DEFAULT/10 text-warning-DEFAULT hover:bg-warning-DEFAULT/20'
+      }`}
+      title={`${isOrder ? 'Order' : 'Driver'} ${id} — ${validated ? 'verified' : 'unverified'}`}
+    >
+      {validated ? <SealCheck size={8} weight="fill" /> : <Warning size={8} weight="fill" />}
+      {id}
+    </button>
+  )
+}
+
+function renderValidatedEvidence(ve: ValidatedEvidence): React.ReactNode {
+  const entityPattern = /(ORD-[A-Z0-9-]+|DRV-[A-Z0-9-]+)/g
+  const entityMap = new Map(ve.entities.map((e) => [e.id, e]))
+  const parts = ve.text.split(entityPattern)
+  return parts.map((part, i) => {
+    if (/^(ORD-|DRV-)/.test(part)) {
+      const ref = entityMap.get(part)
+      return <ClickableEntityLink key={i} id={part} validated={ref?.exists ?? false} />
+    }
+    return part
+  })
+}
+
 export const EvidenceCard: React.FC<EvidenceCardProps> = ({
   evidence,
+  validatedEvidence,
   relatedOrderIds,
   relatedDriverIds,
   isExpanded = false,
@@ -51,15 +100,35 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({
 
       <div className="px-3 py-2">
         <ul className="space-y-1.5">
-          {displayEvidence.map((item, idx) => (
-            <li
-              key={idx}
-              className="text-[11px] text-cloud flex items-start gap-2 leading-relaxed"
-            >
-              <span className="w-1 h-1 rounded-full bg-accent/40 mt-[5px] shrink-0" />
-              <span>{highlightEntities(item)}</span>
-            </li>
-          ))}
+          {displayEvidence.map((item, idx) => {
+            const ve = validatedEvidence?.[idx]
+            return (
+              <li
+                key={idx}
+                className="text-[11px] text-cloud flex items-start gap-2 leading-relaxed"
+              >
+                {ve ? (
+                  <>
+                    {ve.status === 'validated' && (
+                      <SealCheck size={10} className="text-success-DEFAULT mt-[4px] shrink-0" weight="fill" />
+                    )}
+                    {ve.status === 'unverified' && (
+                      <Warning size={10} className="text-warning-DEFAULT mt-[4px] shrink-0" weight="fill" />
+                    )}
+                    {ve.status === 'mixed' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-warning-DEFAULT mt-[4px] shrink-0" />
+                    )}
+                    <span>{renderValidatedEvidence(ve)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-accent/40 mt-[5px] shrink-0" />
+                    <span>{highlightEntities(item)}</span>
+                  </>
+                )}
+              </li>
+            )
+          })}
         </ul>
 
         {!isExpanded && evidence.length > 3 && (

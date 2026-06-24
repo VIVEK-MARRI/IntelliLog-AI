@@ -20,10 +20,12 @@ class StopFactory(factory.DictFactory):
 
 
 class OrderRequestFactory(factory.DictFactory):
-    orderId = factory.Sequence(lambda n: f"order-{n:04d}")
-    driverId = factory.Sequence(lambda n: f"driver-{n:04d}")
-    plannedEta = factory.LazyFunction(_future_eta)
-    stops = factory.LazyFunction(lambda: [StopFactory()])
+    driver_id = factory.Sequence(lambda n: f"driver-{n:04d}")
+    origin_lat = 40.7128
+    origin_lng = -74.0060
+    destination_lat = 40.7580
+    destination_lng = -73.9855
+    planned_eta = factory.LazyFunction(_future_eta)
     notes = "High-priority delivery"
 
 

@@ -1,5 +1,4 @@
 # Prometheus configuration for IntelliLog-AI
-
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -7,48 +6,22 @@ global:
     monitor: 'intelliglog-monitor'
     environment: 'production'
 
-# Alertmanager configuration (optional, for alerts)
 alerting:
   alertmanagers:
     - static_configs:
         - targets: []
 
-# Load rules once and periodically evaluate them
 rule_files:
-  - "alert_rules.yml"
+  - 'alert_rules.yml'
 
-# Scrape configurations
 scrape_configs:
-  # FastAPI application metrics
   - job_name: 'intelliglog-api'
     static_configs:
-      - targets: ['localhost:8000']
+      - targets: ['backend:8000']
     metrics_path: '/metrics'
     scrape_interval: 15s
     scrape_timeout: 10s
-    
-  # Celery worker metrics (celery-prometheus-exporter)
-  - job_name: 'celery-worker'
-    static_configs:
-      - targets: ['localhost:8888']
-    scrape_interval: 30s
-    scrape_timeout: 10s
-    
-  # Redis exporter metrics
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['localhost:9121']
-    scrape_interval: 15s
-    scrape_timeout: 10s
-    
-  # PostgreSQL exporter metrics
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['localhost:9187']
-    scrape_interval: 30s
-    scrape_timeout: 10s
-    
-  # Prometheus self-monitoring
+
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']

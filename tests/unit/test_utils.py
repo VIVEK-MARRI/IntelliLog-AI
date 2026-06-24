@@ -11,7 +11,7 @@ from src.db.redis_schema import (
 
 
 def test_redis_schema_helpers_build_expected_keys() -> None:
-    assert get_order_state_key("order-1") == "order:state:order-1"
+    assert get_order_state_key("order-1") == "order:order-1"
     assert get_fleet_positions_key("tenant-1") == "fleet:tenant-1:positions"
     assert get_features_key("order-1") == "features:order-1"
     assert get_pubsub_events_channel("tenant-1") == "tenant:tenant-1:events"

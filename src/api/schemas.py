@@ -83,15 +83,41 @@ class Waypoint(BaseModel):
 
 
 class CreateOrderRequest(BaseModel):
-    """Create new order."""
+    """Create new order — accepts flat fields matching frontend send format."""
 
-    orderId: str = Field(alias="order_id")
-    driverId: str = Field(alias="driver_id")
-    plannedEta: datetime = Field(alias="planned_eta")
-    stops: List[dict]  # Details of delivery stops
+    order_id: Optional[str] = None  # backend assigns UUID if omitted
+    driver_id: str
+    origin_lat: float
+    origin_lng: float
+    destination_lat: float
+    destination_lng: float
+    planned_eta: datetime
     notes: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class CsvImportRequest(BaseModel):
+    """CSV import payload sent by the frontend after reading a local file."""
+
+    filename: str
+    csv: str
+
+
+class ImportErrorItem(BaseModel):
+    """Validation error for one imported row."""
+
+    row: int
+    message: str
+
+
+class ImportResult(BaseModel):
+    """Summary returned by CSV import endpoints."""
+
+    imported: int
+    failed: int
+    errors: List[ImportErrorItem] = Field(default_factory=list)
+    ids: List[str] = Field(default_factory=list)
 
 
 class OrderResponse(BaseModel):
@@ -105,8 +131,8 @@ class OrderResponse(BaseModel):
     currentEta: datetime = Field(alias="current_eta")
     currentRiskScore: float = Field(alias="current_risk_score")
     riskLevel: RiskLevel = Field(alias="risk_level")
-    latitude: float
-    longitude: float
+    latitude: float = Field(alias="origin_lat")
+    longitude: float = Field(alias="origin_lng")
     speed: float
     stopsRemaining: int = Field(alias="stops_remaining")
     createdAt: datetime = Field(alias="created_at")
@@ -137,7 +163,7 @@ class RiskFactor(BaseModel):
 
     feature: str
     contribution: float
-    direction: str  # "increases_risk" or "decreases_risk"
+    direction: str  # "increases" or "decreases"
     humanReadable: str = Field(alias="human_readable")
 
     model_config = ConfigDict(populate_by_name=True)
@@ -237,7 +263,7 @@ class AgentDecisionResponse(BaseModel):
     riskScore: float = Field(alias="risk_score")
     topRiskFactors: List[RiskFactor] = Field(alias="top_risk_factors")
     toolsInvoked: List[str] = Field(alias="tools_invoked")
-    outcome: str  # "success", "partial", "failed"
+    outcome: str  # "success", "pending", "failed"
     timestamp: datetime
     latencyMs: int = Field(alias="latency_ms")
 
@@ -322,6 +348,82 @@ class CopilotQueryResponse(BaseModel):
     intent: str
     relatedOrderIds: List[str] = Field(default_factory=list, alias="related_order_ids")
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+# ============================================================================
+# WORKSPACE COPILOT — structured AI assistant response
+# ============================================================================
+
+
+class WorkspaceSupportingOrder(BaseModel):
+    """A single order referenced in a copilot workspace response."""
+
+    orderId: str = Field(alias="order_id")
+    driverName: str = Field(alias="driver_name")
+    status: str
+    riskScore: float = Field(alias="risk_score")
+    delayMinutes: float = Field(alias="delay_minutes")
+    eta: Optional[str] = None
+    driverId: Optional[str] = Field(default=None, alias="driver_id")
+
+
+class WorkspaceSupportingPrediction(BaseModel):
+    """Prediction data for a supporting order."""
+
+    orderId: str = Field(alias="order_id")
+    riskScore: float = Field(alias="risk_score")
+    confidence: float
+    predictedDelayMinutes: float = Field(alias="predicted_delay_minutes")
+    topFactors: List[str] = Field(default_factory=list, alias="top_factors")
+    modelVersion: str = Field(alias="model_version")
+
+
+class WorkspaceSupportingDecision(BaseModel):
+    """Agent decision data for a supporting order."""
+
+    decisionId: str = Field(alias="decision_id")
+    orderId: str = Field(alias="order_id")
+    decisionType: str = Field(alias="decision_type")
+    outcome: str
+    reasoning: str
+    riskScore: float = Field(alias="risk_score")
+    timestamp: str
+
+
+class WorkspaceRecommendedAction(BaseModel):
+    """An interactive action the operator can take."""
+
+    id: str
+    type: str  # open_order | explain | view_route | create_alert | generate_report
+    label: str
+    description: Optional[str] = None
+    params: dict[str, Any] = Field(default_factory=dict)
+    priority: str = "normal"  # critical | high | normal
+
+
+class CopilotWorkspaceResponse(BaseModel):
+    """Rich copilot workspace response with supporting data and actions."""
+
+    summary: str
+    evidence: List[str]
+    confidence: float
+    sources: List[str]
+    intent: str
+    supportingOrders: List[WorkspaceSupportingOrder] = Field(
+        default_factory=list, alias="supporting_orders"
+    )
+    supportingPredictions: List[WorkspaceSupportingPrediction] = Field(
+        default_factory=list, alias="supporting_predictions"
+    )
+    supportingDecisions: List[WorkspaceSupportingDecision] = Field(
+        default_factory=list, alias="supporting_decisions"
+    )
+    recommendedActions: List[WorkspaceRecommendedAction] = Field(
+        default_factory=list, alias="recommended_actions"
+    )
+    relatedOrderIds: List[str] = Field(default_factory=list, alias="related_order_ids")
 
     model_config = ConfigDict(populate_by_name=True)
 

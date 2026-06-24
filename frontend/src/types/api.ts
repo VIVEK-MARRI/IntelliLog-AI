@@ -188,6 +188,7 @@ export type WebSocketMessageType =
   | 'eta_updated'
   | 'pong'
   | 'error'
+  | 'position_updated_batch'
 
 export interface WebSocketMessage {
   type: WebSocketMessageType
@@ -298,4 +299,221 @@ export interface Toast {
 export interface SelectedOrder {
   orderId: string
   timestamp: number
+}
+
+// ============================================================================
+// System Health / Observability
+// ============================================================================
+
+export interface ServiceHealth {
+  name: string
+  status: 'ok' | 'degraded' | 'down' | 'unknown'
+  latency_ms: number
+  availability: number
+}
+
+export interface RequestAnalytics {
+  requests_per_minute: number
+  latency_p50_ms: number
+  latency_p95_ms: number
+  latency_p99_ms: number
+  error_rate: number
+  total_requests: number
+  total_errors: number
+}
+
+export interface PredictionAnalytics {
+  predictions_per_second: number
+  total_predictions: number
+  latency_p50_ms: number
+  latency_p95_ms: number
+  latency_p99_ms: number
+  confidence_distribution: Record<string, number>
+  model_status: string
+}
+
+export interface WebSocketAnalytics {
+  active_connections: number
+  total_connections: number
+  messages_per_second: number
+  total_messages: number
+  connection_failures_total: number
+  reconnect_rate: number
+}
+
+export interface RedisAnalytics {
+  operations_per_second: number
+  total_operations: number
+  hit_rate: number
+  miss_rate: number
+  stream_lag: number
+}
+
+export interface DatabaseAnalytics {
+  queries_per_second: number
+  slow_queries: number
+  connection_pool: { active: number; max: number }
+  pool_utilization: number
+}
+
+export interface SystemAlert {
+  severity: 'critical' | 'warning' | 'info'
+  message: string
+  timestamp: string
+}
+
+export interface SystemHealthResponse {
+  generated_at: string
+  uptime_seconds: number
+  infrastructure: { services: ServiceHealth[] }
+  request_analytics: RequestAnalytics
+  prediction_analytics: PredictionAnalytics
+  websocket_analytics: WebSocketAnalytics
+  redis_analytics: RedisAnalytics
+  database_analytics: DatabaseAnalytics
+  alerts: SystemAlert[]
+}
+
+// ============================================================================
+// Explainability Studio
+// ============================================================================
+
+export interface ShapFactor {
+  feature: string
+  label: string
+  value: string | number
+  contribution: number
+  shap_value: number
+  direction: 'increases' | 'decreases'
+}
+
+export interface AgentDecisionBrief {
+  decision_id: string
+  decision_type: 'no_action' | 'alert' | 'reroute'
+  risk_score: number
+  reasoning: string
+  tools_invoked: string[]
+  outcome: string
+  timestamp: string | null
+  latency_ms: number
+  shap_factors: ShapFactor[]
+}
+
+export interface AgentDecisionSection {
+  has_decisions: boolean
+  latest_decision: AgentDecisionBrief | null
+  decisions: AgentDecisionBrief[]
+}
+
+export interface ImpactAnalysis {
+  current_risk_score: number
+  previous_risk_score: number | null
+  risk_reduction: number | null
+  time_saved_minutes: number | null
+  has_intervention: boolean
+}
+
+export interface OrderSummary {
+  order_id: string
+  driver_id: string
+  driver_name: string
+  status: string
+  risk_score: number
+  is_high_risk: boolean
+  confidence: string
+  predicted_delay_minutes: number
+  planned_eta: string
+  stops_remaining: number
+  speed: number
+}
+
+export interface ExplainResponse {
+  generated_at: string
+  order_summary: OrderSummary
+  shap_factors: ShapFactor[]
+  feature_importance: ShapFactor[]
+  risk_narrative: string
+  agent_decision: AgentDecisionSection
+  impact_analysis: ImpactAnalysis
+}
+
+// ============================================================================
+// Agent Operations Center
+// ============================================================================
+
+export interface AgentSummaryEntry {
+  name: string
+  total_decisions: number
+  success_rate: number
+  avg_latency_ms: number
+  failures: number
+}
+
+export interface HourlyBucket {
+  hour: string
+  count: number
+}
+
+export interface DecisionVolume {
+  decisions_per_hour: number
+  hourly_buckets: HourlyBucket[]
+  total_decisions: number
+}
+
+export interface OutcomeEntry {
+  outcome: 'success' | 'failed' | 'pending'
+  count: number
+}
+
+export interface ToolUsageEntry {
+  tool: string
+  count: number
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  agent_name: string
+  impact_score: number
+  success_rate: number
+  time_saved_minutes: number
+  total_decisions: number
+}
+
+export interface ExplorerDecision {
+  id: string
+  order_id: string
+  timestamp: string | null
+  decision_type: 'no_action' | 'alert' | 'reroute'
+  agent_type: string
+  risk_score: number
+  outcome: string
+  reasoning: string
+  tools_called: string[]
+  latency_ms: number
+}
+
+export interface FailureReason {
+  reason: string
+  count: number
+}
+
+export interface FailureAnalysis {
+  total_failures: number
+  failure_rate: number
+  reasons: FailureReason[]
+  avg_retries: number
+}
+
+export interface AgentOpsResponse {
+  generated_at: string
+  agent_summary: AgentSummaryEntry[]
+  decision_volume: DecisionVolume
+  decision_outcomes: OutcomeEntry[]
+  tool_usage: ToolUsageEntry[]
+  leaderboard: LeaderboardEntry[]
+  decision_explorer: {
+    decisions: ExplorerDecision[]
+    total: number
+  }
+  failure_analysis: FailureAnalysis
 }

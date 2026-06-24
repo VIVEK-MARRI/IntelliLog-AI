@@ -11,11 +11,13 @@ interface StreamingResponseProps {
 const stageMeta: Record<CopilotStage, { label: string; color: string }> = {
   idle: { label: 'Ready', color: 'text-mist' },
   connecting: { label: 'Connecting', color: 'text-warning-DEFAULT' },
+  reconnecting: { label: 'Reconnecting', color: 'text-warning-DEFAULT' },
   thinking: { label: 'Thinking', color: 'text-accent' },
   gathering_context: { label: 'Gathering context', color: 'text-info-DEFAULT' },
   streaming: { label: 'Receiving', color: 'text-teal-DEFAULT' },
   complete: { label: 'Complete', color: 'text-success-DEFAULT' },
   error: { label: 'Error', color: 'text-critical-DEFAULT' },
+  cancelled: { label: 'Cancelled', color: 'text-mist' },
 }
 
 export const StreamingResponse: React.FC<StreamingResponseProps> = ({
@@ -25,7 +27,7 @@ export const StreamingResponse: React.FC<StreamingResponseProps> = ({
 }) => {
   const meta = stageMeta[stage] || stageMeta.idle
 
-  const isActive = stage === 'thinking' || stage === 'gathering_context' || stage === 'connecting' || stage === 'streaming'
+  const isActive = stage === 'thinking' || stage === 'gathering_context' || stage === 'connecting' || stage === 'reconnecting' || stage === 'streaming'
 
   if (stage === 'idle' || stage === 'complete') return null
 

@@ -12,6 +12,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.api.auth import AuthenticatedTenant, get_current_tenant
 from src.api.deps import get_db, get_prediction_service, get_redis
 from src.api.schemas import PredictionResponse, RiskFactor
+from src.core.metrics import (
+    application_errors_total,
+    model_cache_hits_total,
+    model_cache_misses_total,
+    model_predictions_total,
+    prediction_latency_seconds,
+    prediction_risk_score,
+)
 from src.db.redis_schema import get_prediction_updates_channel, get_pubsub_events_channel
 from src.ml.inference import PredictionService
 
@@ -28,6 +36,84 @@ def _confidence_to_score(confidence: str) -> float:
         "low": 0.6,
     }
     return mapping.get(confidence.lower(), 0.8)
+
+
+@router.post("/batch", response_model=list)
+async def batch_predict(
+    body: dict,
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
+    redis_client: redis.Redis = Depends(get_redis),
+) -> list[dict]:
+    """
+    Batch predictions for multiple order IDs.
+    Accepts {"order_ids": ["..."]}, returns predictions for each.
+    """
+    order_ids = body.get("order_ids", [])
+    logger.info("batch_predict", count=len(order_ids), tenant_id=current_tenant.tenant_id)
+    results = []
+    for oid in order_ids:
+        cached = await redis_client.hgetall(f"prediction:{oid}")
+        if cached:
+            results.append({
+                "order_id": oid,
+                "risk_score": float(cached.get("risk_score", 0.5)),
+                "is_high_risk": float(cached.get("risk_score", 0.5)) > 0.7,
+                "predicted_delay_minutes": float(cached.get("predicted_delay_minutes", 0.0)),
+            })
+        else:
+            results.append({
+                "order_id": oid,
+                "risk_score": 0.5,
+                "is_high_risk": False,
+                "predicted_delay_minutes": 0.0,
+            })
+    return results
+
+
+@router.get("/model/{model_id:path}", response_model=dict)
+async def get_model_info(
+    model_id: str,
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
+) -> dict:
+    """Return model metadata."""
+    logger.info("get_model_info", model_id=model_id, tenant_id=current_tenant.tenant_id)
+    return {
+        "model_id": model_id,
+        "name": "Delay Prediction Model",
+        "version": "1.0.0",
+        "features": [
+            "hour_of_day", "day_of_week", "speed",
+            "stops_remaining", "driver_on_time_rate",
+            "deviation_meters", "eta_minutes_remaining",
+        ],
+        "confidence_thresholds": {"high": 0.9, "medium": 0.75, "low": 0.6},
+        "status": "active",
+    }
+
+
+@router.get("/{order_id}/history", response_model=list)
+async def get_prediction_history(
+    order_id: str,
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
+    redis_client: redis.Redis = Depends(get_redis),
+) -> list[dict]:
+    """
+    Return recent prediction snapshots for an order.
+    Reads from Redis prediction cache (the single latest value).
+    Full history requires a time-series DB — returns latest snapshot.
+    """
+    logger.info("get_prediction_history", order_id=order_id, tenant_id=current_tenant.tenant_id)
+    cached = await redis_client.hgetall(f"prediction:{order_id}")
+    if not cached:
+        return []
+    return [{
+        "order_id": order_id,
+        "risk_score": float(cached.get("risk_score", 0.5)),
+        "is_high_risk": float(cached.get("risk_score", 0.5)) > 0.7,
+        "predicted_delay_minutes": float(cached.get("predicted_delay_minutes", 0.0)),
+        "confidence": float(cached.get("confidence", 0.8)),
+        "prediction_timestamp": datetime.now(timezone.utc).isoformat(),
+    }]
 
 
 @router.get("/{order_id}", response_model=PredictionResponse)
@@ -55,6 +141,8 @@ async def get_prediction(
             f"prediction:{order_id}"
         )
         if cached_prediction:
+            model_cache_hits_total.inc()
+
             risk_score = float(cached_prediction.get("risk_score", 0.5))
             predicted_delay = float(
                 cached_prediction.get("predicted_delay_minutes", 0.0)
@@ -87,6 +175,9 @@ async def get_prediction(
 
     # Fall back to running prediction
     try:
+        model_cache_misses_total.inc()
+        start_time = datetime.now(timezone.utc)
+
         # Get order state from Redis
         order_state = await redis_client.hgetall(f"order:{order_id}")
         if not order_state:
@@ -154,7 +245,7 @@ async def get_prediction(
                 "risk_score": str(result.risk_score),
                 "predicted_delay_minutes": str(result.predicted_delay_minutes),
                 "confidence": str(_confidence_to_score(result.confidence)),
-                "top_risk_factors": json.dumps([f.model_dump() for f in top_factors]),
+                "top_risk_factors": json.dumps([f.model_dump(by_alias=True) for f in top_factors]),
             },
         )
         await redis_client.expire(f"prediction:{order_id}", 30)
@@ -167,6 +258,11 @@ async def get_prediction(
             get_pubsub_events_channel(current_tenant.tenant_id),
             json.dumps(prediction_payload),
         )
+
+        latency_s = (datetime.now(timezone.utc) - start_time).total_seconds()
+        model_predictions_total.inc()
+        prediction_latency_seconds.observe(latency_s)
+        prediction_risk_score.labels(tenant_id=current_tenant.tenant_id).observe(result.risk_score)
 
         logger.info(
             "prediction_computed",
@@ -187,6 +283,7 @@ async def get_prediction(
         )
 
     except Exception as e:
+        application_errors_total.labels(error_type="prediction", component="predictions_router").inc()
         logger.error("prediction_error", order_id=order_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

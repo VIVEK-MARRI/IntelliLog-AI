@@ -14,7 +14,7 @@ async def test_create_order_throughput(api_client, auth_headers) -> None:
     start = time.perf_counter()
     for _ in range(100):
         order_request = OrderRequestFactory()
-        order_request["plannedEta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+        order_request["planned_eta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
         response = await api_client.post("/api/v1/orders", json=order_request, headers=auth_headers)
         assert response.status_code == 200
 
@@ -26,13 +26,14 @@ async def test_create_order_throughput(api_client, auth_headers) -> None:
 @pytest.mark.asyncio
 async def test_prediction_latency_and_order_updates(api_client, auth_headers, test_redis) -> None:
     order_request = OrderRequestFactory()
-    order_request["plannedEta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
-    await api_client.post("/api/v1/orders", json=order_request, headers=auth_headers)
+    order_request["planned_eta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    resp = await api_client.post("/api/v1/orders", json=order_request, headers=auth_headers)
+    order_id = resp.json()["orderId"]
 
     await test_redis.hset(
-        f"order:{order_request['orderId']}",
+        f"order:{order_id}",
         mapping={
-            "driver_id": order_request["driverId"],
+            "driver_id": order_request["driver_id"],
             "planned_stops": 10,
             "completed_stops": 3,
             "planned_duration_minutes": 240.0,
@@ -47,14 +48,14 @@ async def test_prediction_latency_and_order_updates(api_client, auth_headers, te
 
     start = time.perf_counter()
     for _ in range(50):
-        response = await api_client.get(f"/api/v1/predictions/{order_request['orderId']}", headers=auth_headers)
+        response = await api_client.get(f"/api/v1/predictions/{order_id}", headers=auth_headers)
         assert response.status_code == 200
     prediction_elapsed = time.perf_counter() - start
 
     start = time.perf_counter()
     for _ in range(500):
         response = await api_client.patch(
-            f"/api/v1/orders/{order_request['orderId']}/position",
+            f"/api/v1/orders/{order_id}/position",
             json=PositionUpdateFactory(),
             headers=auth_headers,
         )

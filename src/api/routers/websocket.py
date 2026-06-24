@@ -21,6 +21,11 @@ from src.api.auth import ALGORITHM, AuthenticatedTenant, _get_secret_key
 from src.api.deps import get_db, get_redis as get_redis_client
 from src.api.rate_limit import check_rate_limit
 from src.core.config import get_settings
+from src.core.metrics import (
+    websocket_connections_active,
+    websocket_connections_total,
+    websocket_messages_sent_total,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -52,6 +57,14 @@ async def broadcast_to_tenant(
 
 
 async def _authenticate_ws(websocket: WebSocket) -> AuthenticatedTenant:
+    # Dev mode: skip JWT validation
+    if get_settings(allow_defaults=True).skip_external_startup_checks:
+        return AuthenticatedTenant(
+            tenant_id="00000000-0000-0000-0000-000000000001",
+            name="Dev User",
+            is_active=True,
+        )
+
     secret = _get_secret_key()
     ws_protocol = websocket.headers.get("sec-websocket-protocol", "")
 
@@ -111,6 +124,9 @@ async def websocket_endpoint(websocket: WebSocket):
     else:
         await websocket.accept()
 
+    websocket_connections_total.labels(outcome="accepted").inc()
+    websocket_connections_active.labels(tenant_id=tenant_id).inc()
+
     logger.info("websocket_connected", tenant_id=tenant_id)
 
     if tenant_id not in active_connections:
@@ -140,6 +156,7 @@ async def websocket_endpoint(websocket: WebSocket):
             "orders": initial_orders,
             "message": "Connected to fleet updates",
         })
+        websocket_messages_sent_total.labels(message_type="initial_state").inc()
 
         pubsub = redis_client.pubsub()
         channel = f"tenant:{tenant_id}:events"
@@ -161,6 +178,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         try:
                             data = json.loads(message["data"])
                             await websocket.send_json(data)
+                            msg_type = data.get("type", "unknown")
+                            websocket_messages_sent_total.labels(message_type=msg_type).inc()
                         except Exception as e:
                             logger.warning(
                                 "websocket_redis_parse_error",
@@ -206,4 +225,5 @@ async def websocket_endpoint(websocket: WebSocket):
             active_connections[tenant_id].discard(websocket)
             if not active_connections[tenant_id]:
                 del active_connections[tenant_id]
+        websocket_connections_active.labels(tenant_id=tenant_id).dec()
         logger.info("websocket_cleaned_up", tenant_id=tenant_id)

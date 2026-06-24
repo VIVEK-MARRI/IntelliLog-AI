@@ -22,17 +22,25 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from src.api.deps import get_db, get_redis
 from src.api.routers import (
     agent,
+    agent_ops,
     auth,
     copilot,
     drivers,
+    explain,
     health,
     insights,
     orders,
     predictions,
     routes,
+    system_health,
     websocket,
 )
-from src.core.metrics import generate_latest
+from src.core.metrics import (
+    generate_latest,
+    http_request_duration_seconds,
+    http_requests_in_progress,
+    http_requests_total,
+)
 from src.core.config import get_settings
 from src.ml.inference import PredictionService
 from src.api.rate_limit import check_rate_limit
@@ -40,6 +48,19 @@ from src.services.executive_summary import ExecutiveSummaryService, SummaryType
 from src.services.context_builder import ContextBuilder
 
 logger = structlog.get_logger(__name__)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Adds security headers to all responses."""
+
+    async def dispatch(self, request: Request, call_next: Callable) -> object:
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+        return response
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
@@ -56,22 +77,30 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 
 class TimingMiddleware(BaseHTTPMiddleware):
-    """Logs request timing and metrics."""
+    """Logs request timing and emits Prometheus metrics."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> object:
         start_time = time.time()
         request_id = getattr(request.state, "request_id", "unknown")
         tenant_id = getattr(request.state, "tenant_id", "none")
 
-        response = await call_next(request)
+        http_requests_in_progress.labels(method=request.method).inc()
+        try:
+            response = await call_next(request)
+        finally:
+            http_requests_in_progress.labels(method=request.method).dec()
 
         latency_ms = (time.time() - start_time) * 1000
         status_code = response.status_code
+        path = request.url.path
+
+        http_requests_total.labels(method=request.method, path=path, status_code=status_code).inc()
+        http_request_duration_seconds.labels(method=request.method, path=path).observe(latency_ms / 1000.0)
 
         logger.info(
             "request_completed",
             method=request.method,
-            path=request.url.path,
+            path=path,
             status_code=status_code,
             latency_ms=latency_ms,
             request_id=request_id,
@@ -198,6 +227,7 @@ app = FastAPI(
 )
 
 # Add middleware (order matters - outermost first)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(TimingMiddleware)
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(
@@ -234,6 +264,9 @@ app.include_router(agent.router, prefix="/api/v1")
 app.include_router(copilot.router, prefix="/api/v1")
 app.include_router(drivers.router, prefix="/api/v1")
 app.include_router(websocket.router)
+app.include_router(system_health.router, prefix="/api/v1")
+app.include_router(explain.router, prefix="/api/v1")
+app.include_router(agent_ops.router, prefix="/api/v1")
 
 
 @app.get("/")

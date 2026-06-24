@@ -42,11 +42,12 @@ export const predictionsAPI = {
    * Get model metadata
    */
   async getModelInfo(): Promise<{
+    model_id: string
+    name: string
     version: string
-    f1_score: number
-    accuracy: number
-    latency_ms: number
-    last_updated: string
+    features: string[]
+    confidence_thresholds: { high: number; medium: number; low: number }
+    status: string
   }> {
     return apiClient.get('/predictions/model/info')
   },

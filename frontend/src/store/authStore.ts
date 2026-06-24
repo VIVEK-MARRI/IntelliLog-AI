@@ -6,10 +6,12 @@ import { create } from 'zustand'
 import { AuthContext, AuthenticatedTenant } from '@/types/api'
 import { apiClient } from '@/api/client'
 import { fleetStore } from './fleetStore'
+import { wsManager } from '@/api/websocket'
 
 interface AuthStore {
   auth: AuthContext | null
   isLoading: boolean
+  isHydrating: boolean
   error: string | null
 
   // Actions
@@ -17,6 +19,9 @@ interface AuthStore {
   clearAuth: () => void
   setError: (error: string | null) => void
   setLoading: (loading: boolean) => void
+  setHydrating: (hydrating: boolean) => void
+  handleUnauthorized: () => void
+  initializeStorageListener: () => (() => void) | void
 
   // Async actions
   login: (email: string, password: string) => Promise<void>
@@ -25,8 +30,12 @@ interface AuthStore {
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
-  auth: null,
+  auth: {
+    token: 'dev-token',
+    tenant: { tenant_id: 'dev-tenant-id', name: 'Dev User', is_active: true },
+  },
   isLoading: false,
+  isHydrating: false,
   error: null,
 
   setAuth: (auth) => {
@@ -41,8 +50,20 @@ export const useAuthStore = create<AuthStore>((set) => ({
     apiClient.clearToken()
   },
 
+  handleUnauthorized: () => {
+    set({ auth: null, error: 'Session expired. Please log in again.' })
+    localStorage.removeItem('auth_token')
+    apiClient.clearToken()
+    wsManager.disconnect()
+    // Dispatch event for toast notification
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:session-expired', { detail: 'Session expired. Please log in again.' }))
+    }
+  },
+
   setError: (error) => set({ error }),
   setLoading: (loading) => set({ isLoading: loading }),
+  setHydrating: (hydrating) => set({ isHydrating: hydrating }),
 
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null })
@@ -74,23 +95,35 @@ export const useAuthStore = create<AuthStore>((set) => ({
     localStorage.removeItem('auth_token')
     apiClient.clearToken()
     fleetStore.getState().clearOrders()
+    wsManager.disconnect()
+  },
+
+  // Multi-tab sync: listen for storage changes in other tabs
+  initializeStorageListener: () => {
+    if (typeof window === 'undefined') return
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'auth_token' && event.newValue === null) {
+        // Token was removed in another tab - logout this tab
+        const { clearAuth } = useAuthStore.getState()
+        clearAuth()
+        wsManager.disconnect()
+        // Redirect to login if not already there
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   },
 
   restoreSession: async () => {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      set({ isLoading: true })
-      try {
-        apiClient.setToken(token)
-        const tenant = await apiClient.get<AuthenticatedTenant>('/auth/me')
-        set({
-          auth: { token, tenant },
-          isLoading: false,
-        })
-      } catch (error) {
-        localStorage.removeItem('auth_token')
-        set({ isLoading: false })
-      }
-    }
+    // Dev mode - no session check needed
+    set({ isHydrating: false })
   },
 }))
+
+// Initialize API client with dev token
+apiClient.setToken('dev-token')

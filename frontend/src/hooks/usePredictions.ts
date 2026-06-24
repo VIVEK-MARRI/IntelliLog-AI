@@ -57,10 +57,9 @@ export const usePredictions = () => {
 
     return {
       version: modelInfoQuery.data.version,
-      accuracy: modelInfoQuery.data.accuracy || 0,
-      f1Score: modelInfoQuery.data.f1_score || 0,
-      latencyMs: modelInfoQuery.data.latency_ms || 0,
-      lastUpdated: modelInfoQuery.data.last_updated,
+      featureCount: modelInfoQuery.data.features.length,
+      status: modelInfoQuery.data.status,
+      confidenceThresholds: modelInfoQuery.data.confidence_thresholds,
     };
   }, [modelInfoQuery.data]);
 

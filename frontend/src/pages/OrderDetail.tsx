@@ -27,13 +27,7 @@ export const OrderDetail: React.FC = () => {
         setIsLoading(true)
         let orderData = orders.get(orderId)
         if (!orderData) {
-          const response = await ordersAPI.getOrder(orderId)
-          orderData = {
-            ...response,
-            risk_score: 0.5,
-            is_high_risk: false,
-            delay_minutes: 0,
-          }
+          orderData = await ordersAPI.getOrder(orderId)
         }
         setOrder(orderData)
         const prediction = await predictionsAPI.getPrediction(orderId)

@@ -36,36 +36,34 @@ async def test_create_order_list_orders_and_position_update(api_client, auth_hea
     order_request["plannedEta"] = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
 
     create_response = await api_client.post("/api/v1/orders", json=order_request, headers=auth_headers)
-    assert create_response.status_code == 200
-    assert create_response.json()["orderId"] == order_request["orderId"]
+    assert create_response.status_code == 200, create_response.text
+    created = create_response.json()
+    order_id = created["orderId"]
 
     list_response = await api_client.get("/api/v1/orders", headers=auth_headers)
     assert list_response.status_code == 200
     orders = list_response.json()["items"]
-    assert any(
-        order.get("orderId", order.get("order_id")) == order_request["orderId"]
-        for order in orders
-    )
+    assert any(order.get("orderId", order.get("order_id")) == order_id for order in orders)
 
-    redis_state = await test_redis.hgetall(f"order:{order_request['orderId']}")
+    redis_state = await test_redis.hgetall(f"order:{order_id}")
     normalized_state = {
         (key.decode() if isinstance(key, bytes) else key): (
             value.decode() if isinstance(value, bytes) else value
         )
         for key, value in redis_state.items()
     }
-    assert normalized_state["driver_id"] == order_request["driverId"]
+    assert normalized_state["driver_id"] == order_request["driver_id"]
 
     update_payload = PositionUpdateFactory()
     patch_response = await api_client.patch(
-        f"/api/v1/orders/{order_request['orderId']}/position",
+        f"/api/v1/orders/{order_id}/position",
         json=update_payload,
         headers=auth_headers,
     )
     assert patch_response.status_code == 200
     assert patch_response.json()["received"] is True
 
-    redis_state_after = await test_redis.hgetall(f"order:{order_request['orderId']}")
+    redis_state_after = await test_redis.hgetall(f"order:{order_id}")
     normalized_after = {
         (key.decode() if isinstance(key, bytes) else key): (
             value.decode() if isinstance(value, bytes) else value

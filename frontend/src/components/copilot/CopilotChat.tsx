@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Cpu, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { Cpu, CheckCircle, XCircle, Warning, Clock } from '@phosphor-icons/react'
 import { StreamingResponse } from './StreamingResponse'
 import { EvidenceCard } from './EvidenceCard'
 import { RecommendationPanel } from './RecommendationPanel'
@@ -14,6 +14,41 @@ interface CopilotChatProps {
   streamedContent?: string
 }
 
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (seconds < 10) return 'just now'
+  if (seconds < 60) return `${seconds}s ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  return `${hours}h ago`
+}
+
+const ConfidenceBadge: React.FC<{ confidence: number }> = ({ confidence }) => {
+  const color = confidence >= 0.8 ? 'text-success-DEFAULT'
+    : confidence >= 0.6 ? 'text-warning-DEFAULT'
+    : 'text-critical-DEFAULT'
+  const Icon = confidence >= 0.6 ? CheckCircle : XCircle
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${color}`}>
+      <Icon size={10} weight="fill" />
+      {(confidence * 100).toFixed(0)}% confidence
+    </span>
+  )
+}
+
+const LowConfidenceWarning: React.FC<{ confidence: number }> = ({ confidence }) => {
+  if (confidence >= 0.5) return null
+  return (
+    <div className="flex items-start gap-1.5 p-2 rounded-lg bg-warning-DEFAULT/10 border border-warning-DEFAULT/30">
+      <Warning size={12} weight="fill" className="text-warning-DEFAULT mt-0.5 shrink-0" />
+      <p className="text-[10px] text-warning-DEFAULT leading-relaxed">
+        Low confidence response. Verify before acting.
+      </p>
+    </div>
+  )
+}
+
 const MessageContent: React.FC<{ message: CopilotMessageType }> = ({ message }) => {
   const { response } = message
 
@@ -25,9 +60,12 @@ const MessageContent: React.FC<{ message: CopilotMessageType }> = ({ message }) 
     <div className="space-y-3">
       <p className="text-sm text-pearl leading-relaxed">{response.summary}</p>
 
+      <LowConfidenceWarning confidence={response.confidence} />
+
       {response.evidence && response.evidence.length > 0 && (
         <EvidenceCard
           evidence={response.evidence}
+          validatedEvidence={message.validatedEvidence}
           relatedOrderIds={response.related_order_ids || response.affected_orders}
           relatedDriverIds={response.related_driver_ids || response.affected_drivers}
         />
@@ -47,21 +85,12 @@ const MessageContent: React.FC<{ message: CopilotMessageType }> = ({ message }) 
             {response.sources.join(', ')}
           </span>
         )}
+        <span className="ml-auto flex items-center gap-1 text-[10px] text-mist/50">
+          <Clock size={10} />
+          {timeAgo(message.timestamp)}
+        </span>
       </div>
     </div>
-  )
-}
-
-const ConfidenceBadge: React.FC<{ confidence: number }> = ({ confidence }) => {
-  const color = confidence >= 0.8 ? 'text-success-DEFAULT'
-    : confidence >= 0.6 ? 'text-warning-DEFAULT'
-    : 'text-critical-DEFAULT'
-  const Icon = confidence >= 0.6 ? CheckCircle : XCircle
-  return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${color}`}>
-      <Icon size={10} weight="fill" />
-      {(confidence * 100).toFixed(0)}% confidence
-    </span>
   )
 }
 
@@ -109,12 +138,20 @@ export const CopilotChat: React.FC<CopilotChatProps> = ({
         </div>
       ))}
 
-      {streamStage && streamStage !== 'idle' && streamStage !== 'complete' && (
+      {streamStage && streamStage !== 'idle' && streamStage !== 'complete' && streamStage !== 'cancelled' && (
         <StreamingResponse
           stage={streamStage}
           stageContent={streamStageContent || ''}
           streamedContent={streamedContent || ''}
         />
+      )}
+
+      {streamStage === 'cancelled' && (
+        <div className="flex justify-start">
+          <div className="bg-navy/50 border border-steel-grey/30 rounded-xl rounded-bl-md px-4 py-3 max-w-[85%]">
+            <p className="text-[11px] text-mist italic">Response cancelled</p>
+          </div>
+        </div>
       )}
 
       {isLoading && !streamStage && (

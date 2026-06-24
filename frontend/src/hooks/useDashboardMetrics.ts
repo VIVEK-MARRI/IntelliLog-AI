@@ -100,6 +100,7 @@ export const useDashboardMetrics = () => {
     isLoading,
     isError,
     isLoadingMetrics: metricsQuery.isLoading,
+    isLoadingFleetHealth: fleetHealthQuery.isLoading,
     isLoadingRecommendations: recommendationsQuery.isLoading,
 
     // Utilities

@@ -77,14 +77,16 @@ def solve_routing_job(
     Raises:
         Retries up to max_retries on any exception
     """
-    import asyncio
     import redis
 
     redis_client = redis.Redis.from_url(_settings.redis_url or "redis://localhost:6379/0", decode_responses=True)
     solver = VRPSolver(timeout_seconds=5)
-    db_url = _settings.database_url or os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:admin@localhost:5432/intelliglog")
-    async_engine = create_async_engine(db_url)
-    async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+    db_url = _settings.database_url or os.getenv("DATABASE_URL")
+    if not db_url:
+        raise RuntimeError(
+            "DATABASE_URL is not configured. "
+            "This is a security-critical setting that must be provided via environment variable."
+        )
 
     try:
         # ===== STEP 1: Update status to "running" =====
@@ -127,43 +129,51 @@ def solve_routing_job(
             time_saved_minutes=result.time_saved_minutes,
         )
 
-        # ===== STEP 4: Save to PostgreSQL =====
-        # Run async DB work inside an asyncio loop since Celery tasks are synchronous.
-        async def _save_result():
-            try:
-                async with async_session_factory() as db:
-                    await db.execute(
-                        text(
-                            """
-                            INSERT INTO route_plans (
-                                id, order_id, tenant_id, waypoints, total_distance_km,
-                                total_duration_minutes, solver_status, solver_duration_ms, created_at
-                            ) VALUES (
-                                gen_random_uuid(), :order_id, :tenant_id, :waypoints, :total_distance_km,
-                                :total_duration_minutes, :solver_status, :solver_duration_ms, NOW()
-                            )
-                            """
-                        ),
-                        {
-                            "order_id": order_id,
-                            "tenant_id": tenant_id,
-                            "waypoints": json.dumps(result.ordered_stops),
-                            "total_distance_km": result.total_distance_km,
-                            "total_duration_minutes": result.total_duration_minutes,
-                            "solver_status": result.solver_status,
-                            "solver_duration_ms": result.solver_duration_ms,
-                        },
-                    )
-                    await db.commit()
-            except Exception as db_err:
-                logger.warning(
-                    "solver_db_save_skipped",
-                    job_id=job_id,
-                    order_id=order_id,
-                    error=str(db_err),
+        # ===== STEP 4: Save to PostgreSQL (sync) =====
+        # Use synchronous SQLAlchemy — Celery workers are sync, so
+        # asyncio.run() would crash with "already running event loop".
+        sync_db_url = _settings.database_url or os.getenv("DATABASE_URL")
+        if not sync_db_url:
+            raise RuntimeError(
+                "DATABASE_URL is not configured. "
+                "This is a security-critical setting that must be provided via environment variable."
+            )
+        sync_db_url = sync_db_url.replace("+asyncpg", "+psycopg2")
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session as SyncSession
+        sync_engine = create_engine(sync_db_url)
+        try:
+            with SyncSession(sync_engine) as db:
+                db.execute(
+                    text(
+                        """
+                        INSERT INTO route_plans (
+                            id, order_id, tenant_id, waypoints, total_distance_km,
+                            total_duration_minutes, solver_status, solver_duration_ms, created_at
+                        ) VALUES (
+                            gen_random_uuid(), :order_id, :tenant_id, :waypoints, :total_distance_km,
+                            :total_duration_minutes, :solver_status, :solver_duration_ms, NOW()
+                        )
+                        """
+                    ),
+                    {
+                        "order_id": order_id,
+                        "tenant_id": tenant_id,
+                        "waypoints": json.dumps(result.ordered_stops),
+                        "total_distance_km": result.total_distance_km,
+                        "total_duration_minutes": result.total_duration_minutes,
+                        "solver_status": result.solver_status,
+                        "solver_duration_ms": result.solver_duration_ms,
+                    },
                 )
-
-        asyncio.run(_save_result())
+                db.commit()
+        except Exception as db_err:
+            logger.warning(
+                "solver_db_save_skipped",
+                job_id=job_id,
+                order_id=order_id,
+                error=str(db_err),
+            )
 
         # ===== STEP 5: Update Redis status to "completed" =====
         # Build proper waypoints with lat/lng from ordered stop IDs

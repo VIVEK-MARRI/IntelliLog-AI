@@ -50,11 +50,16 @@ async def health_check() -> HealthResponse:
         logger.error("health_check", service="database", error=str(e))
         db_status = ServiceStatus.DOWN
 
-    # Check Redis
+    # Check Redis (dedicated connection — never close the shared singleton)
     try:
-        redis_client = await get_redis()
-        await redis_client.ping()
-        await redis_client.close()
+        from src.core.config import get_settings
+        _health_settings = get_settings(allow_defaults=True)
+        health_redis = redis.from_url(
+            _health_settings.redis_url or "redis://localhost:6379/0",
+            decode_responses=True,
+        )
+        await health_redis.ping()
+        await health_redis.close()
         logger.info("health_check", service="redis", status="ok")
     except Exception as e:
         logger.warning("health_check", service="redis", error=str(e))

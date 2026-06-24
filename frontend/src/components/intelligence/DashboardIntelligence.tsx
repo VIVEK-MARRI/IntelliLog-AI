@@ -1,48 +1,34 @@
-import React, { useState, useMemo } from 'react';
-import { Activity, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
-import { UsageAnalytics } from './UsageAnalytics';
-import { WorkflowInsights } from './WorkflowInsights';
-import { OptimizationRecommendations } from './OptimizationRecommendations';
-import { useDashboardMetrics } from '../../hooks/useDashboardMetrics';
+import React, { useState, useMemo } from 'react'
+import { fleetStore, useOrdersArray } from '@/store/fleetStore'
+import { useDashboardMetrics } from '../../hooks/useDashboardMetrics'
+import { FleetIntelligence } from './FleetIntelligence'
+import { AgentIntelligence } from './AgentIntelligence'
+import { OptimizationIntelligence } from './OptimizationIntelligence'
+import { OperationalIntelligence } from './OperationalIntelligence'
+import { ChartBar, Brain, ArrowsLeftRight, Gauge, Warning, Crosshair } from '@phosphor-icons/react'
+import clsx from 'clsx'
 
 export const DashboardIntelligence: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'usage' | 'workflow' | 'optimization'>(
-    'usage'
-  );
+  const [activeTab, setActiveTab] = useState<'fleet' | 'agent' | 'optimization' | 'operational'>('fleet')
+  const orders = useOrdersArray()
+  const decisions = fleetStore((s) => s.agentDecisions)
+  const { metrics, fleetHealth } = useDashboardMetrics()
 
-  const { metrics } = useDashboardMetrics();
+  const realMetrics = useMemo(() => {
+    const highRisk = orders.filter((o) => o.is_high_risk).length
+    const healthScore = fleetHealth?.score ?? null
+    const interventions = metrics?.agent_interventions ?? decisions.length
+    const decisionsTotal = decisions.length
 
-  const operatorMetrics = useMemo(() => {
-    const totalActionsPerDay = metrics?.active_deliveries ?? 0;
-    const avgResponseTime = metrics ? Math.max(500, Math.round(5000 - metrics.on_time_percentage * 25)) : 0;
-    const riskAlertReviewTime = metrics ? Math.round(avgResponseTime * 0.8) : 0;
-    const navigationEfficiency = metrics?.on_time_percentage ?? 0;
+    return { highRisk, healthScore, interventions, decisionsTotal }
+  }, [orders, fleetHealth, metrics, decisions])
 
-    return {
-      totalActionsPerDay,
-      avgResponseTime,
-      riskAlertReviewTime,
-      navigationEfficiency,
-      decisionOverrideRate: metrics?.agent_interventions ?? 0,
-      successRate: metrics?.on_time_percentage ?? 0,
-    };
-  }, [metrics]);
-
-  const insights = useMemo(() => {
-    const isHighResponseTime = operatorMetrics.avgResponseTime > 4000;
-    const isLowEfficiency = operatorMetrics.navigationEfficiency < 70;
-    const isHighOverrideRate = operatorMetrics.decisionOverrideRate > 20;
-
-    return {
-      criticalIssues: [
-        ...(isHighResponseTime ? ['High response latency detected'] : []),
-        ...(isLowEfficiency ? ['Low navigation efficiency'] : []),
-        ...(isHighOverrideRate ? ['High decision override rate'] : []),
-      ].length,
-      improvementOpportunities: Math.max(1, Math.round((operatorMetrics.totalActionsPerDay || 0) / 10) || 1),
-      estimatedImprovementPercentage: metrics ? Math.max(0, Math.round(100 - metrics.on_time_percentage)) : 0,
-    };
-  }, [operatorMetrics]);
+  const tabs = [
+    { key: 'fleet' as const, label: 'Fleet Intelligence', icon: Crosshair },
+    { key: 'agent' as const, label: 'Agent Intelligence', icon: Brain },
+    { key: 'optimization' as const, label: 'Optimization', icon: ArrowsLeftRight },
+    { key: 'operational' as const, label: 'Operational', icon: Gauge },
+  ]
 
   return (
     <div className="space-y-6">
@@ -50,23 +36,23 @@ export const DashboardIntelligence: React.FC = () => {
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold text-pearl flex items-center gap-2">
-              <Activity className="w-6 h-6 text-accent" />
-              Dashboard Intelligence
+              <ChartBar className="w-6 h-6 text-accent" />
+              Intelligence Dashboard
             </h2>
             <p className="text-sm text-mist mt-1">
-              Operator behavior analysis and workflow optimization
+              Real-time operational intelligence from live fleet data
             </p>
           </div>
-          {insights.criticalIssues > 0 && (
-            <div className="bg-critical-DEFAULT/10 border border-critical-DEFAULT/50 rounded-lg p-3">
+          {realMetrics.highRisk > 0 && (
+            <div className="bg-critical/10 border border-critical/40 rounded-lg px-4 py-2.5">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-critical-DEFAULT" />
+                <Warning size={16} className="text-critical" />
                 <div>
-                  <p className="text-sm font-semibold text-critical-DEFAULT">
-                    {insights.criticalIssues} Critical Issue{insights.criticalIssues !== 1 ? 's' : ''}
+                  <p className="text-sm font-semibold text-critical">
+                    {realMetrics.highRisk} High-Risk Order{realMetrics.highRisk !== 1 ? 's' : ''}
                   </p>
-                  <p className="text-xs text-critical-DEFAULT/80">
-                    Estimated improvement: {insights.estimatedImprovementPercentage}%
+                  <p className="text-xs text-critical/70">
+                    Intervention recommended
                   </p>
                 </div>
               </div>
@@ -77,81 +63,83 @@ export const DashboardIntelligence: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
-          label="Avg Response Time"
-          value={`${(operatorMetrics.avgResponseTime / 1000).toFixed(1)}s`}
-          change={-12}
-          icon={<Zap className="w-4 h-4" />}
-          status={operatorMetrics.avgResponseTime > 4000 ? 'warning' : 'normal'}
+          label="High-Risk Orders"
+          value={`${realMetrics.highRisk}`}
+          change={null}
+          icon={<Warning size={14} />}
+          status={realMetrics.highRisk > 3 ? 'critical' : realMetrics.highRisk > 0 ? 'warning' : 'normal'}
         />
         <MetricCard
-          label="Navigation Efficiency"
-          value={`${operatorMetrics.navigationEfficiency}%`}
-          change={8}
-          icon={<TrendingUp className="w-4 h-4" />}
-          status={operatorMetrics.navigationEfficiency < 70 ? 'warning' : 'normal'}
+          label="Fleet Health"
+          value={realMetrics.healthScore !== null ? `${realMetrics.healthScore.toFixed(0)}%` : '—'}
+          change={fleetHealth?.trend ?? null}
+          icon={<Gauge size={14} />}
+          status={realMetrics.healthScore !== null && realMetrics.healthScore < 50 ? 'critical' : realMetrics.healthScore !== null && realMetrics.healthScore < 80 ? 'warning' : 'normal'}
         />
         <MetricCard
-          label="Decision Override Rate"
-          value={`${operatorMetrics.decisionOverrideRate}%`}
-          change={-5}
-          icon={<AlertTriangle className="w-4 h-4" />}
-          status={operatorMetrics.decisionOverrideRate > 20 ? 'warning' : 'normal'}
+          label="Agent Interventions"
+          value={`${realMetrics.interventions}`}
+          change={null}
+          icon={<Brain size={14} />}
+          status="normal"
         />
         <MetricCard
-          label="Success Rate"
-          value={`${operatorMetrics.successRate}%`}
-          change={3}
-          icon={<Activity className="w-4 h-4" />}
+          label="Decisions (Total)"
+          value={`${realMetrics.decisionsTotal}`}
+          change={null}
+          icon={<ChartBar size={14} />}
           status="normal"
         />
       </div>
 
       <div className="border-b border-steel-grey/30">
         <div className="flex gap-2">
-          {(['usage', 'workflow', 'optimization'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-medium text-sm transition-colors relative ${
-                activeTab === tab
-                  ? 'text-accent'
-                  : 'text-mist hover:text-cloud'
-              }`}
-            >
-              {tab === 'usage' && 'Usage Analytics'}
-              {tab === 'workflow' && 'Workflow Insights'}
-              {tab === 'optimization' && 'Recommendations'}
-              {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"></div>
-              )}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={clsx(
+                  'flex items-center gap-1.5 px-4 py-2 font-medium text-sm transition-colors relative',
+                  activeTab === tab.key ? 'text-accent' : 'text-mist hover:text-cloud'
+                )}
+              >
+                <Icon size={14} />
+                {tab.label}
+                {activeTab === tab.key && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       <div>
-        {activeTab === 'usage' && <UsageAnalytics operatorMetrics={operatorMetrics} />}
-        {activeTab === 'workflow' && <WorkflowInsights operatorMetrics={operatorMetrics} />}
-        {activeTab === 'optimization' && <OptimizationRecommendations />}
+        {activeTab === 'fleet' && <FleetIntelligence />}
+        {activeTab === 'agent' && <AgentIntelligence />}
+        {activeTab === 'optimization' && <OptimizationIntelligence />}
+        {activeTab === 'operational' && <OperationalIntelligence />}
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface MetricCardProps {
-  label: string;
-  value: string;
-  change: number;
-  icon: React.ReactNode;
-  status: 'normal' | 'warning' | 'critical';
+  label: string
+  value: string
+  change: number | null
+  icon: React.ReactNode
+  status: 'normal' | 'warning' | 'critical'
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ label, value, change, icon, status }) => {
   const statusColor = {
-    normal: 'bg-success-DEFAULT/10 border-success-DEFAULT/50 text-success-DEFAULT',
-    warning: 'bg-warning-DEFAULT/10 border-warning-DEFAULT/50 text-warning-DEFAULT',
-    critical: 'bg-critical-DEFAULT/10 border-critical-DEFAULT/50 text-critical-DEFAULT',
-  };
+    normal: 'bg-success/10 border-success/40 text-success',
+    warning: 'bg-warning/10 border-warning/40 text-warning',
+    critical: 'bg-critical/10 border-critical/40 text-critical',
+  }
 
   return (
     <div className={`border rounded-lg p-4 ${statusColor[status]}`}>
@@ -160,9 +148,11 @@ const MetricCard: React.FC<MetricCardProps> = ({ label, value, change, icon, sta
         <div className="text-mist">{icon}</div>
       </div>
       <div className="text-2xl font-bold text-pearl mb-1">{value}</div>
-      <div className={`text-xs ${change > 0 ? 'text-success-DEFAULT' : 'text-critical-DEFAULT'}`}>
-        {change > 0 ? '+' : ''}{change}% from last period
-      </div>
+      {change !== null && (
+        <div className={`text-xs ${change > 0 ? 'text-success' : 'text-critical'}`}>
+          {change > 0 ? '+' : ''}{change.toFixed(1)}% vs last period
+        </div>
+      )}
     </div>
-  );
-};
+  )
+}

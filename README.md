@@ -536,13 +536,36 @@ IntelliLog-AI/
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker (Recommended — 5 minutes)
+
+Requires [Docker Engine 24+](https://docs.docker.com/engine/install/) and [Docker Compose v2](https://docs.docker.com/compose/install/).
+
+```bash
+# 1. Clone
+git clone https://github.com/your-org/IntelliLog-AI.git
+cd IntelliLog-AI
+
+# 2. Launch everything
+docker compose up -d
+
+# 3. Verify
+docker compose ps
+
+# 4. Open the platform
+open http://localhost:3000
+```
+
+All 7 services start automatically with health checks and correct ordering.  
+See the [Deployment Guide](DEPLOYMENT.md) for details.
+
+### Option 2: Manual (For Development)
+
+Requires:
 
 - **Python** ≥ 3.13
 - **Node.js** ≥ 18 & **npm** ≥ 9
 - **PostgreSQL** 15+ (with TimescaleDB extension)
 - **Redis** 7+
-- **Docker** + **Docker Compose** (recommended)
 
 ### 1. Clone the Repository
 
@@ -619,29 +642,74 @@ UI is available at: **http://localhost:5173**
 
 ## Docker Deployment
 
-Production-style single-command deployment:
+**The entire platform launches with a single command:**
 
 ```bash
-docker compose -f docker-compose.prod.yml up --build -d
+docker compose up -d
 ```
 
-### Services Brought Up
+Wait ~30 seconds for all health checks to pass, then open **http://localhost:3000**.
 
-| Service | Port | Description |
-|---|---|---|
-| Nginx | 80 / 443 | Reverse proxy + TLS termination |
-| Frontend | — | Static SPA served via Nginx |
-| Backend | 8000 | FastAPI application |
-| PostgreSQL | 5432 | Persistent relational store |
-| Redis | 6379 | Cache + Pub/Sub |
-| Prometheus | 9090 | Metrics scraping |
-| Grafana | 3000 | Operational dashboards |
+### Services
 
-### Health & Status
+| Service       | URL                     | Credentials         | Description                            |
+|---------------|-------------------------|---------------------|----------------------------------------|
+| Frontend      | http://localhost:3000   | —                   | React SPA via nginx with API proxy     |
+| API           | http://localhost:8000   | —                   | FastAPI backend with WebSocket support |
+| API Docs      | http://localhost:8000/docs | —                | Interactive OpenAPI documentation      |
+| PostgreSQL    | localhost:5432          | intellilog / intellilog | Relational data store              |
+| Redis         | localhost:6379          | —                   | Cache, Pub/Sub, task queue             |
+| Prometheus    | http://localhost:9090   | —                   | Metrics collection & alerting          |
+| Grafana       | http://localhost:3001   | admin / admin       | Operational dashboards (auto-provisioned) |
+
+### Deployment Topology
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                         docker compose                           │
+│                                                                  │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐│
+│  │ Frontend │────▶│ Backend  │◀────│Prometheus│────▶│  Grafana ││
+│  │ (nginx)  │     │(uvicorn) │     │(metrics) │     │(dashbrds)││
+│  └──────────┘     └────┬─────┘     └──────────┘     └──────────┘│
+│                        │                                         │
+│           ┌────────────┼─────────────┐                           │
+│           ▼            ▼              ▼                           │
+│  ┌────────────┐ ┌───────────┐ ┌───────────────┐                  │
+│  │ PostgreSQL │ │   Redis   │ │  Celery/Agent │                  │
+│  │  (persist) │ │ (cache)   │ │  Workers      │                  │
+│  └────────────┘ └───────────┘ └───────────────┘                  │
+│                                                                  │
+│  Volumes: postgres_data  redis_data  prometheus_data  grafana_data│
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Startup Order (Docker Compose Health Checks)
+
+1. **PostgreSQL** — `pg_isready`
+2. **Redis** — `redis-cli ping`
+3. **Backend API** — waits for Postgres + Redis, exposes `/health`
+4. **Celery Worker** + **Agent Worker** — waits for Postgres + Redis
+5. **Frontend** — waits for Backend, serves SPA via nginx
+6. **Prometheus** — waits for Backend, scrapes `/metrics`
+7. **Grafana** — waits for Prometheus, auto-provisions dashboards
+
+### Configuration
+
+Copy `.env.docker` to `.env` and customize:
 
 ```bash
-docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs -f backend
+cp .env.docker .env
+```
+
+Key variables: `POSTGRES_PASSWORD`, `SECRET_KEY`, `GRAFANA_PASSWORD`.
+
+### Health Checks
+
+```bash
+docker compose ps
+docker compose logs -f backend
+curl http://localhost:8000/health
 ```
 
 ---

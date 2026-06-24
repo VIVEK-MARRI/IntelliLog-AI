@@ -1,0 +1,324 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Inter:wght@300..800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+.landing-page {
+  --radius: 0.75rem;
+  --background: oklch(0.965 0.008 75);
+  --foreground: oklch(0.18 0.02 250);
+  --card: oklch(0.985 0.005 75);
+  --card-foreground: oklch(0.18 0.02 250);
+  --popover: oklch(0.985 0.005 75);
+  --popover-foreground: oklch(0.18 0.02 250);
+  --primary: oklch(0.22 0.04 255);
+  --primary-foreground: oklch(0.965 0.008 75);
+  --secondary: oklch(0.92 0.012 75);
+  --secondary-foreground: oklch(0.22 0.04 255);
+  --muted: oklch(0.93 0.01 75);
+  --muted-foreground: oklch(0.45 0.02 250);
+  --accent: oklch(0.50 0.07 195);
+  --accent-foreground: oklch(0.985 0.005 75);
+  --destructive: oklch(0.55 0.16 28);
+  --border: oklch(0.88 0.012 75);
+  --input: oklch(0.88 0.012 75);
+  --ring: oklch(0.50 0.07 195);
+  --chart-1: oklch(0.22 0.04 255);
+  --chart-2: oklch(0.50 0.07 195);
+  --chart-3: oklch(0.62 0.05 145);
+  --chart-4: oklch(0.74 0.12 80);
+  --chart-5: oklch(0.55 0.10 45);
+  --navy: oklch(0.22 0.04 255);
+  --navy-deep: oklch(0.15 0.03 258);
+  --teal: oklch(0.50 0.07 195);
+  --sage: oklch(0.62 0.05 145);
+  --amber: oklch(0.74 0.12 80);
+  --copper: oklch(0.55 0.10 45);
+  --slate: oklch(0.45 0.02 250);
+  --porcelain: oklch(0.965 0.008 75);
+  --mist: oklch(0.93 0.012 75);
+  --graphite: oklch(0.18 0.015 255);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.landing-page.dark,
+.landing-page .dark {
+  --background: oklch(0.18 0.015 255);
+  --foreground: oklch(0.965 0.008 75);
+  --card: oklch(0.22 0.02 258);
+  --card-foreground: oklch(0.965 0.008 75);
+  --popover: oklch(0.22 0.02 258);
+  --popover-foreground: oklch(0.965 0.008 75);
+  --primary: oklch(0.965 0.008 75);
+  --primary-foreground: oklch(0.22 0.04 255);
+  --secondary: oklch(0.28 0.02 258);
+  --secondary-foreground: oklch(0.965 0.008 75);
+  --muted: oklch(0.28 0.02 258);
+  --muted-foreground: oklch(0.70 0.015 255);
+  --accent: oklch(0.62 0.09 195);
+  --accent-foreground: oklch(0.18 0.015 255);
+  --destructive: oklch(0.65 0.18 28);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.62 0.09 195);
+  --chart-1: oklch(0.62 0.09 195);
+  --chart-2: oklch(0.72 0.08 145);
+  --chart-3: oklch(0.80 0.14 80);
+  --chart-4: oklch(0.65 0.13 45);
+  --chart-5: oklch(0.72 0.06 250);
+}
+
+.landing-page ::selection {
+  background: oklch(0.50 0.07 195 / 0.18);
+  color: oklch(0.15 0.03 258);
+}
+
+.landing-page :focus-visible {
+  outline: 2px solid oklch(0.50 0.07 195);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.landing-page .font-display {
+  font-family: 'Fraunces', ui-serif, Georgia, serif;
+}
+
+.landing-page .font-sans {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.landing-page .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.landing-page .text-balance {
+  text-wrap: balance;
+}
+
+.landing-page .text-pretty {
+  text-wrap: pretty;
+}
+
+.landing-page .editorial-title {
+  font-family: 'Fraunces', ui-serif, Georgia, serif;
+  font-weight: 380;
+  letter-spacing: -0.025em;
+  line-height: 0.98;
+  font-optical-sizing: auto;
+}
+
+.landing-page .editorial-eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+}
+
+.landing-page .editorial-lead {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 380;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.landing-page.surface-porcelain,
+.landing-page .surface-porcelain {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.985 0.005 75) 0%, oklch(0.965 0.008 75) 100%);
+}
+
+.landing-page .surface-paper {
+  background:
+    linear-gradient(180deg, oklch(0.985 0.005 75) 0%, oklch(0.965 0.008 75) 100%);
+}
+
+.landing-page .surface-mist {
+  background: oklch(0.93 0.012 75);
+}
+
+.landing-page .surface-graphite {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.22 0.04 255) 0%, oklch(0.15 0.03 258) 100%);
+  color: oklch(0.965 0.008 75);
+}
+
+.landing-page .paper-grain {
+  position: relative;
+}
+
+.landing-page .paper-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, oklch(0.4 0.02 250 / 0.025) 0, transparent 1px),
+    radial-gradient(circle at 70% 60%, oklch(0.4 0.02 250 / 0.018) 0, transparent 1px),
+    radial-gradient(circle at 40% 80%, oklch(0.4 0.02 250 / 0.022) 0, transparent 1px);
+  background-size: 8px 8px, 14px 14px, 11px 11px;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+.landing-page .glass-card {
+  background: oklch(0.985 0.005 75 / 0.78);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid oklch(0.55 0.04 250 / 0.10);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.6) inset,
+    0 18px 40px -22px oklch(0.22 0.04 255 / 0.18),
+    0 4px 12px -8px oklch(0.22 0.04 255 / 0.08);
+}
+
+.landing-page .glass-dark {
+  background: oklch(0.18 0.015 255 / 0.72);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid oklch(1 0 0 / 0.08);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.06) inset,
+    0 24px 60px -30px oklch(0 0 0 / 0.5);
+}
+
+.landing-page .soft-card {
+  background: oklch(0.985 0.005 75);
+  border: 1px solid oklch(0.88 0.012 75);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.9) inset,
+    0 1px 2px oklch(0.22 0.04 255 / 0.04),
+    0 10px 24px -16px oklch(0.22 0.04 255 / 0.12);
+}
+
+.landing-page .soft-card-hover {
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.3s ease;
+}
+
+.landing-page .soft-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: oklch(0.55 0.04 250 / 0.22);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.9) inset,
+    0 1px 2px oklch(0.22 0.04 255 / 0.05),
+    0 22px 50px -22px oklch(0.22 0.04 255 / 0.20);
+}
+
+.landing-page .hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, oklch(0.45 0.02 250 / 0.22) 18%, oklch(0.45 0.02 250 / 0.22) 82%, transparent 100%);
+}
+
+.landing-page .hairline-dark {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, oklch(1 0 0 / 0.18) 18%, oklch(1 0 0 / 0.18) 82%, transparent 100%);
+}
+
+.landing-page .atlas-grid {
+  background-image:
+    linear-gradient(oklch(0.45 0.02 250 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.45 0.02 250 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.landing-page .atlas-grid-dark {
+  background-image:
+    linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.landing-page .dot-grid {
+  background-image: radial-gradient(oklch(0.45 0.02 250 / 0.16) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.landing-page .dot-grid-dark {
+  background-image: radial-gradient(oklch(1 0 0 / 0.10) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+@keyframes landing-pulse-soft {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.landing-page .animate-pulse-soft {
+  animation: landing-pulse-soft 2.6s ease-in-out infinite;
+}
+
+@keyframes landing-dash-flow {
+  to {
+    stroke-dashoffset: -200;
+  }
+}
+
+.landing-page .animate-dash {
+  animation: landing-dash-flow 4s linear infinite;
+}
+
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-page .animate-marquee {
+  animation: landing-marquee 60s linear infinite;
+}
+
+.landing-page .status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  position: relative;
+}
+
+.landing-page .status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  opacity: 0.4;
+  animation: landing-pulse-soft 2.6s ease-in-out infinite;
+}
+
+.landing-page .text-gradient-navy {
+  background: linear-gradient(135deg, oklch(0.22 0.04 255) 0%, oklch(0.40 0.07 220) 60%, oklch(0.50 0.07 195) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-page .text-gradient-amber {
+  background: linear-gradient(135deg, oklch(0.55 0.10 45) 0%, oklch(0.74 0.12 80) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

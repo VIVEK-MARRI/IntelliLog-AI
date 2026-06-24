@@ -12,7 +12,7 @@ from typing import Literal
 # Order Hot State
 # ============================================================================
 
-# Pattern: order:state:{order_id}
+# Pattern: order:{order_id}
 # Type: Redis Hash
 # Purpose: Current real-time state of an active delivery order
 # TTL: 4 hours (auto-expire completed orders)
@@ -31,7 +31,7 @@ from typing import Literal
 #   - status (STRING): Order status
 #
 # Example:
-#   HSET order:state:550e8400-e29b-41d4-a716-446655440000 \
+#   HSET order:550e8400-e29b-41d4-a716-446655440000 \
 #     lat 40.7128 \
 #     lng -74.0060 \
 #     speed 45.2 \
@@ -43,9 +43,9 @@ from typing import Literal
 #     deviation_meters 250.5 \
 #     status "in_progress"
 #
-# TTL: EXPIRE order:state:{order_id} 14400 (4 hours)
+# TTL: EXPIRE order:{order_id} 14400 (4 hours)
 
-ORDER_STATE_KEY_PATTERN = "order:state:{order_id}"
+ORDER_STATE_KEY_PATTERN = "order:{order_id}"
 ORDER_STATE_TTL_SECONDS = 4 * 60 * 60  # 4 hours
 ORDER_STATE_FIELDS = {
     "lat": "FLOAT - Current latitude",
@@ -246,7 +246,7 @@ PUBSUB_MESSAGE_TYPES = {
 
 @dataclass
 class OrderState:
-    """In-memory representation of order:state:{order_id}."""
+    """In-memory representation of order:{order_id}."""
     lat: float
     lng: float
     speed: float
@@ -296,7 +296,7 @@ class ModelFeatures:
 
 def get_order_state_key(order_id: str) -> str:
     """Get Redis key for order state."""
-    return f"order:state:{order_id}"
+    return f"order:{order_id}"
 
 
 def get_fleet_positions_key(tenant_id: str) -> str:

@@ -2,7 +2,7 @@
  * HTTP API Client for IntelliLog-AI
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+const API_BASE = import.meta.env.VITE_API_URL || '/api/v1'
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>
@@ -14,17 +14,15 @@ class APIClient {
 
   constructor(baseURL: string = API_BASE) {
     this.baseURL = baseURL
-    this.token = localStorage.getItem('auth_token')
+    this.token = null // Token will be set via setToken() from authStore
   }
 
   setToken(token: string) {
     this.token = token
-    localStorage.setItem('auth_token', token)
   }
 
   clearToken() {
     this.token = null
-    localStorage.removeItem('auth_token')
   }
 
   private getHeaders(): Record<string, string> {
@@ -71,7 +69,10 @@ class APIClient {
     if (!response.ok) {
       if (response.status === 401) {
         this.clearToken()
-        window.location.href = '/login'
+        // Dispatch event for React Router navigation + toast
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: 'Session expired' }))
+        }
       }
       const error = await response.json().catch(() => ({}))
       throw new Error(error.detail || `API Error: ${response.status}`)
