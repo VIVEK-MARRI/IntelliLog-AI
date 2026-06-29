@@ -18,6 +18,7 @@ COPY src/ src/
 COPY models/ models/
 COPY alembic.ini .
 COPY alembic/ alembic/
+COPY docker_seed.py .
 
 EXPOSE 8000
 

@@ -1,1 +1,1 @@
-"""Database module for IntelliLog-AI."""
+"""Database module."""

@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+.git
+.gitignore
+*.log
+.env*
+__pycache__
+*.pyc
+.coverage
+.pytest_cache
+reports
+tests
+scripts
+Dockerfile
+README.md
+*.md

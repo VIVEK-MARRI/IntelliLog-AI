@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react'
+import React, { useCallback, useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fleetStore, useOrdersArray } from '@/store/fleetStore'
 import { predictionsAPI } from '@/api/predictions'
 import { routesAPI } from '@/api/routes'
 import { agentAPI } from '@/api/agent'
+import { useToast } from '@/components/notifications'
 import { clsx } from 'clsx'
 import { format } from 'date-fns'
 import {
@@ -472,6 +473,44 @@ function AICopilot({
 }) {
   const orders = useOrdersArray()
   const order = orderId ? orders.find((o) => o.id === orderId) : null
+  const [rerouting, setRerouting] = useState(false)
+  const { addToast } = useToast()
+
+  const handleReroute = useCallback(async () => {
+    if (!orderId) return
+    setRerouting(true)
+    try {
+      const result = await routesAPI.optimizeRoute(orderId, true)
+      addToast({ type: 'info', title: 'Route optimization submitted', message: `Job ${result.job_id?.slice(0, 8)} started` })
+      const poll = async () => {
+        try {
+          const status = await routesAPI.getJobStatus(result.job_id)
+          if (status.status === 'completed') {
+            fleetStore.getState().updateRouteWaypoints(orderId, status.result?.waypoints?.map((w: any) => ({
+              lat: w.latitude,
+              lng: w.longitude,
+              order_id: orderId,
+              sequence: w.sequence,
+              type: 'delivery' as const,
+            })) ?? [])
+            addToast({ type: 'success', title: 'Route optimized', message: 'New route applied' })
+            setRerouting(false)
+          } else if (status.status === 'failed') {
+            addToast({ type: 'error', title: 'Optimization failed', message: status.error ?? 'Unknown error' })
+            setRerouting(false)
+          } else {
+            setTimeout(poll, 2000)
+          }
+        } catch {
+          setRerouting(false)
+        }
+      }
+      setTimeout(poll, 2000)
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Reroute failed', message: err.message })
+      setRerouting(false)
+    }
+  }, [orderId, addToast])
 
   if (!orderId || !order) {
     return (
@@ -616,8 +655,12 @@ function AICopilot({
         <section>
           <h3 className="text-[10px] font-semibold text-silver-muted uppercase tracking-wider mb-2">Available Actions</h3>
           <div className="space-y-2">
-            <button className="w-full text-left px-3.5 py-2.5 bg-amber text-charcoal font-semibold rounded-lg hover:bg-amber/90 transition text-sm">
-              Reroute Order
+            <button
+              onClick={handleReroute}
+              disabled={rerouting}
+              className="w-full text-left px-3.5 py-2.5 bg-amber text-charcoal font-semibold rounded-lg hover:bg-amber/90 transition text-sm disabled:opacity-50"
+            >
+              {rerouting ? 'Optimizing...' : 'Reroute Order'}
             </button>
             <button className="w-full text-left px-3.5 py-2.5 bg-graphite border border-slate/20 text-silver rounded-lg hover:bg-graphite/80 transition text-sm">
               Contact Driver

@@ -1,25 +1,31 @@
 """
 Realistic delivery event simulator for IntelliLog-AI.
 
-Generates statistically honest GPS and order data that reflects real-world
-delivery patterns, including:
-- Multi-stop routes with realistic duration
-- Speed variation by environment (highway, urban, stopped)
-- Traffic and weather events
-- Driver behavior variation
-- Appropriate class imbalance (~20% late deliveries)
+Generates statistically honest GPS and order data that models real delivery patterns:
+- Drivers start at depot, visit N stops in sequence, return to depot
+- GPS pings every 15-30 seconds with realistic noise
+- Speed varies by context: highway (80-120 km/h), urban (20-50 km/h), stopped (0)
+- Stop duration: 2-8 minutes per delivery
+- Traffic events: 15% chance of congestion (+5-25 min to segment)
+- Weather events: 8% chance of rain (+10-20% to remaining ETAs)
+- Driver behavior: 10% slower drivers (+20% stop time)
+- Class imbalance: ~20% late deliveries (ground truth for ML training)
 """
 
-import random
 import uuid
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Generator, Literal, Optional
+import random
 import math
-
-import pandas as pd
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timedelta, timezone
+from typing import Literal, Generator, Optional, List
+from enum import Enum
 import numpy as np
+import pandas as pd
+
+
+# ============================================================================
+# DATA MODELS
+# ============================================================================
 
 
 class EventType(str, Enum):
@@ -38,8 +44,8 @@ class WeatherCondition(str, Enum):
 
 
 @dataclass
-class GPSEvent:
-    """Single GPS ping or stop event from a driver."""
+class GPSPingEvent:
+    """A single GPS ping event from driver's mobile device."""
     event_id: str
     order_id: str
     driver_id: str
@@ -52,17 +58,16 @@ class GPSEvent:
     sequence_number: int
     event_type: Literal["ping", "stop_arrival", "stop_departure", "depot_arrival"]
 
-    def to_dict(self):
-        """Convert to dictionary."""
-        d = asdict(self)
-        d["event_type"] = self.event_type.value if isinstance(self.event_type, Enum) else self.event_type
-        d["timestamp"] = d["timestamp"].isoformat()
-        return d
+    def to_dict(self) -> dict:
+        """Convert to dictionary, ensuring datetime is ISO format."""
+        data = asdict(self)
+        data["timestamp"] = self.timestamp.isoformat()
+        return data
 
 
 @dataclass
 class CompletedDelivery:
-    """Historical record of a completed delivery."""
+    """A completed delivery record with ground truth labels for ML training."""
     order_id: str
     driver_id: str
     tenant_id: str
@@ -81,502 +86,546 @@ class CompletedDelivery:
     driver_historical_on_time_rate: float
     distance_km: float
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
-        d = asdict(self)
-        d["weather_condition"] = self.weather_condition.value if isinstance(self.weather_condition, Enum) else self.weather_condition
-        return d
+        return asdict(self)
+
+
+@dataclass
+class DeliveryRoute:
+    """A planned delivery route with stops."""
+    order_id: str
+    driver_id: str
+    tenant_id: str
+    planned_stops: int
+    stops: List[dict] = field(default_factory=list)  # Each: {lat, lng, eta_minutes}
+    total_distance_km: float = 0.0
+    total_duration_minutes: float = 0.0
+    driver_slowness_factor: float = 1.0  # 1.0 or 1.2 for slow drivers
+    weather_condition: Literal["clear", "rain", "heavy_rain"] = "clear"
+    traffic_segments: List[int] = field(default_factory=list)  # Indices with traffic
+
+
+# ============================================================================
+# DELIVERY SIMULATOR
+# ============================================================================
 
 
 class DeliverySimulator:
     """
     Simulates realistic delivery routes and GPS events.
     
-    Models real delivery characteristics:
-    - Urban deliveries: 8-15 stops, 4-8 hours total
-    - GPS noise: ±0.0001 degrees
-    - Speed variation: highway (80-120 km/h), urban (20-50 km/h), stopped (0)
-    - Stop duration: 2-8 minutes
-    - Traffic events: 15% chance adding 5-25 min
-    - Weather events: 8% chance adding 10-20% to ETAs
-    - Driver behavior: 10% slow drivers (20% longer at stops)
-    - Late delivery target: ~20% of deliveries
+    Supports two modes:
+    1. generate_historical() - Creates 10K completed delivery records for ML training
+    2. stream_events() - Replays a single route as GPS ping events (can be accelerated)
     """
 
-    # Constants for realism
-    DEPOT_LAT = 40.7128  # NYC depot
-    DEPOT_LNG = -74.0060
-    
-    # Speed profiles (km/h)
-    HIGHWAY_SPEED = (80, 120)
-    URBAN_SPEED = (20, 50)
-    STOPPED_SPEED = 0
-    
-    # Distance between stops
-    MIN_STOP_DISTANCE_KM = 1.0
-    MAX_STOP_DISTANCE_KM = 8.0
-    
-    # Stop durations (minutes)
-    MIN_DWELL = 2
-    MAX_DWELL = 8
-    
-    # GPS ping interval
-    PING_INTERVAL_SECONDS = (15, 30)
-    
-    # Probability of events
-    TRAFFIC_EVENT_PROBABILITY = 0.15  # 15% of routes
-    TRAFFIC_DELAY_MINUTES = (5, 25)
-    
-    WEATHER_EVENT_PROBABILITY = 0.08  # 8% of routes
-    WEATHER_DELAY_FACTOR = (1.10, 1.20)  # 10-20% increase
-    
-    SLOW_DRIVER_PROBABILITY = 0.10  # 10% of drivers
-    SLOW_DRIVER_DWELL_MULTIPLIER = 1.20  # 20% longer at stops
-    
-    LATE_DELIVERY_TARGET_RATE = 0.20  # 20% should be late
-    
-    def __init__(self, tenant_id: str | None = None, seed: int | None = None):
+    # Realistic configuration constants
+    DEPOT_LAT, DEPOT_LNG = 17.3850, 78.4867  # Hyderabad, India
+    STOPS_MIN, STOPS_MAX = 8, 15
+    DURATION_MIN_HOURS, DURATION_MAX_HOURS = 4, 8
+    PING_INTERVAL_SEC_MIN, PING_INTERVAL_SEC_MAX = 15, 30
+    SPEED_HIGHWAY_MIN_KMH, SPEED_HIGHWAY_MAX_KMH = 80, 120
+    SPEED_URBAN_MIN_KMH, SPEED_URBAN_MAX_KMH = 20, 50
+    STOP_DURATION_MIN_MIN, STOP_DURATION_MAX_MIN = 2, 8
+    TRAFFIC_PROBABILITY = 0.15  # 15% of segments have traffic
+    TRAFFIC_DELAY_MIN_MIN, TRAFFIC_DELAY_MAX_MIN = 5, 25
+    WEATHER_PROBABILITY = 0.08  # 8% of routes have weather
+    WEATHER_ETA_IMPACT = (0.1, 0.2)  # 10-20% impact on remaining ETAs
+    SLOW_DRIVER_PROBABILITY = 0.10  # 10% of drivers are 20% slower
+    LATE_DELIVERY_RATE = 0.20  # Target ~20% late deliveries
+    GPS_NOISE_DEGREES = 0.0001  # ~11 meters in lat/lng
+
+    def __init__(self, seed: Optional[int] = None, tenant_id: str = None):
         """
         Initialize the simulator.
         
         Args:
-            tenant_id: Tenant ID for generated events. Defaults to random UUID.
-            seed: Random seed for reproducibility.
+            seed: Random seed for reproducibility
+            tenant_id: Tenant ID for generated events (defaults to random UUID)
         """
-        self.tenant_id = tenant_id or str(uuid.uuid4())
         if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
-    
-    def _generate_random_point_near(
-        self, 
-        lat: float, 
-        lng: float, 
-        max_distance_km: float
-    ) -> tuple[float, float]:
+        
+        self.tenant_id = tenant_id or str(uuid.uuid4())
+        self._driver_on_time_rates: dict = {}  # Cache driver performance metrics
+
+    def _distance_between_points(self, lat1: float, lng1: float, 
+                                 lat2: float, lng2: float) -> float:
         """
-        Generate a random lat/lng point within distance from origin.
-        
-        Args:
-            lat: Origin latitude
-            lng: Origin longitude
-            max_distance_km: Maximum distance in kilometers
-            
-        Returns:
-            Tuple of (latitude, longitude)
-        """
-        # Earth radius in km
-        R = 6371
-        
-        # Random distance and bearing
-        distance = random.uniform(0, max_distance_km)
-        bearing = random.uniform(0, 360)
-        
-        # Convert to radians
-        lat_rad = math.radians(lat)
-        lng_rad = math.radians(lng)
-        bearing_rad = math.radians(bearing)
-        
-        # New latitude
-        new_lat_rad = math.asin(
-            math.sin(lat_rad) * math.cos(distance / R) +
-            math.cos(lat_rad) * math.sin(distance / R) * math.cos(bearing_rad)
-        )
-        
-        # New longitude
-        new_lng_rad = lng_rad + math.atan2(
-            math.sin(bearing_rad) * math.sin(distance / R) * math.cos(lat_rad),
-            math.cos(distance / R) - math.sin(lat_rad) * math.sin(new_lat_rad)
-        )
-        
-        return (math.degrees(new_lat_rad), math.degrees(new_lng_rad))
-    
-    def _great_circle_distance(
-        self, 
-        lat1: float, 
-        lng1: float, 
-        lat2: float, 
-        lng2: float
-    ) -> float:
-        """
-        Calculate great-circle distance between two points in km (Haversine).
-        
-        Args:
-            lat1, lng1: First point
-            lat2, lng2: Second point
-            
-        Returns:
-            Distance in kilometers
+        Calculate distance between two points using Haversine formula (in km).
         """
         R = 6371  # Earth radius in km
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        delta_phi = math.radians(lat2 - lat1)
+        delta_lambda = math.radians(lng2 - lng1)
         
-        lat1_rad = math.radians(lat1)
-        lat2_rad = math.radians(lat2)
-        delta_lat = math.radians(lat2 - lat1)
-        delta_lng = math.radians(lng2 - lng1)
-        
-        a = math.sin(delta_lat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lng / 2) ** 2
+        a = math.sin(delta_phi / 2) ** 2 + \
+            math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        
         return R * c
-    
-    def _generate_route(self) -> tuple[list[tuple[float, float]], float]:
+
+    def _bearing_between_points(self, lat1: float, lng1: float,
+                               lat2: float, lng2: float) -> float:
         """
-        Generate a delivery route with multiple stops.
-        
-        Returns:
-            Tuple of (list of (lat, lng) waypoints including depot, total_distance_km)
+        Calculate bearing (heading) between two points (0-360 degrees).
         """
-        num_stops = random.randint(8, 15)
-        waypoints = [(self.DEPOT_LAT, self.DEPOT_LNG)]
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        delta_lambda = math.radians(lng2 - lng1)
         
-        total_distance = 0.0
-        current_lat, current_lng = self.DEPOT_LAT, self.DEPOT_LNG
+        y = math.sin(delta_lambda) * math.cos(phi2)
+        x = math.cos(phi1) * math.sin(phi2) - \
+            math.sin(phi1) * math.cos(phi2) * math.cos(delta_lambda)
         
+        bearing = math.degrees(math.atan2(y, x))
+        return (bearing + 360) % 360
+
+    def _generate_stops(self, num_stops: int) -> List[tuple]:
+        """
+        Generate realistic stop locations within ~50 km of depot (urban area).
+        Returns list of (lat, lng) tuples.
+        """
+        stops = []
         for _ in range(num_stops):
-            # Generate stop within max distance from current point
-            next_lat, next_lng = self._generate_random_point_near(
-                current_lat,
-                current_lng,
-                self.MAX_STOP_DISTANCE_KM
-            )
+            # Generate random point within ~50 km radius, roughly uniformly
+            angle = random.uniform(0, 2 * math.pi)
+            # Use sqrt for more uniform distribution in circle
+            distance_km = random.uniform(2, 50)
             
-            distance = self._great_circle_distance(current_lat, current_lng, next_lat, next_lng)
-            total_distance += distance
+            # Approximate: 1 degree lat ≈ 111 km, 1 degree lng ≈ 111*cos(lat) km
+            delta_lat = (distance_km / 111.0) * math.cos(angle)
+            delta_lng = (distance_km / (111.0 * math.cos(math.radians(self.DEPOT_LAT)))) * \
+                        math.sin(angle)
             
-            waypoints.append((next_lat, next_lng))
-            current_lat, current_lng = next_lat, next_lng
+            lat = self.DEPOT_LAT + delta_lat
+            lng = self.DEPOT_LNG + delta_lng
+            stops.append((lat, lng))
         
-        # Return to depot
-        distance = self._great_circle_distance(current_lat, current_lng, self.DEPOT_LAT, self.DEPOT_LNG)
-        total_distance += distance
-        waypoints.append((self.DEPOT_LAT, self.DEPOT_LNG))
-        
-        return waypoints, total_distance
-    
-    def _calculate_segment_duration(
-        self,
-        distance_km: float,
-        is_highway: bool = False,
-        traffic_event: bool = False,
-        weather_multiplier: float = 1.0
-    ) -> tuple[float, int]:
+        return stops
+
+    def _plan_route(self, num_stops: int, slowness_factor: float = 1.0) -> DeliveryRoute:
         """
-        Calculate time to traverse a segment with realistic variation.
+        Plan a delivery route with realistic timing and distance.
         
         Args:
-            distance_km: Segment distance
-            is_highway: Whether this is a highway segment
-            traffic_event: Whether a traffic event affects this segment
-            weather_multiplier: ETA multiplier from weather
+            num_stops: Number of delivery stops
+            slowness_factor: 1.0 for normal driver, 1.2 for slow driver
             
         Returns:
-            Tuple of (duration_minutes, traffic_delay_minutes)
-        """
-        # Pick speed profile
-        if is_highway:
-            speed = random.uniform(*self.HIGHWAY_SPEED)
-        else:
-            speed = random.uniform(*self.URBAN_SPEED)
-        
-        # Base duration
-        duration_minutes = (distance_km / speed) * 60
-        
-        # Traffic delay
-        traffic_delay = 0
-        if traffic_event:
-            traffic_delay = random.uniform(*self.TRAFFIC_DELAY_MINUTES)
-            duration_minutes += traffic_delay
-        
-        # Weather multiplier
-        duration_minutes *= weather_multiplier
-        
-        return duration_minutes, traffic_delay
-    
-    def generate_completed_delivery(self) -> CompletedDelivery:
-        """
-        Generate a single completed delivery record with realistic characteristics.
-        
-        Returns:
-            CompletedDelivery object
+            DeliveryRoute with waypoints and timing
         """
         order_id = str(uuid.uuid4())
         driver_id = str(uuid.uuid4())
         
-        # Determine if driver is slow
-        is_slow_driver = random.random() < self.SLOW_DRIVER_PROBABILITY
-        driver_on_time_rate = random.uniform(0.70, 0.95) if not is_slow_driver else random.uniform(0.60, 0.80)
+        # Cache driver's on-time rate
+        if driver_id not in self._driver_on_time_rates:
+            self._driver_on_time_rates[driver_id] = random.gauss(0.85, 0.10)
+            self._driver_on_time_rates[driver_id] = max(0.5, min(0.95, 
+                self._driver_on_time_rates[driver_id]))
         
-        # Generate route
-        waypoints, distance_km = self._generate_route()
-        num_stops = len(waypoints) - 2  # Exclude depot endpoints
+        # Generate stops
+        stop_locs = self._generate_stops(num_stops)
         
-        # Determine weather
-        has_weather = random.random() < self.WEATHER_EVENT_PROBABILITY
-        weather = WeatherCondition.RAIN if random.random() < 0.6 else WeatherCondition.HEAVY_RAIN if has_weather else WeatherCondition.CLEAR
-        weather_multiplier = random.uniform(*self.WEATHER_DELAY_FACTOR) if has_weather else 1.0
+        # Calculate total distance and baseline duration
+        current_lat, current_lng = self.DEPOT_LAT, self.DEPOT_LNG
+        total_distance = 0.0
+        route_stops = []
         
-        # Traffic events
-        has_traffic = random.random() < self.TRAFFIC_EVENT_PROBABILITY
-        
-        # Calculate segment durations
-        total_driving_time = 0.0
-        total_traffic_delay = 0.0
-        
-        for i in range(len(waypoints) - 1):
-            lat1, lng1 = waypoints[i]
-            lat2, lng2 = waypoints[i + 1]
-            segment_distance = self._great_circle_distance(lat1, lng1, lat2, lng2)
-            
-            # Simplify: assume segments beyond first are urban
-            is_highway = i == 0 and segment_distance > 5
-            
-            duration, traffic_delay = self._calculate_segment_duration(
-                segment_distance,
-                is_highway=is_highway,
-                traffic_event=has_traffic,
-                weather_multiplier=weather_multiplier
+        for idx, (stop_lat, stop_lng) in enumerate(stop_locs):
+            segment_dist = self._distance_between_points(
+                current_lat, current_lng, stop_lat, stop_lng
             )
+            total_distance += segment_dist
             
-            total_driving_time += duration
-            total_traffic_delay += traffic_delay
+            # Estimate time: 40 km/h average + stop time
+            segment_time = (segment_dist / 40.0) * 60 + \
+                          random.uniform(self.STOP_DURATION_MIN_MIN, 
+                                        self.STOP_DURATION_MAX_MIN)
+            
+            route_stops.append({
+                "lat": stop_lat,
+                "lng": stop_lng,
+                "eta_minutes": segment_time,
+                "stop_index": idx
+            })
+            
+            current_lat, current_lng = stop_lat, stop_lng
         
-        # Stop durations
-        dwell_per_stop = random.uniform(self.MIN_DWELL, self.MAX_DWELL)
-        if is_slow_driver:
-            dwell_per_stop *= self.SLOW_DRIVER_DWELL_MULTIPLIER
+        # Add return to depot
+        return_dist = self._distance_between_points(
+            current_lat, current_lng, self.DEPOT_LAT, self.DEPOT_LNG
+        )
+        total_distance += return_dist
+        return_time = (return_dist / 40.0) * 60
         
-        total_stop_time = dwell_per_stop * num_stops
+        total_duration = sum(s["eta_minutes"] for s in route_stops) + return_time
+        total_duration *= slowness_factor  # Apply slowness factor
         
-        # Planned duration (slightly optimistic)
-        planned_duration = total_driving_time * 0.85 + total_stop_time * 0.90
+        # Determine if traffic/weather occurs
+        has_traffic = random.random() < self.TRAFFIC_PROBABILITY
+        traffic_segments = [random.randint(0, num_stops - 1)] if has_traffic else []
         
-        # Actual duration
-        actual_duration = total_driving_time + total_stop_time
+        weather_cond = WeatherCondition.CLEAR
+        if random.random() < self.WEATHER_PROBABILITY:
+            weather_cond = random.choice([WeatherCondition.RAIN, 
+                                         WeatherCondition.HEAVY_RAIN])
+            # Weather adds 10-20% to remaining time
+            eta_increase = random.uniform(*self.WEATHER_ETA_IMPACT)
+            total_duration *= (1.0 + eta_increase)
         
-        # Determine if late
-        # Target ~20% late, but use driver on-time rate and route characteristics
-        on_time_probability = driver_on_time_rate * (0.95 if not has_weather else 0.80)
-        is_late = random.random() > on_time_probability
+        if has_traffic:
+            traffic_delay = random.uniform(self.TRAFFIC_DELAY_MIN_MIN,
+                                          self.TRAFFIC_DELAY_MAX_MIN)
+            total_duration += traffic_delay
         
-        # Add some randomness to actual delay
-        if is_late:
-            delay_minutes = random.uniform(5, 45)
-        else:
-            delay_minutes = -random.uniform(0, 15)  # Negative = early
-        
-        # Start time (random hour of day)
-        start_hour = random.randint(6, 18)
-        start_date = datetime.now().date() - timedelta(days=random.randint(0, 365))
-        day_of_week = start_date.weekday()
-        
-        # Average speed
-        avg_speed = distance_km / (total_driving_time / 60) if total_driving_time > 0 else 0
-        
-        return CompletedDelivery(
+        route = DeliveryRoute(
             order_id=order_id,
             driver_id=driver_id,
             tenant_id=self.tenant_id,
             planned_stops=num_stops,
-            actual_stops=num_stops,  # Simplified: assume all stops completed
-            planned_duration_minutes=planned_duration,
-            actual_duration_minutes=actual_duration + delay_minutes,
-            was_late=is_late,
-            delay_minutes=delay_minutes,
-            traffic_events_encountered=1 if has_traffic else 0,
-            weather_condition=weather.value,
-            day_of_week=day_of_week,
-            hour_of_day_start=start_hour,
-            avg_speed_kmh=avg_speed,
-            stop_dwell_time_avg_minutes=dwell_per_stop,
-            driver_historical_on_time_rate=driver_on_time_rate,
-            distance_km=distance_km
+            stops=route_stops,
+            total_distance_km=total_distance,
+            total_duration_minutes=total_duration,
+            driver_slowness_factor=slowness_factor,
+            weather_condition=weather_cond.value,
+            traffic_segments=traffic_segments
         )
-    
+        
+        return route
+
+    def _make_delivery_late(self, route: DeliveryRoute, 
+                           driver_on_time_rate: float) -> bool:
+        """
+        Probabilistically determine if a delivery will be late.
+        Slower drivers and those with lower historical on-time rates are more likely to be late.
+        """
+        # Base probability from driver's historical rate
+        base_late_prob = 1.0 - driver_on_time_rate
+        
+        # Adjust for slowness and events
+        if route.driver_slowness_factor > 1.0:
+            base_late_prob *= 1.2
+        
+        if route.traffic_segments:
+            base_late_prob *= 1.3
+        
+        if route.weather_condition != WeatherCondition.CLEAR.value:
+            base_late_prob *= 1.15
+        
+        # Clamp to reasonable range
+        base_late_prob = min(0.8, base_late_prob)
+        
+        return random.random() < base_late_prob
+
     def generate_historical(self, num_deliveries: int = 10000) -> pd.DataFrame:
         """
-        Generate a dataset of completed deliveries.
+        Generate realistic historical delivery data for ML training.
         
-        Args:
-            num_deliveries: Number of historical deliveries to generate
-            
         Returns:
-            Pandas DataFrame with columns matching CompletedDelivery
+            DataFrame with 10K completed deliveries, ~20% late
         """
-        deliveries = []
-        
-        # Generate deliveries and adjust late rate to hit target
+        records = []
         late_count = 0
-        target_late = int(num_deliveries * self.LATE_DELIVERY_TARGET_RATE)
         
-        for i in range(num_deliveries):
-            delivery = self.generate_completed_delivery()
+        # Reuse drivers across deliveries for realistic multi-delivery drivers
+        num_drivers = max(1, num_deliveries // 8)  # ~8 deliveries per driver on average
+        drivers = [str(uuid.uuid4()) for _ in range(num_drivers)]
+        
+        for delivery_idx in range(num_deliveries):
+            # Plan route
+            num_stops = random.randint(self.STOPS_MIN, self.STOPS_MAX)
+            is_slow_driver = random.random() < self.SLOW_DRIVER_PROBABILITY
+            slowness = 1.2 if is_slow_driver else 1.0
             
-            # Adjust late rate toward target
-            if i > num_deliveries * 0.5:  # After halfway, start adjusting
-                current_late_rate = late_count / (i + 1)
-                target_rate = self.LATE_DELIVERY_TARGET_RATE
-                
-                if current_late_rate < target_rate * 0.95 and delivery.was_late is False:
-                    # Force late to catch up
-                    delivery.was_late = True
-                    delivery.delay_minutes = random.uniform(5, 45)
-                elif current_late_rate > target_rate * 1.05 and delivery.was_late is True:
-                    # Force on-time to come down
-                    delivery.was_late = False
-                    delivery.delay_minutes = -random.uniform(0, 15)
+            route = self._plan_route(num_stops, slowness_factor=slowness)
             
-            if delivery.was_late:
+            # Reuse driver from pool
+            reused_driver_id = drivers[delivery_idx % len(drivers)]
+            route.driver_id = reused_driver_id
+            
+            driver_on_time_rate = self._driver_on_time_rates.get(
+                route.driver_id, 0.85
+            )
+            
+            # Determine if late
+            is_late = self._make_delivery_late(route, driver_on_time_rate)
+            if is_late:
                 late_count += 1
             
-            deliveries.append(delivery.to_dict())
+            # Add random delays if late
+            actual_duration = route.total_duration_minutes
+            if is_late:
+                delay_addition = random.uniform(5, 45)  # 5-45 min additional delay
+                actual_duration += delay_addition
+                delay_minutes = delay_addition
+            else:
+                # Negative delay = early/on-time
+                delay_minutes = random.uniform(-10, 0)
+                actual_duration += delay_minutes
+            
+            # Calculate average speed
+            total_time_hours = actual_duration / 60.0
+            avg_speed = route.total_distance_km / total_time_hours if total_time_hours > 0 else 0
+            
+            # Stop dwell time average
+            num_traffic_events = len(route.traffic_segments)
+            stop_dwell_avg = actual_duration / (num_stops + 1) if (num_stops + 1) > 0 else 0
+            
+            # Delivery metadata
+            start_dt = datetime.now(timezone.utc) - timedelta(
+                days=random.randint(1, 90)
+            )
+            day_of_week = start_dt.weekday()
+            hour_of_day = start_dt.hour
+            
+            record = CompletedDelivery(
+                order_id=route.order_id,
+                driver_id=route.driver_id,
+                tenant_id=route.tenant_id,
+                planned_stops=route.planned_stops,
+                actual_stops=route.planned_stops,
+                planned_duration_minutes=route.total_duration_minutes,
+                actual_duration_minutes=actual_duration,
+                was_late=is_late,
+                delay_minutes=delay_minutes,
+                traffic_events_encountered=num_traffic_events,
+                weather_condition=route.weather_condition,
+                day_of_week=day_of_week,
+                hour_of_day_start=hour_of_day,
+                avg_speed_kmh=avg_speed,
+                stop_dwell_time_avg_minutes=stop_dwell_avg,
+                driver_historical_on_time_rate=driver_on_time_rate,
+                distance_km=route.total_distance_km,
+            )
+            records.append(record)
         
-        df = pd.DataFrame(deliveries)
+        # Convert to DataFrame
+        df = pd.DataFrame([r.to_dict() for r in records])
         
-        # Ensure no NaN values in numeric fields
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-        df[numeric_cols] = df[numeric_cols].fillna(0)
+        # Log statistics
+        late_rate = late_count / num_deliveries
+        print(f"\n✓ Generated {num_deliveries} historical deliveries")
+        print(f"  Late delivery rate: {late_rate:.1%} (target: 20%)")
+        print(f"  Distance range: {df['distance_km'].min():.1f}-{df['distance_km'].max():.1f} km")
+        print(f"  Duration range: {df['actual_duration_minutes'].min():.0f}-"
+              f"{df['actual_duration_minutes'].max():.0f} minutes")
+        print(f"  Avg speed range: {df['avg_speed_kmh'].min():.1f}-"
+              f"{df['avg_speed_kmh'].max():.1f} km/h")
         
         return df
-    
-    def stream_events(
-        self,
-        route: list[tuple[float, float]],
-        start_time: datetime,
-        speed_multiplier: float = 1.0,
-        jitter: bool = True
-    ) -> Generator[GPSEvent, None, None]:
+
+    def stream_events(self, order_id: str, route: Optional[DeliveryRoute] = None,
+                     acceleration: float = 1.0) -> Generator[GPSPingEvent, None, None]:
         """
-        Stream GPS events for a route in chronological order.
-        
-        Simulates a delivery in progress, emitting GPS pings and stop events.
-        Can run in real-time (speed_multiplier=1.0) or accelerated (10x, 100x).
+        Stream GPS ping events for a delivery route in real-time or accelerated.
         
         Args:
-            route: List of (lat, lng) waypoints from _generate_route()
-            start_time: Start timestamp for the route
-            speed_multiplier: Acceleration factor (1.0=real-time, 10.0=10x speed)
-            jitter: Whether to add small GPS noise
+            order_id: Order ID to stream
+            route: DeliveryRoute to replay (if None, generates new random route)
+            acceleration: Speedup factor (1.0 = real-time, 10.0 = 10x faster)
             
         Yields:
-            GPSEvent objects in sequence
+            GPSPingEvent objects in sequence
         """
-        order_id = str(uuid.uuid4())
-        driver_id = str(uuid.uuid4())
+        if route is None:
+            route = self._plan_route(random.randint(self.STOPS_MIN, self.STOPS_MAX))
+            route.order_id = order_id
+        else:
+            route.order_id = order_id
         
-        event_id_counter = 0
-        sequence_number = 0
-        current_time = start_time
+        start_time = datetime.now(timezone.utc)
+        current_lat, current_lng = self.DEPOT_LAT, self.DEPOT_LNG
+        heading = 0.0
+        speed = 0.0
+        sequence_num = 0
+        current_stop_idx = 0
+        elapsed_time_sec = 0.0  # Track cumulative time in real-world seconds
         
-        for i in range(len(route) - 1):
-            # Stop arrival event
-            event_id_counter += 1
-            sequence_number += 1
+        # Emit depot arrival event
+        yield GPSPingEvent(
+            event_id=str(uuid.uuid4()),
+            order_id=route.order_id,
+            driver_id=route.driver_id,
+            tenant_id=route.tenant_id,
+            latitude=current_lat,
+            longitude=current_lng,
+            speed_kmh=0.0,
+            heading_degrees=heading,
+            timestamp=start_time + timedelta(seconds=elapsed_time_sec / acceleration),
+            sequence_number=sequence_num,
+            event_type=EventType.DEPOT_ARRIVAL.value
+        )
+        sequence_num += 1
+        
+        # Traverse each stop
+        for stop in route.stops:
+            stop_lat, stop_lng = stop["lat"], stop["lng"]
+            stop_duration_min = random.uniform(self.STOP_DURATION_MIN_MIN,
+                                              self.STOP_DURATION_MAX_MIN)
+            stop_duration_min *= route.driver_slowness_factor
             
-            lat, lng = route[i]
-            if jitter:
-                lat += random.uniform(-0.0001, 0.0001)
-                lng += random.uniform(-0.0001, 0.0001)
-            
-            yield GPSEvent(
-                event_id=str(uuid.uuid4()),
-                order_id=order_id,
-                driver_id=driver_id,
-                tenant_id=self.tenant_id,
-                latitude=lat,
-                longitude=lng,
-                speed_kmh=0.0,
-                heading_degrees=0.0,
-                timestamp=current_time,
-                sequence_number=sequence_number,
-                event_type=EventType.STOP_ARRIVAL.value
+            # Travel to stop
+            segment_distance = self._distance_between_points(
+                current_lat, current_lng, stop_lat, stop_lng
             )
             
-            # Dwell time at stop
-            dwell_minutes = random.uniform(self.MIN_DWELL, self.MAX_DWELL)
-            dwell_seconds = int(dwell_minutes * 60)
-            current_time += timedelta(seconds=int(dwell_seconds / speed_multiplier))
+            # Determine speed (highway vs urban - infer from distance)
+            if segment_distance > 5:  # Likely highway
+                target_speed = random.uniform(self.SPEED_HIGHWAY_MIN_KMH,
+                                             self.SPEED_HIGHWAY_MAX_KMH)
+            else:  # Urban
+                target_speed = random.uniform(self.SPEED_URBAN_MIN_KMH,
+                                             self.SPEED_URBAN_MAX_KMH)
             
-            # Stop departure event
-            event_id_counter += 1
-            sequence_number += 1
+            # Apply traffic if this is a traffic segment
+            if current_stop_idx in route.traffic_segments:
+                target_speed *= 0.6  # Reduce speed in traffic
             
-            yield GPSEvent(
-                event_id=str(uuid.uuid4()),
-                order_id=order_id,
-                driver_id=driver_id,
-                tenant_id=self.tenant_id,
-                latitude=lat,
-                longitude=lng,
-                speed_kmh=0.0,
-                heading_degrees=0.0,
-                timestamp=current_time,
-                sequence_number=sequence_number,
-                event_type=EventType.STOP_DEPARTURE.value
-            )
+            segment_time_hours = segment_distance / target_speed
+            segment_time_sec = segment_time_hours * 3600
             
-            # Stream pings between stops
-            next_lat, next_lng = route[i + 1]
-            segment_distance = self._great_circle_distance(lat, lng, next_lat, next_lng)
+            # Emit pings along segment
+            num_pings = max(1, int(segment_time_sec / 
+                            random.uniform(self.PING_INTERVAL_SEC_MIN,
+                                          self.PING_INTERVAL_SEC_MAX)))
             
-            # Pick speed
-            speed = random.uniform(*self.URBAN_SPEED)
-            segment_duration_seconds = (segment_distance / speed) * 3600
-            
-            # Number of pings
-            ping_interval = random.uniform(*self.PING_INTERVAL_SECONDS)
-            num_pings = max(1, int(segment_duration_seconds / ping_interval))
-            
-            # Interpolate between stops
             for ping_idx in range(num_pings):
-                progress = (ping_idx + 1) / max(num_pings, 1)
+                t = ping_idx / max(1, num_pings - 1) if num_pings > 1 else 0
                 
-                interp_lat = lat + (next_lat - lat) * progress
-                interp_lng = lng + (next_lng - lng) * progress
+                # Interpolate position
+                lat = current_lat + (stop_lat - current_lat) * t
+                lng = current_lng + (stop_lng - current_lng) * t
                 
-                if jitter:
-                    interp_lat += random.uniform(-0.0001, 0.0001)
-                    interp_lng += random.uniform(-0.0001, 0.0001)
+                # Add GPS noise
+                lat += np.random.normal(0, self.GPS_NOISE_DEGREES)
+                lng += np.random.normal(0, self.GPS_NOISE_DEGREES)
                 
-                # Heading
-                delta_lat = next_lat - lat
-                delta_lng = next_lng - lng
-                heading = math.degrees(math.atan2(delta_lng, delta_lat))
-                if heading < 0:
-                    heading += 360
-                
-                sequence_number += 1
-                
-                yield GPSEvent(
-                    event_id=str(uuid.uuid4()),
-                    order_id=order_id,
-                    driver_id=driver_id,
-                    tenant_id=self.tenant_id,
-                    latitude=interp_lat,
-                    longitude=interp_lng,
-                    speed_kmh=speed,
-                    heading_degrees=heading,
-                    timestamp=current_time,
-                    sequence_number=sequence_number,
-                    event_type=EventType.PING.value
+                # Calculate heading
+                heading = self._bearing_between_points(
+                    current_lat, current_lng, stop_lat, stop_lng
                 )
                 
-                time_delta_seconds = int((segment_duration_seconds / num_pings) / speed_multiplier)
-                current_time += timedelta(seconds=time_delta_seconds)
+                # Compute event time - use segment time progress
+                segment_elapsed_sec = segment_time_sec * t
+                event_time = start_time + timedelta(seconds=(elapsed_time_sec + segment_elapsed_sec) / acceleration)
+                
+                yield GPSPingEvent(
+                    event_id=str(uuid.uuid4()),
+                    order_id=route.order_id,
+                    driver_id=route.driver_id,
+                    tenant_id=route.tenant_id,
+                    latitude=lat,
+                    longitude=lng,
+                    speed_kmh=target_speed,
+                    heading_degrees=heading,
+                    timestamp=event_time,
+                    sequence_number=sequence_num,
+                    event_type=EventType.PING.value
+                )
+                sequence_num += 1
+            
+            # Update elapsed time after travel segment
+            elapsed_time_sec += segment_time_sec
+            
+            # Emit stop arrival event
+            yield GPSPingEvent(
+                event_id=str(uuid.uuid4()),
+                order_id=route.order_id,
+                driver_id=route.driver_id,
+                tenant_id=route.tenant_id,
+                latitude=stop_lat,
+                longitude=stop_lng,
+                speed_kmh=0.0,
+                heading_degrees=heading,
+                timestamp=start_time + timedelta(seconds=elapsed_time_sec / acceleration),
+                sequence_number=sequence_num,
+                event_type=EventType.STOP_ARRIVAL.value
+            )
+            sequence_num += 1
+            
+            # Stop dwell time
+            dwell_time_sec = (stop_duration_min * 60)
+            
+            # Update elapsed time with dwell
+            elapsed_time_sec += dwell_time_sec
+            
+            # Emit stop departure
+            yield GPSPingEvent(
+                event_id=str(uuid.uuid4()),
+                order_id=route.order_id,
+                driver_id=route.driver_id,
+                tenant_id=route.tenant_id,
+                latitude=stop_lat,
+                longitude=stop_lng,
+                speed_kmh=0.0,
+                heading_degrees=heading,
+                timestamp=start_time + timedelta(seconds=elapsed_time_sec / acceleration),
+                sequence_number=sequence_num,
+                event_type=EventType.STOP_DEPARTURE.value
+            )
+            sequence_num += 1
+            
+            current_lat, current_lng = stop_lat, stop_lng
+            current_stop_idx += 1
         
-        # Final depot arrival
-        sequence_number += 1
+        # Return to depot
+        return_distance = self._distance_between_points(
+            current_lat, current_lng, self.DEPOT_LAT, self.DEPOT_LNG
+        )
+        return_speed = random.uniform(self.SPEED_HIGHWAY_MIN_KMH,
+                                     self.SPEED_HIGHWAY_MAX_KMH)
+        return_time_sec = (return_distance / return_speed) * 3600
         
-        yield GPSEvent(
+        num_return_pings = max(1, int(return_time_sec / 
+                              random.uniform(self.PING_INTERVAL_SEC_MIN,
+                                            self.PING_INTERVAL_SEC_MAX)))
+        
+        for ping_idx in range(num_return_pings):
+            t = ping_idx / max(1, num_return_pings - 1) if num_return_pings > 1 else 0
+            
+            lat = current_lat + (self.DEPOT_LAT - current_lat) * t
+            lng = current_lng + (self.DEPOT_LNG - current_lng) * t
+            
+            lat += np.random.normal(0, self.GPS_NOISE_DEGREES)
+            lng += np.random.normal(0, self.GPS_NOISE_DEGREES)
+            
+            heading = self._bearing_between_points(
+                current_lat, current_lng, self.DEPOT_LAT, self.DEPOT_LNG
+            )
+            
+            segment_elapsed_sec = (return_time_sec * t)
+            event_time = start_time + timedelta(seconds=(elapsed_time_sec + segment_elapsed_sec) / acceleration)
+            
+            yield GPSPingEvent(
+                event_id=str(uuid.uuid4()),
+                order_id=route.order_id,
+                driver_id=route.driver_id,
+                tenant_id=route.tenant_id,
+                latitude=lat,
+                longitude=lng,
+                speed_kmh=return_speed,
+                heading_degrees=heading,
+                timestamp=event_time,
+                sequence_number=sequence_num,
+                event_type=EventType.PING.value
+            )
+            sequence_num += 1
+        
+        # Emit depot arrival
+        total_time_sec = elapsed_time_sec + return_time_sec
+        yield GPSPingEvent(
             event_id=str(uuid.uuid4()),
-            order_id=order_id,
-            driver_id=driver_id,
-            tenant_id=self.tenant_id,
+            order_id=route.order_id,
+            driver_id=route.driver_id,
+            tenant_id=route.tenant_id,
             latitude=self.DEPOT_LAT,
             longitude=self.DEPOT_LNG,
             speed_kmh=0.0,
-            heading_degrees=0.0,
-            timestamp=current_time,
-            sequence_number=sequence_number,
+            heading_degrees=heading,
+            timestamp=start_time + timedelta(seconds=total_time_sec / acceleration),
+            sequence_number=sequence_num,
             event_type=EventType.DEPOT_ARRIVAL.value
         )

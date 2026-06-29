@@ -1,0 +1,68 @@
+# Simple setup: backend + PostgreSQL + frontend (nginx)
+# Run: docker compose -f docker-compose.simple.yml up -d
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: intelliglog-postgres
+    environment:
+      POSTGRES_DB: intelliglog
+      POSTGRES_USER: intelliglog
+      POSTGRES_PASSWORD: dev-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intelliglog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intelliglog-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://intelliglog:dev-password@postgres:5432/intelliglog
+      REDIS_URL: ""
+      SECRET_KEY: dev-key-change-in-production
+      ENVIRONMENT: development
+      SKIP_EXTERNAL_STARTUP_CHECKS: "true"
+      GEMINI_API_KEY: ""
+      PROMETHEUS_ENABLED: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "python docker_seed.py && uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: intelliglog-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  postgres_data:

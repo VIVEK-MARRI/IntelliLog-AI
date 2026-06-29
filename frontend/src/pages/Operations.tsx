@@ -8,11 +8,13 @@ import {
   Lightning,
   Package,
   Pulse,
+  Plus,
   Truck,
   WarningCircle,
   X,
 } from '@phosphor-icons/react'
 import { ordersAPI } from '@/api/orders'
+import { routesAPI } from '@/api/routes'
 import { useToast } from '@/components/notifications'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { FleetMap } from '@/components/fleet/FleetMap'
@@ -33,7 +35,7 @@ const riskPriority = (order: LiveOrder): 'Critical' | 'High' | 'Watch' =>
 
 const formatOrderId = (id: string) => (id.length > 8 ? id.slice(0, 8).toUpperCase() : id.toUpperCase())
 
-function OperationsTopBar({ orderCount, connectionStatus }: { orderCount: number; connectionStatus: string }) {
+function OperationsTopBar({ orderCount, connectionStatus, onCreateOrder }: { orderCount: number; connectionStatus: string; onCreateOrder: () => void }) {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate/20 bg-charcoal px-5">
       <div className="flex items-center gap-3">
@@ -49,6 +51,10 @@ function OperationsTopBar({ orderCount, connectionStatus }: { orderCount: number
       <div className="flex items-center gap-5">
         <StatusMetric icon={<Truck size={14} weight="bold" />} label="Orders" value={orderCount} />
         <StatusMetric icon={<Pulse size={14} weight="fill" />} label="Stream" value={connectionLabel[connectionStatus] ?? connectionStatus} live={connectionStatus === 'connected'} />
+        <button onClick={onCreateOrder} className="inline-flex items-center gap-1.5 rounded-xl bg-amber px-3 py-2 text-xs font-semibold text-charcoal transition hover:bg-amberBright active:scale-[0.98]">
+          <Plus size={14} weight="bold" />
+          New Order
+        </button>
       </div>
     </header>
   )
@@ -223,7 +229,7 @@ function HighRiskQueue({ selectedOrderId, onOrderSelect }: { selectedOrderId: st
   )
 }
 
-function SelectedOrderPanel({ orderId, onClose }: { orderId: string | null; onClose: () => void }) {
+function SelectedOrderPanel({ orderId, onClose, onReroute, rerouting }: { orderId: string | null; onClose: () => void; onReroute: (id: string) => void; rerouting: boolean }) {
   const orders = useOrdersArray()
   const order = orders.find((item) => item.id === orderId)
 
@@ -285,11 +291,27 @@ function SelectedOrderPanel({ orderId, onClose }: { orderId: string | null; onCl
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber px-3 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-amberBright active:scale-[0.98]">
-            Reroute
+          <button
+            onClick={() => onReroute(order.id)}
+            disabled={rerouting}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber px-3 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-amberBright active:scale-[0.98] disabled:opacity-50"
+          >
+            {rerouting ? 'Optimizing...' : 'Reroute'}
             <ArrowRight size={14} weight="bold" />
           </button>
-          <button className="rounded-xl border border-slate/20 bg-charcoal px-3 py-2.5 text-sm font-semibold text-silver transition hover:border-slate/40 active:scale-[0.98]">
+          <button type="button" onClick={() => {
+            fleetStore.getState().addAgentDecision({
+              id: `esc-${order.id}-${Date.now()}`,
+              order_id: order.id,
+              decision_type: 'alert',
+              reasoning: 'Order escalated to supervisor by operator',
+              risk_score: order.risk_score,
+              tools_invoked: ['manual_escalation'],
+              outcome: 'pending',
+              created_at: new Date().toISOString(),
+              latency_ms: 0,
+            })
+          }} className="rounded-xl border border-slate/20 bg-charcoal px-3 py-2.5 text-sm font-semibold text-silver transition hover:border-slate/40 active:scale-[0.98]">
             Escalate
           </button>
         </div>
@@ -340,6 +362,9 @@ export const Operations: React.FC = () => {
     loadData()
   }, [auth, addToast])
 
+  const [showCreateOrder, setShowCreateOrder] = useState(false)
+  const [reroutingOrderId, setReroutingOrderId] = useState<string | null>(null)
+
   const handleOrderSelect = useCallback((orderId: string) => {
     fleetStore.getState().setSelectedOrder(orderId)
   }, [])
@@ -347,6 +372,60 @@ export const Operations: React.FC = () => {
   const handleCloseOrder = useCallback(() => {
     fleetStore.getState().setSelectedOrder(null)
   }, [])
+
+  const handleReroute = useCallback(async (orderId: string) => {
+    setReroutingOrderId(orderId)
+    try {
+      const result = await routesAPI.optimizeRoute(orderId, true)
+      addToast({ type: 'info', title: 'Route optimization submitted', message: `Job ${result.job_id?.slice(0, 8)} started` })
+      const poll = async () => {
+        try {
+          const status = await routesAPI.getJobStatus(result.job_id)
+          if (status.status === 'completed') {
+            fleetStore.getState().updateRouteWaypoints(orderId, status.result?.waypoints?.map((w: any) => ({
+              lat: w.latitude,
+              lng: w.longitude,
+              order_id: orderId,
+              sequence: w.sequence,
+              type: 'delivery' as const,
+            })) ?? [])
+            addToast({ type: 'success', title: 'Route optimized', message: 'New route applied' })
+            setReroutingOrderId(null)
+          } else if (status.status === 'failed') {
+            addToast({ type: 'error', title: 'Optimization failed', message: status.error ?? 'Unknown error' })
+            setReroutingOrderId(null)
+          } else {
+            setTimeout(poll, 2000)
+          }
+        } catch {
+          setReroutingOrderId(null)
+        }
+      }
+      setTimeout(poll, 2000)
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Reroute failed', message: err.message })
+      setReroutingOrderId(null)
+    }
+  }, [addToast])
+
+  const handleCreateOrder = useCallback(async (data: {
+    driver_id: string
+    origin_lat: number
+    origin_lng: number
+    destination_lat: number
+    destination_lng: number
+    planned_eta: string
+  }) => {
+    try {
+      const result = await ordersAPI.createOrder(data)
+      addToast({ type: 'success', title: 'Order created', message: `Order ${(result as any).orderId ?? ''}` })
+      setShowCreateOrder(false)
+      const ordersData = await ordersAPI.getOrders({ page: 1, page_size: 100 })
+      if (ordersData?.items) fleetStore.getState().setOrders(ordersData.items)
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Create order failed', message: err.message })
+    }
+  }, [addToast])
 
   if (!auth) {
     return (
@@ -358,7 +437,7 @@ export const Operations: React.FC = () => {
 
   return (
     <div className="flex h-[100dvh] flex-col bg-charcoal">
-      <OperationsTopBar orderCount={orders.length} connectionStatus={connectionStatus} />
+      <OperationsTopBar orderCount={orders.length} connectionStatus={connectionStatus} onCreateOrder={() => setShowCreateOrder(true)} />
 
       <main className="grid flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[minmax(0,7fr)_minmax(360px,3fr)]">
         <section className="relative min-h-0 border-r border-slate/20 bg-graphite">
@@ -381,7 +460,7 @@ export const Operations: React.FC = () => {
         <aside className="flex min-h-0 flex-col overflow-y-auto bg-charcoal">
           <AIRecommendationsPanel selectedOrderId={selectedOrderId} />
           <HighRiskQueue selectedOrderId={selectedOrderId} onOrderSelect={handleOrderSelect} />
-          <SelectedOrderPanel orderId={selectedOrderId} onClose={handleCloseOrder} />
+          <SelectedOrderPanel orderId={selectedOrderId} onClose={handleCloseOrder} onReroute={handleReroute} rerouting={reroutingOrderId === selectedOrderId} />
           <section className="mt-auto border-t border-slate/20 px-4 py-4">
             <div className="grid grid-cols-3 gap-2">
               <RailMetric label="Active" value={orders.filter((o) => o.status !== 'completed' && o.status !== 'cancelled').length} />
@@ -391,6 +470,82 @@ export const Operations: React.FC = () => {
           </section>
         </aside>
       </main>
+
+      {showCreateOrder && (
+        <CreateOrderModal
+          onClose={() => setShowCreateOrder(false)}
+          onSubmit={handleCreateOrder}
+        />
+      )}
+    </div>
+  )
+}
+
+function CreateOrderModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (data: { driver_id: string; origin_lat: number; origin_lng: number; destination_lat: number; destination_lng: number; planned_eta: string }) => void }) {
+  const [driverId, setDriverId] = useState('')
+  const [originLat, setOriginLat] = useState('')
+  const [originLng, setOriginLng] = useState('')
+  const [destLat, setDestLat] = useState('')
+  const [destLng, setDestLng] = useState('')
+  const [plannedEta, setPlannedEta] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!driverId || !originLat || !originLng || !destLat || !destLng || !plannedEta) return
+    setSubmitting(true)
+    await onSubmit({
+      driver_id: driverId,
+      origin_lat: parseFloat(originLat),
+      origin_lng: parseFloat(originLng),
+      destination_lat: parseFloat(destLat),
+      destination_lng: parseFloat(destLng),
+      planned_eta: new Date(plannedEta).toISOString(),
+    })
+    setSubmitting(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-slate/20 bg-charcoal p-6 shadow-[0_24px_70px_rgba(0,0,0,0.4)]" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-silver">Create Order</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-silver-muted hover:text-silver"><X size={18} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-silver-muted">Driver ID</label>
+            <input value={driverId} onChange={(e) => setDriverId(e.target.value)} placeholder="e.g. DRV-001" className="w-full rounded-lg border border-slate/20 bg-graphite px-3 py-2 text-sm text-silver outline-none focus:border-amber/40 placeholder:text-silver-muted/50" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-silver-muted">Origin Lat</label>
+              <input value={originLat} onChange={(e) => setOriginLat(e.target.value)} placeholder="40.7128" className="w-full rounded-lg border border-slate/20 bg-graphite px-3 py-2 text-sm text-silver outline-none focus:border-amber/40 placeholder:text-silver-muted/50" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-silver-muted">Origin Lng</label>
+              <input value={originLng} onChange={(e) => setOriginLng(e.target.value)} placeholder="-74.0060" className="w-full rounded-lg border border-slate/20 bg-graphite px-3 py-2 text-sm text-silver outline-none focus:border-amber/40 placeholder:text-silver-muted/50" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-silver-muted">Destination Lat</label>
+              <input value={destLat} onChange={(e) => setDestLat(e.target.value)} placeholder="40.7580" className="w-full rounded-lg border border-slate/20 bg-graphite px-3 py-2 text-sm text-silver outline-none focus:border-amber/40 placeholder:text-silver-muted/50" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-silver-muted">Destination Lng</label>
+              <input value={destLng} onChange={(e) => setDestLng(e.target.value)} placeholder="-73.9855" className="w-full rounded-lg border border-slate/20 bg-graphite px-3 py-2 text-sm text-silver outline-none focus:border-amber/40 placeholder:text-silver-muted/50" />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-silver-muted">Planned ETA</label>
+            <input type="datetime-local" value={plannedEta} onChange={(e) => setPlannedEta(e.target.value)} className="w-full rounded-lg border border-slate/20 bg-graphite px-3 py-2 text-sm text-silver outline-none focus:border-amber/40" />
+          </div>
+          <button type="submit" disabled={submitting} className="mt-2 w-full rounded-xl bg-amber px-4 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-amberBright active:scale-[0.98] disabled:opacity-50">
+            {submitting ? 'Creating...' : 'Create Order'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

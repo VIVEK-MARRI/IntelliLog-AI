@@ -1,17 +1,19 @@
-"""Simulator module for IntelliLog-AI."""
+"""Delivery simulation module."""
 
 from .delivery_simulator import (
     DeliverySimulator,
-    GPSEvent,
+    GPSPingEvent,
     CompletedDelivery,
+    DeliveryRoute,
     EventType,
     WeatherCondition,
 )
 
 __all__ = [
     "DeliverySimulator",
-    "GPSEvent",
+    "GPSPingEvent",
     "CompletedDelivery",
+    "DeliveryRoute",
     "EventType",
     "WeatherCondition",
 ]

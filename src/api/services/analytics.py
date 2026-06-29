@@ -287,7 +287,7 @@ class AnalyticsService:
                     COUNT(*) AS affected_orders,
                     AVG(p.risk_score) AS avg_risk
                 FROM predictions p
-                JOIN LATERAL jsonb_array_elements(p.top_risk_factors) AS factor ON TRUE
+                JOIN LATERAL jsonb_array_elements(p.top_risk_factors::jsonb) AS factor ON TRUE
                 WHERE p.tenant_id = :tenant_id
                 GROUP BY factor->>'feature'
                 ORDER BY affected_orders DESC, avg_risk DESC

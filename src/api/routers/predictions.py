@@ -9,9 +9,13 @@ import redis.asyncio as redis
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.api.auth import AuthenticatedTenant, get_current_tenant
 from src.api.deps import get_db, get_prediction_service, get_redis
 from src.api.schemas import PredictionResponse, RiskFactor
+from src.core.config import get_settings
 from src.core.metrics import (
     application_errors_total,
     model_cache_hits_total,
@@ -178,13 +182,34 @@ async def get_prediction(
         model_cache_misses_total.inc()
         start_time = datetime.now(timezone.utc)
 
-        # Get order state from Redis
+        # Get order state from Redis (fall back to PostgreSQL if not found)
         order_state = await redis_client.hgetall(f"order:{order_id}")
         if not order_state:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Order {order_id} not found",
-            )
+            settings = get_settings()
+            from sqlalchemy.ext.asyncio import create_async_engine
+            engine = create_async_engine(settings.database_url)
+            async with AsyncSession(engine) as db:
+                r = await db.execute(
+                    text("SELECT planned_stops, completed_stops FROM orders WHERE id = :oid"),
+                    {"oid": order_id}
+                )
+                row = r.fetchone()
+                if row:
+                    order_state = {
+                        "planned_stops": str(row.planned_stops),
+                        "completed_stops": str(row.completed_stops),
+                        "stops_remaining": str(max(0, row.planned_stops - row.completed_stops)),
+                        "eta_minutes_remaining": "60.0",
+                        "speed": "0.0",
+                        "deviation_meters": "0.0",
+                        "driver_on_time_rate": "0.85",
+                    }
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Order {order_id} not found",
+                    )
+            await engine.dispose()
 
         # Build the live feature vector expected by the model.
         features = prediction_service.feature_builder.build_from_live(

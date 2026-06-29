@@ -1,9 +1,12 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { lazyWithRetry } from '@/utils/lazyWithRetry'
+import { ordersAPI } from '@/api/orders'
+import { fleetStore } from '@/store/fleetStore'
+import { useAuthStore } from '@/store/authStore'
 
 const LandingPage = lazyWithRetry(() => import('@/pages/Landing').then(m => ({ default: m.Landing })), {
   retries: 3,
@@ -68,6 +71,16 @@ const AppShellLayout: React.FC = () => (
 )
 
 const App: React.FC = () => {
+  useEffect(() => {
+    const token = useAuthStore.getState().auth?.token
+    if (!token) return
+    ordersAPI.getOrders({ page: 1, page_size: 200 }).then((result) => {
+      if (result?.items?.length) {
+        fleetStore.getState().setOrders(result.items)
+      }
+    }).catch(() => {})
+  }, [])
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>

@@ -1,329 +1,435 @@
 """
-Redis data structure schemas for IntelliLog-AI.
+Redis data structures and key patterns for IntelliLog-AI.
 
-Defines the exact key patterns, data types, and TTLs for Redis caching layer.
-Used for real-time state, fleet tracking, feature caching, and pub/sub events.
+This module documents the exact Redis key patterns, data types, and TTLs
+used throughout the platform for caching, pub/sub, and real-time features.
+
+All keys are namespaced by tenant for multi-tenant isolation.
 """
 
+from typing import TypedDict, Literal
 from dataclasses import dataclass
-from typing import Literal
+
 
 # ============================================================================
-# Order Hot State
+# ORDER HOT STATE (Updated on every GPS ping)
 # ============================================================================
 
-# Pattern: order:{order_id}
-# Type: Redis Hash
-# Purpose: Current real-time state of an active delivery order
-# TTL: 4 hours (auto-expire completed orders)
-# Updated: On every GPS ping
-#
-# Fields:
-#   - lat (FLOAT): Current latitude
-#   - lng (FLOAT): Current longitude
-#   - speed (FLOAT): Current speed in km/h
-#   - heading (FLOAT): Current heading in degrees
-#   - risk_score (FLOAT): Latest ML model prediction (0.0-1.0)
-#   - eta_minutes_remaining (INT): Estimated minutes until delivery
-#   - stops_remaining (INT): Number of stops not yet visited
-#   - last_ping_at (INT): Unix timestamp of last GPS ping
-#   - deviation_meters (FLOAT): Deviation from planned route
-#   - status (STRING): Order status
-#
-# Example:
-#   HSET order:550e8400-e29b-41d4-a716-446655440000 \
-#     lat 40.7128 \
-#     lng -74.0060 \
-#     speed 45.2 \
-#     heading 125.5 \
-#     risk_score 0.68 \
-#     eta_minutes_remaining 23 \
-#     stops_remaining 3 \
-#     last_ping_at 1704067200 \
-#     deviation_meters 250.5 \
-#     status "in_progress"
-#
-# TTL: EXPIRE order:{order_id} 14400 (4 hours)
-
-ORDER_STATE_KEY_PATTERN = "order:{order_id}"
-ORDER_STATE_TTL_SECONDS = 4 * 60 * 60  # 4 hours
-ORDER_STATE_FIELDS = {
-    "lat": "FLOAT - Current latitude",
-    "lng": "FLOAT - Current longitude", 
-    "speed": "FLOAT - Current speed km/h",
-    "heading": "FLOAT - Heading in degrees",
-    "risk_score": "FLOAT - ML risk prediction (0.0-1.0)",
-    "eta_minutes_remaining": "INT - Minutes until delivery",
-    "stops_remaining": "INT - Unvisited stops",
-    "last_ping_at": "INT - Unix timestamp of last ping",
-    "deviation_meters": "FLOAT - Route deviation in meters",
-    "status": "STRING - Order status (pending, assigned, in_progress, completed, failed)"
-}
-
-# ============================================================================
-# Fleet Position Index
-# ============================================================================
-
-# Pattern: fleet:{tenant_id}:positions
-# Type: Redis Sorted Set (ZSET)
-# Purpose: Real-time position of all active drivers for fleet map
-# TTL: 30 minutes (expires old positions)
-# Score: Unix timestamp (for age-based expiry)
-# Member: JSON string with driver info
-#
-# Member JSON schema:
-#   {
-#     "driver_id": "UUID",
-#     "lat": float,
-#     "lng": float,
-#     "order_id": "UUID or null",
-#     "risk_score": float (0.0-1.0),
-#     "speed_kmh": float,
-#     "status": "idle" | "assigned" | "in_delivery" | "offline"
-#   }
-#
-# Example:
-#   ZADD fleet:550e8400-e29b-41d4-a716-446655440000:positions \
-#     1704067200 '{"driver_id":"driver-123","lat":40.7128,"lng":-74.0060,"order_id":"order-456","risk_score":0.68,"speed_kmh":45.2,"status":"in_delivery"}'
-#
-# TTL: EXPIRE fleet:{tenant_id}:positions 1800 (30 minutes)
-# Cleanup: Remove stale entries older than 30 minutes via background task
-
-FLEET_POSITIONS_KEY_PATTERN = "fleet:{tenant_id}:positions"
-FLEET_POSITIONS_TTL_SECONDS = 30 * 60  # 30 minutes
-FLEET_POSITION_JSON_FIELDS = {
-    "driver_id": "UUID of driver",
-    "lat": "Current latitude",
-    "lng": "Current longitude",
-    "order_id": "UUID of current order or null",
-    "risk_score": "ML delay risk (0.0-1.0)",
-    "speed_kmh": "Current speed km/h",
-    "status": "Driver status (idle, assigned, in_delivery, offline)"
-}
-
-# ============================================================================
-# Feature Cache
-# ============================================================================
-
-# Pattern: features:{order_id}
-# Type: Redis Hash
-# Purpose: Pre-computed ML model features, cached to avoid recalculation
-# TTL: 5 minutes (features are short-lived; recalculated frequently)
-# Updated: After every GPS ping; contains 14 model features
-#
-# Fields (matching XGBoost feature set from Prompt 2):
-#   - distance_remaining_km (FLOAT): Remaining distance to deliver
-#   - time_remaining_minutes (FLOAT): Planned time remaining
-#   - current_speed_kmh (FLOAT): Current speed
-#   - avg_speed_last_10_pings (FLOAT): Rolling avg speed
-#   - stops_remaining (INT): Unvisited stops
-#   - time_per_stop_minutes (FLOAT): Average stop duration
-#   - hour_of_day (INT): Current hour
-#   - day_of_week (INT): 0=Monday, 6=Sunday
-#   - traffic_events_on_route (INT): Predicted traffic events ahead
-#   - weather_condition (STRING): "clear", "rain", or "heavy_rain"
-#   - driver_on_time_rate (FLOAT): Driver's historical OTR
-#   - is_first_delivery (INT): 1 if first delivery of day, 0 otherwise
-#   - cumulative_delay_minutes (FLOAT): Total delay accumulated so far
-#   - route_complexity_score (FLOAT): Complexity metric (0.0-1.0)
-#
-# Example:
-#   HSET features:order-550e8400 \
-#     distance_remaining_km 12.5 \
-#     time_remaining_minutes 18 \
-#     current_speed_kmh 45.2 \
-#     avg_speed_last_10_pings 42.8 \
-#     stops_remaining 3 \
-#     time_per_stop_minutes 5.2 \
-#     hour_of_day 14 \
-#     day_of_week 2 \
-#     traffic_events_on_route 1 \
-#     weather_condition "clear" \
-#     driver_on_time_rate 0.87 \
-#     is_first_delivery 0 \
-#     cumulative_delay_minutes -2.5 \
-#     route_complexity_score 0.65
-#
-# TTL: EXPIRE features:{order_id} 300 (5 minutes)
-
-FEATURES_KEY_PATTERN = "features:{order_id}"
-FEATURES_TTL_SECONDS = 5 * 60  # 5 minutes
-FEATURES_FIELDS = {
-    "distance_remaining_km": "FLOAT - Remaining distance",
-    "time_remaining_minutes": "FLOAT - Planned time remaining",
-    "current_speed_kmh": "FLOAT - Current speed",
-    "avg_speed_last_10_pings": "FLOAT - Rolling average",
-    "stops_remaining": "INT - Unvisited stops",
-    "time_per_stop_minutes": "FLOAT - Avg stop duration",
-    "hour_of_day": "INT - Current hour (0-23)",
-    "day_of_week": "INT - Day (0=Monday, 6=Sunday)",
-    "traffic_events_on_route": "INT - Predicted events",
-    "weather_condition": "STRING - clear|rain|heavy_rain",
-    "driver_on_time_rate": "FLOAT - Historical OTR",
-    "is_first_delivery": "INT - 1 if first, 0 otherwise",
-    "cumulative_delay_minutes": "FLOAT - Accumulated delay",
-    "route_complexity_score": "FLOAT - Complexity (0.0-1.0)"
-}
-
-# ============================================================================
-# Pub/Sub Channels for WebSocket Broadcasting
-# ============================================================================
-
-# Canonical operational channels used by the backend.
-SHIPMENT_UPDATES_CHANNEL = "shipment_updates"
-PREDICTION_UPDATES_CHANNEL = "prediction_updates"
-AGENT_UPDATES_CHANNEL = "agent_updates"
-
-# Pattern: tenant:{tenant_id}:events
-# Type: Pub/Sub Channel
-# Purpose: Broadcast real-time events to WebSocket clients
-# Message Format: JSON string
-#
-# Message JSON schema:
-#   {
-#     "type": "gps_update" | "risk_alert" | "agent_action" | "delivery_completed",
-#     "order_id": "UUID",
-#     "timestamp": "ISO 8601 datetime",
-#     "payload": {...event-specific data...}
-#   }
-#
-# Example GPS Update:
-#   {
-#     "type": "gps_update",
-#     "order_id": "order-550e8400",
-#     "timestamp": "2024-01-01T12:00:00Z",
-#     "payload": {
-#       "lat": 40.7128,
-#       "lng": -74.0060,
-#       "speed_kmh": 45.2,
-#       "heading_degrees": 125.5,
-#       "eta_minutes_remaining": 23
-#     }
-#   }
-#
-# Example Risk Alert:
-#   {
-#     "type": "risk_alert",
-#     "order_id": "order-550e8400",
-#     "timestamp": "2024-01-01T12:00:00Z",
-#     "payload": {
-#       "risk_score": 0.92,
-#       "threshold": 0.80,
-#       "primary_factors": ["traffic_ahead", "driver_speed_slow"],
-#       "recommended_action": "alert_customer"
-#     }
-#   }
-#
-# Example Agent Action:
-#   {
-#     "type": "agent_action",
-#     "order_id": "order-550e8400",
-#     "timestamp": "2024-01-01T12:00:00Z",
-#     "payload": {
-#       "action": "alert_customer",
-#       "decision_id": "decision-uuid",
-#       "reasoning": {
-#         "risk_score": 0.92,
-#         "feature_importance": {...},
-#         "model_version": "v1.2.0"
-#       }
-#     }
-#   }
-#
-# USAGE: PUBLISH tenant:{tenant_id}:events "{message_json}"
-
-PUBSUB_EVENTS_KEY_PATTERN = "tenant:{tenant_id}:events"
-PUBSUB_MESSAGE_TYPES = {
-    "gps_update": "New GPS ping received",
-    "risk_alert": "Risk score crossed threshold",
-    "agent_action": "Agent took an action",
-    "delivery_completed": "Delivery finished"
-}
-
-# ============================================================================
-# Data Class References for Type Safety
-# ============================================================================
-
-@dataclass
-class OrderState:
-    """In-memory representation of order:{order_id}."""
+class OrderHotStateDict(TypedDict, total=False):
+    """Order state dictionary stored in Redis Hash."""
     lat: float
     lng: float
     speed: float
     heading: float
     risk_score: float
-    eta_minutes_remaining: int
+    eta_minutes_remaining: float
     stops_remaining: int
-    last_ping_at: int
+    last_ping_at: str  # ISO format timestamp
     deviation_meters: float
-    status: Literal["pending", "assigned", "in_progress", "completed", "failed"]
 
 
-@dataclass
-class FleetPosition:
-    """In-memory representation of fleet position in sorted set."""
+ORDER_STATE_KEY_PATTERN = "order:state:{order_id}"
+"""
+Pattern: order:state:{order_id}
+Type: Redis Hash
+TTL: 4 hours (auto-expire completed orders)
+
+Fields stored:
+- lat: Current latitude
+- lng: Current longitude
+- speed: Current speed in km/h
+- heading: Heading in degrees (0-360)
+- risk_score: Current delay risk score (0.0-1.0)
+- eta_minutes_remaining: Estimated minutes until delivery
+- stops_remaining: Number of unvisited stops
+- last_ping_at: ISO timestamp of last GPS update
+- deviation_meters: Distance deviated from planned route
+
+Example key: order:state:550e8400-e29b-41d4-a716-446655440000
+"""
+
+ORDER_STATE_TTL_SECONDS = 4 * 3600  # 4 hours
+
+
+# ============================================================================
+# DRIVER POSITION INDEX (Fleet map for real-time dashboards)
+# ============================================================================
+
+class DriverPositionMember(TypedDict):
+    """Member data for fleet position index."""
     driver_id: str
+    order_id: str
     lat: float
     lng: float
-    order_id: str | None
     risk_score: float
-    speed_kmh: float
-    status: Literal["idle", "assigned", "in_delivery", "offline"]
 
 
-@dataclass
-class ModelFeatures:
-    """In-memory representation of features:{order_id}."""
+FLEET_POSITIONS_KEY_PATTERN = "fleet:{tenant_id}:positions"
+"""
+Pattern: fleet:{tenant_id}:positions
+Type: Redis Sorted Set (score = Unix timestamp)
+TTL: 30 minutes
+
+Sorted set member: JSON string {driver_id, lat, lng, order_id, risk_score}
+Score: Unix timestamp (seconds since epoch)
+
+Used for:
+- Real-time fleet map display on dispatcher dashboard
+- Quick spatial queries of active drivers
+- Geofencing alerts
+
+Score ordering ensures old positions are easily pruned.
+
+Example key: fleet:550e8400-e29b-41d4-a716-446655440000:positions
+Example member: {"driver_id": "d1", "order_id": "o1", "lat": 17.385, "lng": 78.487, "risk_score": 0.35}
+Example score: 1685283600 (Unix timestamp)
+"""
+
+FLEET_POSITIONS_TTL_SECONDS = 30 * 60  # 30 minutes
+
+
+# ============================================================================
+# FEATURE CACHE (ML model features, pre-computed every 30 seconds)
+# ============================================================================
+
+class FeatureCacheDict(TypedDict, total=False):
+    """Feature cache dictionary stored in Redis Hash."""
     distance_remaining_km: float
     time_remaining_minutes: float
-    current_speed_kmh: float
-    avg_speed_last_10_pings: float
     stops_remaining: int
-    time_per_stop_minutes: float
+    current_speed_kmh: float
+    avg_speed_kmh: float
+    max_speed_recent_kmh: float
+    acceleration_kmh_per_min: float
+    traffic_ahead_probability: float
+    driver_on_time_rate: float
     hour_of_day: int
     day_of_week: int
-    traffic_events_on_route: int
-    weather_condition: Literal["clear", "rain", "heavy_rain"]
-    driver_on_time_rate: float
-    is_first_delivery: int
-    cumulative_delay_minutes: float
-    route_complexity_score: float
+    weather_condition: str
+    vehicle_type: str
+    route_complexity: float
+
+
+FEATURES_CACHE_KEY_PATTERN = "features:{order_id}"
+"""
+Pattern: features:{order_id}
+Type: Redis Hash
+TTL: 5 minutes (model inference features are frequently recomputed)
+
+Pre-computed feature values for ML model:
+- distance_remaining_km: Distance to final stop (km)
+- time_remaining_minutes: Planned time to final stop
+- stops_remaining: Stops not yet visited
+- current_speed_kmh: Last reported speed
+- avg_speed_kmh: Average speed on current delivery
+- max_speed_recent_kmh: Max speed in last 5 minutes
+- acceleration_kmh_per_min: Rate of speed change (positive=accelerating)
+- traffic_ahead_probability: Predicted traffic likelihood
+- driver_on_time_rate: Historical on-time performance (0.0-1.0)
+- hour_of_day: Hour when delivery started (0-23)
+- day_of_week: Day of week (0=Monday, 6=Sunday)
+- weather_condition: 'clear', 'rain', 'heavy_rain'
+- vehicle_type: e.g., 'motorcycle', 'car', 'van'
+- route_complexity: Number of turns / complexity score
+
+Used by: XGBoost model for delay prediction
+Updated: Every GPS ping (or at most every 30 seconds)
+
+Example key: features:550e8400-e29b-41d4-a716-446655440000
+"""
+
+FEATURES_CACHE_TTL_SECONDS = 5 * 60  # 5 minutes
 
 
 # ============================================================================
-# Python Helper Functions for Redis Clients
+# DECISION CACHE (Latest agent decision for an order)
 # ============================================================================
 
-def get_order_state_key(order_id: str) -> str:
-    """Get Redis key for order state."""
-    return f"order:{order_id}"
+class DecisionCacheDict(TypedDict, total=False):
+    """Latest decision cache for an order."""
+    decision: str  # 'no_action', 'alert_customer', 'reroute', 'escalate'
+    risk_score: float
+    decided_at: str  # ISO timestamp
+    model_version: str
 
 
-def get_fleet_positions_key(tenant_id: str) -> str:
-    """Get Redis key for fleet positions."""
-    return f"fleet:{tenant_id}:positions"
+DECISION_CACHE_KEY_PATTERN = "decision:{order_id}"
+"""
+Pattern: decision:{order_id}
+Type: Redis Hash
+TTL: 2 minutes
+
+Stores the most recent agent decision and metadata:
+- decision: Type of action taken
+- risk_score: Risk score that triggered decision
+- decided_at: ISO timestamp when decision was made
+- model_version: Version of model that made decision
+
+Used for:
+- Quick lookup of current order status
+- Audit trail in real-time dashboard
+- Prevent duplicate decisions on the same risk event
+
+Example key: decision:550e8400-e29b-41d4-a716-446655440000
+"""
+
+DECISION_CACHE_TTL_SECONDS = 2 * 60  # 2 minutes
 
 
-def get_features_key(order_id: str) -> str:
-    """Get Redis key for model features."""
-    return f"features:{order_id}"
+# ============================================================================
+# PUB/SUB CHANNELS (WebSocket Broadcasting)
+# ============================================================================
+
+TENANT_EVENTS_CHANNEL_PATTERN = "tenant:{tenant_id}:events"
+"""
+Channel pattern: tenant:{tenant_id}:events
+
+Used for broadcasting events to all WebSocket clients for a tenant.
+
+Message format (JSON):
+{
+  "type": "order_update" | "agent_decision" | "driver_location" | "alert",
+  "order_id": str,
+  "payload": {...}
+}
+
+Event types:
+- order_update: Order status changed
+- agent_decision: Agent made a decision (alert, reroute, etc.)
+- driver_location: Driver location updated
+- alert: High-priority alert for dispatcher
+
+Example channel: tenant:550e8400-e29b-41d4-a716-446655440000:events
+
+Subscribers: WebSocket connections for that tenant's dashboard
+Publishers: API backend on every GPS ping / decision
+"""
+
+ORDER_EVENTS_CHANNEL_PATTERN = "order:{order_id}:events"
+"""
+Channel pattern: order:{order_id}:events
+
+Used for broadcasting order-specific events.
+
+Message format (JSON):
+{
+  "type": "status_change" | "risk_update" | "gps_ping",
+  "timestamp": ISO timestamp,
+  "payload": {...}
+}
+
+Subscribers: Dashboards/monitoring systems for that specific order
+Publishers: Order processing backend
+"""
 
 
-def get_pubsub_events_channel(tenant_id: str) -> str:
-    """Get Pub/Sub channel for tenant events."""
-    return f"tenant:{tenant_id}:events"
+# ============================================================================
+# RATE LIMITING (Token bucket for API rate limiting)
+# ============================================================================
+
+RATE_LIMIT_KEY_PATTERN = "ratelimit:{tenant_id}:{endpoint}"
+"""
+Pattern: ratelimit:{tenant_id}:{endpoint}
+Type: Redis String (counter) with TTL
+TTL: 60 seconds (sliding window)
+
+Stores request count for rate limiting.
+
+Example key: ratelimit:550e8400-e29b-41d4-a716-446655440000:gps_ping
+Example value: 42
+
+Used with: INCR command + TTL expiry
+Reference: Token bucket algorithm
+"""
+
+RATE_LIMIT_TTL_SECONDS = 60
 
 
-def get_shipment_updates_channel() -> str:
-    """Get the shipment update pub/sub channel."""
-    return SHIPMENT_UPDATES_CHANNEL
+# ============================================================================
+# DRIVER SESSION CACHE
+# ============================================================================
+
+DRIVER_SESSION_KEY_PATTERN = "driver:session:{driver_id}"
+"""
+Pattern: driver:session:{driver_id}
+Type: Redis Hash
+TTL: 8 hours (typical delivery shift)
+
+Stores driver session info:
+- session_id: UUID of current session
+- current_order_id: Order being delivered
+- tenant_id: Tenant this driver belongs to
+- last_heartbeat: Last GPS ping timestamp
+- total_stops_today: Cumulative stops delivered today
+
+Example key: driver:session:d550e8400-e29b-41d4-a716-446655440001
+"""
+
+DRIVER_SESSION_TTL_SECONDS = 8 * 3600
+
+
+# ============================================================================
+# DEPENDENCY TRACKING (For feature cache invalidation)
+# ============================================================================
+
+ORDER_DEPENDENCIES_KEY_PATTERN = "deps:{order_id}"
+"""
+Pattern: deps:{order_id}
+Type: Redis Set
+TTL: 5 minutes
+
+Tracks which cached features depend on this order.
+When an order updates, all dependent caches are invalidated.
+
+Example key: deps:550e8400-e29b-41d4-a716-446655440000
+Example members: ['features:550e8400-e29b-41d4-a716-446655440000', 
+                  'decision:550e8400-e29b-41d4-a716-446655440000']
+"""
+
+
+# ============================================================================
+# SUMMARY OF ALL KEY PATTERNS AND TTLs
+# ============================================================================
+
+@dataclass
+class RedisKeyPattern:
+    """Documentation for a Redis key pattern."""
+    pattern: str
+    key_type: Literal["hash", "zset", "set", "string", "list"]
+    ttl_seconds: int
+    description: str
+    example_key: str
+    multi_tenant: bool
+
+
+REDIS_KEY_PATTERNS = [
+    RedisKeyPattern(
+        pattern=ORDER_STATE_KEY_PATTERN,
+        key_type="hash",
+        ttl_seconds=ORDER_STATE_TTL_SECONDS,
+        description="Current order state (position, speed, risk, ETA)",
+        example_key="order:state:550e8400-e29b-41d4-a716-446655440000",
+        multi_tenant=True,
+    ),
+    RedisKeyPattern(
+        pattern=FLEET_POSITIONS_KEY_PATTERN,
+        key_type="zset",
+        ttl_seconds=FLEET_POSITIONS_TTL_SECONDS,
+        description="Real-time driver positions for fleet map (sorted by timestamp)",
+        example_key="fleet:550e8400-e29b-41d4-a716-446655440000:positions",
+        multi_tenant=True,
+    ),
+    RedisKeyPattern(
+        pattern=FEATURES_CACHE_KEY_PATTERN,
+        key_type="hash",
+        ttl_seconds=FEATURES_CACHE_TTL_SECONDS,
+        description="Pre-computed ML model features for delay prediction",
+        example_key="features:550e8400-e29b-41d4-a716-446655440000",
+        multi_tenant=True,
+    ),
+    RedisKeyPattern(
+        pattern=DECISION_CACHE_KEY_PATTERN,
+        key_type="hash",
+        ttl_seconds=DECISION_CACHE_TTL_SECONDS,
+        description="Latest agent decision and metadata for an order",
+        example_key="decision:550e8400-e29b-41d4-a716-446655440000",
+        multi_tenant=True,
+    ),
+    RedisKeyPattern(
+        pattern=DRIVER_SESSION_KEY_PATTERN,
+        key_type="hash",
+        ttl_seconds=DRIVER_SESSION_TTL_SECONDS,
+        description="Driver active session information",
+        example_key="driver:session:d550e8400-e29b-41d4-a716-446655440001",
+        multi_tenant=True,
+    ),
+    RedisKeyPattern(
+        pattern=ORDER_DEPENDENCIES_KEY_PATTERN,
+        key_type="set",
+        ttl_seconds=5 * 60,
+        description="Tracking dependencies for cache invalidation",
+        example_key="deps:550e8400-e29b-41d4-a716-446655440000",
+        multi_tenant=True,
+    ),
+]
+
+
+def get_redis_key(pattern: str, **kwargs) -> str:
+    """
+    Generate a Redis key from a pattern.
+    
+    Args:
+        pattern: Key pattern with {variable} placeholders
+        **kwargs: Values for placeholders
+        
+    Returns:
+        Formatted Redis key
+        
+    Example:
+        >>> get_redis_key(ORDER_STATE_KEY_PATTERN, order_id="123")
+        'order:state:123'
+    """
+    return pattern.format(**kwargs)
 
 
 def get_prediction_updates_channel() -> str:
-    """Get the prediction update pub/sub channel."""
-    return PREDICTION_UPDATES_CHANNEL
+    """Return the pub/sub channel name for prediction updates."""
+    return "predictions:updates"
 
 
-def get_agent_updates_channel() -> str:
-    """Get the agent update pub/sub channel."""
-    return AGENT_UPDATES_CHANNEL
+def get_pubsub_events_channel(tenant_id: str) -> str:
+    """Return the pub/sub channel name for a tenant's events."""
+    return TENANT_EVENTS_CHANNEL_PATTERN.format(tenant_id=tenant_id)
+
+
+# ============================================================================
+# REDIS CONNECTION & HEALTH CHECKS
+# ============================================================================
+
+REDIS_HEALTH_CHECK_KEY = "health:check"
+"""
+Simple health check key. Used to verify Redis is responding.
+Set to current timestamp, TTL: 60 seconds.
+"""
+
+REDIS_TASK_QUEUE_KEY = "tasks:queue"
+"""
+Queue for background tasks (expired orders cleanup, feature computation, etc.)
+Type: Redis List (FIFO)
+"""
+
+REDIS_TASK_QUEUE_PROCESSING_KEY = "tasks:processing"
+"""
+Set of tasks currently being processed (for at-least-once delivery).
+Type: Redis Set
+"""
+
+
+# ============================================================================
+# MEMORY OPTIMIZATION NOTES
+# ============================================================================
+
+"""
+Redis Memory Optimization Strategy:
+
+1. KEY EXPIRATION:
+   - All keys have explicit TTL to prevent unbounded memory growth
+   - Configure eviction policy: 'allkeys-lru' as fallback
+   
+2. VALUE COMPRESSION:
+   - Store JSON as strings (Redis handles efficiently)
+   - Use GZIP compression for large feature vectors (if needed)
+   
+3. PARTITIONING (for large deployments):
+   - Use Redis Cluster or Sentinel for sharding
+   - Shard by {tenant_id} + consistent hashing for {order_id}
+   
+4. MONITORING:
+   - Track memory usage per key prefix
+   - Alert if any single key grows > 1MB
+   - Archive old decision history to TimescaleDB periodically
+   
+5. BATCH OPERATIONS:
+   - Use PIPELINE for multiple commands
+   - Use SCAN instead of KEYS for production systems
+"""

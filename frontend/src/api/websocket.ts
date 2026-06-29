@@ -1,6 +1,7 @@
 import { WebSocketMessage, WebSocketMessageType, AgentDecisionMessage, RouteUpdatedMessage, ETAUpdatedMessage, LiveOrder } from '@/types/api'
 import { fleetStore } from '@/store/fleetStore'
 import { useAuthStore } from '@/store/authStore'
+import { useActivityStore } from '@/store/activityStore'
 import { API_CONFIG } from '@/utils/constants'
 import { syntheticPosition } from '@/api/orders'
 
@@ -362,6 +363,15 @@ class WebSocketManager {
           delay_minutes: 0,
           route_efficiency: 100,
         } as LiveOrder])
+        useActivityStore.getState().addEvent({
+          id: `act-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          type: 'order_created',
+          severity: 'success',
+          title: 'Order Created',
+          description: `Order ${created.order_id?.slice(0, 8)} assigned to driver ${created.driver_id?.slice(0, 8)}`,
+          orderId: created.order_id,
+        })
         this.emit(WS_EVENTS.ORDER_CREATED, message)
         break
       }
@@ -374,6 +384,15 @@ class WebSocketManager {
           break
         }
         fleetStore.getState().updateOrderRisk(update.order_id, update.risk_score, update.timestamp)
+        useActivityStore.getState().addEvent({
+          id: `pred-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          type: 'prediction_updated',
+          severity: update.risk_score > 0.7 ? 'critical' : update.risk_score > 0.3 ? 'warning' : 'info',
+          title: 'Risk Updated',
+          description: `Order ${update.order_id?.slice(0, 8)} risk score: ${Math.round(update.risk_score * 100)}%`,
+          orderId: update.order_id,
+        })
         this.emit(WS_EVENTS.PREDICTION_UPDATED, message)
         break
       }
@@ -396,6 +415,15 @@ class WebSocketManager {
           created_at: new Date().toISOString(),
           latency_ms: decision.latency_ms,
         })
+        useActivityStore.getState().addEvent({
+          id: `dec-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          type: 'agent_decision',
+          severity: decision.decision === 'reroute' ? 'warning' : 'info',
+          title: `Agent Decision: ${decision.decision}`,
+          description: decision.reasoning?.slice(0, 120) ?? '',
+          orderId: decision.order_id,
+        })
         this.emit(WS_EVENTS.AGENT_DECISION, message)
         break
       }
@@ -408,6 +436,15 @@ class WebSocketManager {
           break
         }
         fleetStore.getState().updateRouteWaypoints(update.order_id, update.new_waypoints)
+        useActivityStore.getState().addEvent({
+          id: `route-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          type: 'route_updated',
+          severity: 'info',
+          title: 'Route Updated',
+          description: `Order ${update.order_id?.slice(0, 8)} route updated, saving ${Math.round(update.time_saved_minutes ?? 0)} min`,
+          orderId: update.order_id,
+        })
         this.emit(WS_EVENTS.ROUTE_UPDATED, message)
         break
       }
@@ -420,6 +457,15 @@ class WebSocketManager {
           break
         }
         fleetStore.getState().updateOrderETA(update.order_id, update.new_eta)
+        useActivityStore.getState().addEvent({
+          id: `eta-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          type: 'eta_updated',
+          severity: update.reason?.includes('delay') ? 'warning' : 'info',
+          title: 'ETA Updated',
+          description: `Order ${update.order_id?.slice(0, 8)} ETA: ${update.reason ?? 'Adjusted'}`,
+          orderId: update.order_id,
+        })
         this.emit(WS_EVENTS.ETA_UPDATED, message)
         break
       }
