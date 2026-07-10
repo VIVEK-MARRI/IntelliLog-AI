@@ -42,54 +42,138 @@ def _confidence_to_score(confidence: str) -> float:
     return mapping.get(confidence.lower(), 0.8)
 
 
-@router.post("/batch", response_model=list)
+@router.post("/batch", response_model=dict)
 async def batch_predict(
     body: dict,
     current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
     redis_client: redis.Redis = Depends(get_redis),
-) -> list[dict]:
+) -> dict[str, dict]:
     """
     Batch predictions for multiple order IDs.
-    Accepts {"order_ids": ["..."]}, returns predictions for each.
+
+    Accepts {"order_ids": ["..."]}.
+    Returns a keyed object: {order_id: PredictionResponse-shaped dict}.
+
+    Previously returned a list — that shape caused silent failures in 2 of 3
+    frontend consumers (AICommandCenter.tsx used `batchResults[order.id]` which
+    always returned undefined from a list; ModelInsights.tsx had an Array.isArray
+    workaround proving the bug was known but patched locally instead of fixed).
     """
     order_ids = body.get("order_ids", [])
     logger.info("batch_predict", count=len(order_ids), tenant_id=current_tenant.tenant_id)
-    results = []
+    results: dict[str, dict] = {}
     for oid in order_ids:
         cached = await redis_client.hgetall(f"prediction:{oid}")
         if cached:
-            results.append({
+            risk_score = float(cached.get("risk_score", 0.5))
+            results[oid] = {
                 "order_id": oid,
-                "risk_score": float(cached.get("risk_score", 0.5)),
-                "is_high_risk": float(cached.get("risk_score", 0.5)) > 0.7,
+                "risk_score": risk_score,
+                "is_high_risk": risk_score > 0.7,
                 "predicted_delay_minutes": float(cached.get("predicted_delay_minutes", 0.0)),
-            })
+                "confidence": float(cached.get("confidence", 0.8)),
+            }
         else:
-            results.append({
+            results[oid] = {
                 "order_id": oid,
                 "risk_score": 0.5,
                 "is_high_risk": False,
                 "predicted_delay_minutes": 0.0,
-            })
+                "confidence": 0.5,
+            }
     return results
 
 
-@router.get("/model/{model_id:path}", response_model=dict)
-async def get_model_info(
-    model_id: str,
+@router.get("/model/feature-importance", response_model=dict)
+async def get_feature_importance(
     current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
+    prediction_service: PredictionService = Depends(get_prediction_service),
 ) -> dict:
-    """Return model metadata."""
-    logger.info("get_model_info", model_id=model_id, tenant_id=current_tenant.tenant_id)
+    """
+    Return global SHAP-based feature importance for the delay prediction model.
+
+    Uses the loaded SHAP TreeExplainer and a representative synthetic sample
+    to compute mean absolute SHAP values per feature.  This is backed by the
+    actual model artefact — not a hardcoded payload.
+
+    Previously this endpoint didn't exist: the catch-all route
+    GET /model/{model_id:path} matched 'feature-importance' and 'info'
+    identically, returning identical hardcoded data for both.
+    """
+    logger.info("get_feature_importance", tenant_id=current_tenant.tenant_id)
+    try:
+        import numpy as np
+
+        # Build a representative sample using each feature's median from training stats
+        feature_names = prediction_service.feature_names
+        feature_stats = prediction_service.feature_stats
+
+        sample_size = 100
+        sample = np.array([
+            [feature_stats.feature_medians.get(name, 0.5) for name in feature_names]
+            for _ in range(sample_size)
+        ])
+
+        explainer = prediction_service._get_explainer()
+        shap_values = explainer.shap_values(sample)  # shape: (sample_size, n_features)
+
+        # Mean absolute SHAP = global feature importance
+        mean_abs_shap = np.abs(shap_values).mean(axis=0)
+        total = float(mean_abs_shap.sum()) or 1.0
+
+        importance_list = sorted([
+            {
+                "feature": feature_names[i],
+                "importance": float(mean_abs_shap[i]),
+                "importance_pct": round(float(mean_abs_shap[i]) / total * 100, 2),
+            }
+            for i in range(len(feature_names))
+        ], key=lambda x: x["importance"], reverse=True)
+
+        return {
+            "model_version": prediction_service.model_version,
+            "method": "shap_mean_absolute",
+            "sample_size": sample_size,
+            "features": importance_list,
+            "top_feature": importance_list[0]["feature"] if importance_list else None,
+        }
+
+    except Exception as e:
+        logger.error("feature_importance_error", error=str(e))
+        # Fallback: return feature names from model without SHAP values
+        return {
+            "model_version": getattr(prediction_service, "model_version", "unknown"),
+            "method": "fallback_no_shap",
+            "error": str(e),
+            "features": [
+                {"feature": name, "importance": None, "importance_pct": None}
+                for name in getattr(prediction_service, "feature_names", [])
+            ],
+        }
+
+
+@router.get("/model/info", response_model=dict)
+async def get_model_info(
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant),
+    prediction_service: PredictionService = Depends(get_prediction_service),
+) -> dict:
+    """
+    Return model metadata (version, features, thresholds, status).
+
+    Distinct from feature-importance: returns configuration, not SHAP analysis.
+    Previously both endpoints hit the same catch-all and returned identical data.
+    """
+    logger.info("get_model_info", tenant_id=current_tenant.tenant_id)
     return {
-        "model_id": model_id,
+        "model_id": "delay-prediction-v1",
         "name": "Delay Prediction Model",
-        "version": "1.0.0",
-        "features": [
+        "version": getattr(prediction_service, "model_version", "1.0.0"),
+        "features": getattr(prediction_service, "feature_names", [
             "hour_of_day", "day_of_week", "speed",
             "stops_remaining", "driver_on_time_rate",
             "deviation_meters", "eta_minutes_remaining",
-        ],
+        ]),
+        "optimal_threshold": getattr(prediction_service, "optimal_threshold", 0.7),
         "confidence_thresholds": {"high": 0.9, "medium": 0.75, "low": 0.6},
         "status": "active",
     }

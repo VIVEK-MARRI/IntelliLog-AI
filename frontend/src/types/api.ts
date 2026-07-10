@@ -181,6 +181,7 @@ export interface Driver {
 // ============================================================================
 
 export type WebSocketMessageType =
+  | 'initial_state'
   | 'order_position_updated'
   | 'prediction_updated'
   | 'agent_decision'

@@ -15,6 +15,7 @@ import json
 import time
 from typing import Optional
 import structlog
+import redis
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 import httpx
@@ -401,12 +402,18 @@ class AgentRunner:
 
 async def main():
     """Main entry point."""
-    runner = AgentRunner()
-    
+    from src.core.config import get_settings
+
+    settings = get_settings(allow_defaults=True)
+    runner = AgentRunner(
+        redis_url=settings.redis_url or "redis://localhost:6379",
+        db_url=settings.database_url or "postgresql+asyncpg://user:password@localhost/db",
+    )
+
     try:
         await runner.setup()
         await runner.run_forever()
-    
+
     finally:
         await runner.cleanup()
 

@@ -1,5 +1,15 @@
 /**
  * Authentication Store (Zustand)
+ *
+ * Session lifecycle:
+ *   1. restoreSession() is called on app mount (see main.tsx).
+ *   2. In dev-bypass mode (VITE_DEV_AUTH_BYPASS=true), restoreSession logs a
+ *      loud console.warn and auto-populates auth with the dev tenant.
+ *      This is intentionally visible — not silently indistinguishable from a
+ *      real session.
+ *   3. In production / non-bypass mode, restoreSession reads the token from
+ *      localStorage and sets auth if a valid token is found. The UI redirects
+ *      to /login if auth is null.
  */
 
 import { create } from 'zustand'
@@ -7,6 +17,15 @@ import { AuthContext, AuthenticatedTenant } from '@/types/api'
 import { apiClient } from '@/api/client'
 import { fleetStore } from './fleetStore'
 import { wsManager } from '@/api/websocket'
+
+/** True when running in local dev with explicit bypass enabled. */
+const DEV_BYPASS =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+const DEV_AUTH: AuthContext = {
+  token: 'dev-token',
+  tenant: { tenant_id: 'dev-tenant-id', name: 'Dev User', is_active: true },
+}
 
 interface AuthStore {
   auth: AuthContext | null
@@ -30,12 +49,11 @@ interface AuthStore {
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
-  auth: {
-    token: 'dev-token',
-    tenant: { tenant_id: 'dev-tenant-id', name: 'Dev User', is_active: true },
-  },
+  // Start with auth=null — ProtectedRoute will redirect to /login if restoreSession
+  // doesn't populate it. DEV_BYPASS will populate it synchronously in restoreSession.
+  auth: null,
   isLoading: false,
-  isHydrating: false,
+  isHydrating: true,
   error: null,
 
   setAuth: (auth) => {
@@ -55,7 +73,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     localStorage.removeItem('auth_token')
     apiClient.clearToken()
     wsManager.disconnect()
-    // Dispatch event for toast notification
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('auth:session-expired', { detail: 'Session expired. Please log in again.' }))
     }
@@ -104,11 +121,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'auth_token' && event.newValue === null) {
-        // Token was removed in another tab - logout this tab
         const { clearAuth } = useAuthStore.getState()
         clearAuth()
         wsManager.disconnect()
-        // Redirect to login if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login'
         }
@@ -120,10 +135,35 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   restoreSession: async () => {
-    // Dev mode - no session check needed
-    set({ isHydrating: false })
+    set({ isHydrating: true })
+
+    // --- Dev bypass: explicit, loud, not silently-indistinguishable from real auth ---
+    if (DEV_BYPASS) {
+      console.warn(
+        '[IntelliLog DEV] Auth bypass active (VITE_DEV_AUTH_BYPASS=true). ' +
+        'Using synthetic dev-tenant-id session. Set VITE_DEV_AUTH_BYPASS=false to require login.'
+      )
+      apiClient.setToken(DEV_AUTH.token)
+      set({ auth: DEV_AUTH, isHydrating: false })
+      return
+    }
+
+    // --- Normal mode: restore from localStorage ---
+    const storedToken = localStorage.getItem('auth_token')
+    if (storedToken) {
+      // Trust stored token (the API will 401 on any real request if it's expired)
+      apiClient.setToken(storedToken)
+      set({
+        auth: {
+          token: storedToken,
+          // Tenant info isn't stored separately — the next API call will surface any issue
+          tenant: { tenant_id: 'restored', name: 'Restored Session', is_active: true },
+        },
+        isHydrating: false,
+      })
+    } else {
+      // No token → stay null, ProtectedRoute will redirect to /login
+      set({ isHydrating: false })
+    }
   },
 }))
-
-// Initialize API client with dev token
-apiClient.setToken('dev-token')

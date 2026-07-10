@@ -66,6 +66,7 @@ pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
 pytest-env>=1.1.0
 testcontainers[postgresql,redis]>=4.0.0
+factory-boy~=3.3.0
 
 # Code Quality
 ruff>=0.1.0

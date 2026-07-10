@@ -80,7 +80,7 @@ async def get_redis() -> redis.Redis:
     Returns:
         Redis client (real or fakeredis)
     """
-    global _fakeredis_instance, _real_redis_works
+    global _fakeredis_instance, _real_redis_works, _real_redis_client
 
     if _real_redis_works and _real_redis_client is not None:
         return _real_redis_client

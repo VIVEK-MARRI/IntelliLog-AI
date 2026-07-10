@@ -168,10 +168,10 @@ function InvestigationWorkspace({
 }: {
   orderId: string | null
 }) {
+  const allOrders = useOrdersArray()
   const order = useMemo(() => {
-    const orders = useOrdersArray()
-    return orders.find((o) => o.id === orderId) ?? null
-  }, [orderId])
+    return allOrders.find((o) => o.id === orderId) ?? null
+  }, [orderId, allOrders])
 
   // Hooks for API data
   const predictionQuery = useQuery({

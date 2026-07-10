@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react'
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -13,6 +13,13 @@ const LandingPage = lazyWithRetry(() => import('@/pages/Landing').then(m => ({ d
   delay: 1000,
   onError: (error, attempt) => {
     console.warn(`[LazyLoad] Landing chunk load failed (attempt ${attempt}):`, error.message)
+  },
+})
+const LoginPage = lazyWithRetry(() => import('@/pages/Login').then(m => ({ default: m.Login })), {
+  retries: 3,
+  delay: 1000,
+  onError: (error, attempt) => {
+    console.warn(`[LazyLoad] Login chunk load failed (attempt ${attempt}):`, error.message)
   },
 })
 const MissionControl = lazyWithRetry(() => import('@/pages/MissionControl').then(m => ({ default: m.MissionControl })), {
@@ -70,6 +77,26 @@ const AppShellLayout: React.FC = () => (
   </AppShell>
 )
 
+/**
+ * ProtectedRoute: redirects to /login if there is no authenticated session.
+ * Shows a loading spinner while restoreSession() is in progress (isHydrating=true).
+ * In dev-bypass mode (VITE_DEV_AUTH_BYPASS=true) the authStore auto-populates
+ * auth synchronously — the spinner flashes at most once.
+ */
+const ProtectedRoute: React.FC = () => {
+  const auth = useAuthStore((state) => state.auth)
+  const isHydrating = useAuthStore((state) => state.isHydrating)
+  const location = useLocation()
+
+  if (isHydrating) {
+    return <PageLoader message="Restoring session..." />
+  }
+  if (!auth) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />
+  }
+  return <Outlet />
+}
+
 const App: React.FC = () => {
   useEffect(() => {
     const token = useAuthStore.getState().auth?.token
@@ -84,36 +111,41 @@ const App: React.FC = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* Landing page — no AppShell */ }
+        {/* Public routes — no auth required */}
         <Route path="/" element={
           <ErrorBoundary><LandingPage /></ErrorBoundary>
         } />
-        {/* App routes — with AppShell */ }
-        <Route element={<AppShellLayout />}>
-          <Route path="/app" element={
-            <ErrorBoundary><MissionControl /></ErrorBoundary>
-          } />
-          <Route path="/mission-control" element={
-            <ErrorBoundary><MissionControl /></ErrorBoundary>
-          } />
-          <Route path="/operations" element={
-            <ErrorBoundary><Operations /></ErrorBoundary>
-          } />
-          <Route path="/orders" element={
-            <ErrorBoundary><OrdersPage /></ErrorBoundary>
-          } />
-          <Route path="/executive" element={
-            <ErrorBoundary><ExecutivePage /></ErrorBoundary>
-          } />
-          <Route path="/system-health" element={
-            <ErrorBoundary><SystemHealthPage /></ErrorBoundary>
-          } />
-          <Route path="/ai" element={
-            <ErrorBoundary><AIWorkspacePage /></ErrorBoundary>
-          } />
-          <Route path="/copilot" element={
-            <ErrorBoundary><AIWorkspacePage /></ErrorBoundary>
-          } />
+        <Route path="/login" element={
+          <ErrorBoundary><LoginPage /></ErrorBoundary>
+        } />
+        {/* Protected app routes — redirect to /login if not authenticated */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppShellLayout />}>
+            <Route path="/app" element={
+              <ErrorBoundary><MissionControl /></ErrorBoundary>
+            } />
+            <Route path="/mission-control" element={
+              <ErrorBoundary><MissionControl /></ErrorBoundary>
+            } />
+            <Route path="/operations" element={
+              <ErrorBoundary><Operations /></ErrorBoundary>
+            } />
+            <Route path="/orders" element={
+              <ErrorBoundary><OrdersPage /></ErrorBoundary>
+            } />
+            <Route path="/executive" element={
+              <ErrorBoundary><ExecutivePage /></ErrorBoundary>
+            } />
+            <Route path="/system-health" element={
+              <ErrorBoundary><SystemHealthPage /></ErrorBoundary>
+            } />
+            <Route path="/ai" element={
+              <ErrorBoundary><AIWorkspacePage /></ErrorBoundary>
+            } />
+            <Route path="/copilot" element={
+              <ErrorBoundary><AIWorkspacePage /></ErrorBoundary>
+            } />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import clsx from 'clsx'
 import {
@@ -374,6 +374,7 @@ export const FleetMap: React.FC<FleetMapProps> = ({ onOrderSelect, selectedOrder
   const animationRef = useRef<number | null>(null)
   const initializedBoundsRef = useRef(false)
 
+  const [containerReady, setContainerReady] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [quickFilter, setQuickFilter] = useState<FilterKey>('all')
   const [layers, setLayers] = useState<LayerState>({ traffic: false, route: true, risk: true, driver: true })
@@ -401,11 +402,32 @@ export const FleetMap: React.FC<FleetMapProps> = ({ onOrderSelect, selectedOrder
     optimized: orders.filter((o) => (o as any).is_optimized || o.route_efficiency >= 0.9).length,
   }), [orders])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (mapRef.current) return
-    const map = L.map(mapContainerId, {
+    const container = document.getElementById(mapContainerId)
+    if (!container) return
+    // Leaflet canvas renderer crashes when the container has zero dimensions
+    // at init time (clearRect on null context). Defer until sized.
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      const ro = new ResizeObserver(() => {
+        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+          ro.disconnect()
+          setContainerReady(true)
+        }
+      })
+      ro.observe(container)
+      return () => ro.disconnect()
+    }
+    setContainerReady(true)
+  }, [mapContainerId])
+
+  useLayoutEffect(() => {
+    if (mapRef.current || !containerReady) return
+    const container = document.getElementById(mapContainerId)
+    if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) return
+
+    const map = L.map(container, {
       zoomControl: false,
-      preferCanvas: true,
       worldCopyJump: true,
     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM)
 
@@ -419,7 +441,7 @@ export const FleetMap: React.FC<FleetMapProps> = ({ onOrderSelect, selectedOrder
     mapRef.current = map
 
     const observer = new ResizeObserver(() => map.invalidateSize())
-    observer.observe(map.getContainer())
+    observer.observe(container)
     ;(map as any).__resizeObserver = observer
 
     return () => {
@@ -429,7 +451,7 @@ export const FleetMap: React.FC<FleetMapProps> = ({ onOrderSelect, selectedOrder
       map.remove()
       mapRef.current = null
     }
-  }, [mapContainerId])
+  }, [containerReady, mapContainerId])
 
   useEffect(() => {
     const abort = new AbortController()

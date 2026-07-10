@@ -119,7 +119,9 @@ class OptimizationService:
         await self.redis_client.hset(redis_key, mapping=metadata_dict)
         await self.redis_client.expire(redis_key, 86400)  # 24-hour TTL
 
-        # Submit to Celery if available
+        # Submit to Celery if available and reachable.
+        # Falls back to inline execution when Celery broker (Redis) is unavailable.
+        celery_submitted = False
         if self.celery_app:
             # Import here to avoid circular dependency
             from src.optimization.tasks import solve_routing_job
@@ -147,26 +149,30 @@ class OptimizationService:
                 result_backend=str(getattr(self.celery_app.conf, "result_backend", "unknown")),
             )
 
-            async_result = solve_routing_job.delay(job_id, order_id, tenant_id, problem_dict)
+            try:
+                async_result = solve_routing_job.delay(job_id, order_id, tenant_id, problem_dict)
+                logger.info(
+                    "job_enqueue_complete",
+                    job_id=job_id,
+                    task_id=async_result.id,
+                )
+                await self.redis_client.hset(
+                    redis_key,
+                    mapping={
+                        "task_id": async_result.id,
+                        "queue_name": "celery",
+                    },
+                )
+                celery_submitted = True
+            except Exception as exc:
+                logger.warning(
+                    "celery_unavailable_falling_back_to_inline",
+                    job_id=job_id,
+                    error=str(exc),
+                )
 
-            logger.info(
-                "job_enqueue_complete",
-                job_id=job_id,
-                task_id=async_result.id,
-            )
-
-            await self.redis_client.hset(
-                redis_key,
-                mapping={
-                    "task_id": async_result.id,
-                    "queue_name": "celery",
-                },
-            )
-
-        # Run solver inline only if Celery is unavailable.
-        # When Celery is configured, the dispatched Celery task is the sole
-        # execution path — this avoids the dual-execution race.
-        if not self.celery_app or not getattr(self.celery_app.conf, "broker_url", None):
+        # Run solver inline when Celery is unavailable or unreachable.
+        if not celery_submitted:
             import asyncio
             asyncio.create_task(self._execute_job(job_id, redis_key, problem, order_id, tenant_id))
 

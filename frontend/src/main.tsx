@@ -4,8 +4,17 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import App from './App'
 import { ToastProvider, ToastContainer } from '@/components/notifications'
+import { useAuthStore } from '@/store/authStore'
 import 'leaflet/dist/leaflet.css'
 import './index.css'
+
+// Bootstrap authentication state before the app renders.
+// restoreSession() is synchronous for the dev-bypass path and async
+// for the localStorage-restore path. Either way, isHydrating=true until it resolves.
+// ProtectedRoute reads auth which starts as null, so without this call the app would
+// redirect every user to /login on first paint.
+useAuthStore.getState().restoreSession()
+
 
 const queryClient = new QueryClient({
   defaultOptions: {

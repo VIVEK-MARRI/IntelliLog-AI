@@ -1,25 +1,33 @@
 """
 WebSocket router.
 Real-time fleet events, order updates, and copilot streaming.
+
+Auth note: WebSocket connections are authenticated via the single canonical
+`get_current_tenant_ws` dependency in `src/api/auth.py`.  The old duplicated
+`_authenticate_ws()` helper (which hardcoded a different UUID in dev mode and
+caused order events to never reach the WebSocket) has been removed.
+
+Tenant ID source of truth: auth.py:get_current_tenant (REST) and
+auth.py:get_current_tenant_ws (WebSocket) both return "dev-tenant-id" in dev
+mode and the JWT sub claim in production.  There is now exactly one place that
+decides "what is the current tenant."
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
+from datetime import datetime, timezone
 from typing import Set
 
 import redis.asyncio as redis
 import structlog
-from fastapi import APIRouter, Depends, WebSocketDisconnect, WebSocketException, status
+from fastapi import APIRouter, WebSocketDisconnect, WebSocketException, status
 from fastapi.websockets import WebSocket
-from jose import JWTError, jwt
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.auth import ALGORITHM, AuthenticatedTenant, _get_secret_key
-from src.api.deps import get_db, get_redis as get_redis_client
-from src.api.rate_limit import check_rate_limit
+from src.api.auth import AuthenticatedTenant, get_current_tenant_ws
+from src.api.deps import get_redis as get_redis_client, _get_session_maker
 from src.core.config import get_settings
 from src.core.metrics import (
     websocket_connections_active,
@@ -56,63 +64,35 @@ async def broadcast_to_tenant(
         active_connections[tenant_id] -= disconnected
 
 
-async def _authenticate_ws(websocket: WebSocket) -> AuthenticatedTenant:
-    # Dev mode: skip JWT validation
-    if get_settings(allow_defaults=True).skip_external_startup_checks:
-        return AuthenticatedTenant(
-            tenant_id="00000000-0000-0000-0000-000000000001",
-            name="Dev User",
-            is_active=True,
-        )
+async def _auth_from_websocket(websocket: WebSocket) -> AuthenticatedTenant:
+    """
+    Thin adapter: extract tenant identity for a WebSocket connection.
 
-    secret = _get_secret_key()
-    ws_protocol = websocket.headers.get("sec-websocket-protocol", "")
+    Delegates entirely to the canonical `get_current_tenant_ws` function
+    from auth.py so there is exactly one implementation of auth logic.
+    Dev-mode returns tenant_id="dev-tenant-id" to match REST auth.
 
-    if not ws_protocol:
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION,
-            reason="Authentication required",
-        )
+    Previously this module had its own `_authenticate_ws()` that hardcoded
+    a different UUID ("00000000-0000-0000-0000-000000000001") in dev mode,
+    causing orders published under "dev-tenant-id" to never appear on the
+    WebSocket.  That function has been deleted.
 
-    token = ws_protocol.split(",")[0].strip()
-    if not token:
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION,
-            reason="Missing authentication token",
-        )
-
-    try:
-        payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
-        tenant_id: str | None = payload.get("sub")
-        tenant_name: str | None = payload.get("name")
-
-        if not tenant_id:
-            raise WebSocketException(
-                code=status.WS_1008_POLICY_VIOLATION,
-                reason="Invalid token: no tenant ID",
-            )
-
-        logger.info("ws_auth_success", tenant_id=tenant_id)
-        return AuthenticatedTenant(
-            tenant_id=tenant_id,
-            name=tenant_name or "Unknown",
-            is_active=True,
-        )
-
-    except JWTError as e:
-        logger.warning("ws_auth_failed", reason=str(e))
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION,
-            reason="Invalid or expired token",
-        )
+    WebSocket (starlette.websockets.WebSocket) inherits from HTTPConnection,
+    which exposes .headers and .state — the same interface `get_current_tenant_ws`
+    needs. We pass it directly and None for db (the WS auth fn uses
+    `db: AsyncSession = Depends(lambda: None)` meaning db is not used for auth).
+    """
+    # Cast is safe: WebSocket is an HTTPConnection subclass with .headers and .state
+    return await get_current_tenant_ws(request=websocket, db=None)  # type: ignore[arg-type]
 
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     try:
-        auth_result = await _authenticate_ws(websocket)
+        auth_result = await _auth_from_websocket(websocket)
         tenant_id = auth_result.tenant_id
-    except WebSocketException:
+    except (WebSocketException, Exception) as exc:
+        logger.warning("websocket_auth_failed", error=str(exc))
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
@@ -134,10 +114,17 @@ async def websocket_endpoint(websocket: WebSocket):
     active_connections[tenant_id].add(websocket)
 
     try:
-        initial_orders = []
+        # ------------------------------------------------------------------ #
+        # Build initial_state — always scoped to this tenant only.            #
+        # Returns the same OrderResponse-shaped fields that REST returns so   #
+        # the frontend can merge (not replace) existing rich data.            #
+        # ------------------------------------------------------------------ #
+        initial_orders: list[dict] = []
         redis_client = await get_redis_client()
+
+        # 1. Try Redis hot-state cache first
         try:
-            async for key in redis_client.scan_iter(match=f"order:*"):
+            async for key in redis_client.scan_iter(match="order:*"):
                 order_data = await redis_client.hgetall(key)
                 if order_data and order_data.get("tenant_id") == tenant_id:
                     initial_orders.append({
@@ -146,15 +133,64 @@ async def websocket_endpoint(websocket: WebSocket):
                         "risk_score": float(order_data.get("risk_score", 0.5)),
                         "latitude": float(order_data.get("latitude", 0.0)),
                         "longitude": float(order_data.get("longitude", 0.0)),
+                        "driver_id": order_data.get("driver_id", ""),
                     })
         except Exception as e:
-            logger.warning("initial_state_load_failed", tenant_id=tenant_id, error=str(e))
+            logger.warning("initial_state_redis_load_failed", tenant_id=tenant_id, error=str(e))
+
+        # 2. Fallback to PostgreSQL — ALWAYS filter by tenant_id (never scan all orders)
+        if not initial_orders:
+            try:
+                session_maker = _get_session_maker()
+                async with session_maker() as db:
+                    result = await db.execute(
+                        text("""
+                            SELECT
+                                id::text AS order_id,
+                                status,
+                                current_risk_score,
+                                driver_id::text AS driver_id,
+                                origin_lat,
+                                origin_lng,
+                                destination_lat,
+                                destination_lng,
+                                planned_eta,
+                                current_eta
+                            FROM orders
+                            WHERE tenant_id = :tenant_id
+                            ORDER BY updated_at DESC
+                            LIMIT 200
+                        """),
+                        {"tenant_id": tenant_id},
+                    )
+                    for row in result:
+                        initial_orders.append({
+                            "order_id": row.order_id,
+                            "status": row.status or "active",
+                            "risk_score": float(row.current_risk_score or 0.5),
+                            "driver_id": row.driver_id or "",
+                            "latitude": float(row.origin_lat or 0.0),
+                            "longitude": float(row.origin_lng or 0.0),
+                            "destination_lat": float(row.destination_lat or 0.0),
+                            "destination_lng": float(row.destination_lng or 0.0),
+                            "planned_eta": row.planned_eta.isoformat() if row.planned_eta else None,
+                            "current_eta": row.current_eta.isoformat() if row.current_eta else None,
+                        })
+            except Exception as e:
+                logger.warning(
+                    "initial_state_db_load_failed",
+                    tenant_id=tenant_id,
+                    error=str(e),
+                )
 
         await websocket.send_json({
             "type": "initial_state",
-            "tenant_id": tenant_id,
-            "orders": initial_orders,
-            "message": "Connected to fleet updates",
+            "data": {
+                "orders": initial_orders,
+                "tenant_id": tenant_id,
+                "message": "Connected to fleet updates",
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         websocket_messages_sent_total.labels(message_type="initial_state").inc()
 

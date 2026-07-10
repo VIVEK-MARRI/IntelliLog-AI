@@ -1,4 +1,4 @@
-"""
+﻿"""
 Pydantic models for request/response validation.
 Uses camelCase for API responses (common in React frontends).
 """
@@ -83,7 +83,7 @@ class Waypoint(BaseModel):
 
 
 class CreateOrderRequest(BaseModel):
-    """Create new order — accepts flat fields matching frontend send format."""
+    """Create new order â€” accepts flat fields matching frontend send format."""
 
     order_id: Optional[str] = None  # backend assigns UUID if omitted
     driver_id: str
@@ -121,7 +121,12 @@ class ImportResult(BaseModel):
 
 
 class OrderResponse(BaseModel):
-    """Order response with current state."""
+    """
+    Order response with current state.
+
+    All fields from the DB are included so REST response and WebSocket
+    initial_state have the same shape (enabling merge not replace in fleetStore).
+    """
 
     orderId: str = Field(alias="order_id")
     driverId: str = Field(alias="driver_id")
@@ -133,6 +138,9 @@ class OrderResponse(BaseModel):
     riskLevel: RiskLevel = Field(alias="risk_level")
     latitude: float = Field(alias="origin_lat")
     longitude: float = Field(alias="origin_lng")
+    # Destination coordinates for route rendering — previously absent from response
+    destinationLat: float = Field(alias="destination_lat", default=0.0)
+    destinationLng: float = Field(alias="destination_lng", default=0.0)
     speed: float
     stopsRemaining: int = Field(alias="stops_remaining")
     createdAt: datetime = Field(alias="created_at")
@@ -353,7 +361,7 @@ class CopilotQueryResponse(BaseModel):
 
 
 # ============================================================================
-# WORKSPACE COPILOT — structured AI assistant response
+# WORKSPACE COPILOT â€” structured AI assistant response
 # ============================================================================
 
 

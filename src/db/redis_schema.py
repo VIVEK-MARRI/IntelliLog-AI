@@ -111,6 +111,11 @@ class FeatureCacheDict(TypedDict, total=False):
 
 
 FEATURES_CACHE_KEY_PATTERN = "features:{order_id}"
+
+
+def get_features_key(order_id: str) -> str:
+    """Return the Redis key for an order's pre-computed ML features."""
+    return FEATURES_CACHE_KEY_PATTERN.format(order_id=order_id)
 """
 Pattern: features:{order_id}
 Type: Redis Hash
@@ -372,6 +377,55 @@ def get_redis_key(pattern: str, **kwargs) -> str:
     return pattern.format(**kwargs)
 
 
+def get_shipment_updates_channel() -> str:
+    """Return the pub/sub channel name for shipment/route updates."""
+    return "shipment:updates"
+
+
+def get_features_key(order_id: str) -> str:
+    """
+    Return the Redis key for the ML feature cache for a given order.
+
+    Pattern: features:{order_id}
+    TTL: FEATURES_CACHE_TTL_SECONDS (5 minutes)
+
+    Example:
+        >>> get_features_key("550e8400-e29b-41d4-a716-446655440000")
+        'features:550e8400-e29b-41d4-a716-446655440000'
+    """
+    return FEATURES_CACHE_KEY_PATTERN.format(order_id=order_id)
+
+
+def get_order_state_key(order_id: str) -> str:
+    """
+    Return the Redis key for the live order state hash.
+
+    Pattern: order:{order_id}
+    (Note: ORDER_STATE_KEY_PATTERN documents 'order:state:{order_id}' but the
+    actual codebase consistently uses 'order:{order_id}'. This helper matches
+    the actual usage — see orders.py, predictions.py, routes.py.)
+
+    Example:
+        >>> get_order_state_key("order-1")
+        'order:order-1'
+    """
+    return f"order:{order_id}"
+
+
+def get_fleet_positions_key(tenant_id: str) -> str:
+    """
+    Return the Redis key for the fleet positions sorted set for a tenant.
+
+    Pattern: fleet:{tenant_id}:positions
+    TTL: FLEET_POSITIONS_TTL_SECONDS (30 minutes)
+
+    Example:
+        >>> get_fleet_positions_key("tenant-1")
+        'fleet:tenant-1:positions'
+    """
+    return FLEET_POSITIONS_KEY_PATTERN.format(tenant_id=tenant_id)
+
+
 def get_prediction_updates_channel() -> str:
     """Return the pub/sub channel name for prediction updates."""
     return "predictions:updates"
@@ -380,6 +434,21 @@ def get_prediction_updates_channel() -> str:
 def get_pubsub_events_channel(tenant_id: str) -> str:
     """Return the pub/sub channel name for a tenant's events."""
     return TENANT_EVENTS_CHANNEL_PATTERN.format(tenant_id=tenant_id)
+
+
+def get_agent_updates_channel() -> str:
+    """
+    Return the pub/sub channel name for agent decision updates.
+
+    Used by agent tools to broadcast decisions (reroute, alert, no-action)
+    to any subscriber interested in agent activity across all tenants.
+    Tenant-specific events are also published separately to the tenant channel.
+
+    Example:
+        >>> get_agent_updates_channel()
+        'agent:updates'
+    """
+    return "agent:updates"
 
 
 # ============================================================================

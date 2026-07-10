@@ -71,6 +71,19 @@ class FakeAsyncSession:
         self.predictions: dict[tuple[str, str], dict[str, Any]] = {}
         self.config: dict[str, str] = {}
 
+    def get_bind(self) -> Any:
+        """
+        Simulate SQLAlchemy's Session.get_bind() for test purposes.
+        Returns a fake object with dialect.name == 'sqlite' so that
+        _set_tenant_context() takes the early-return path (skips
+        set_config which is PostgreSQL-only).
+        """
+        class FakeDialect:
+            name = "sqlite"
+        class FakeBind:
+            dialect = FakeDialect()
+        return FakeBind()
+
     async def execute(self, statement: Any, parameters: dict[str, Any] | None = None) -> FakeQueryResult:
         sql = str(statement)
         params = parameters or {}

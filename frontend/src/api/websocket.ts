@@ -471,16 +471,17 @@ class WebSocketManager {
       }
 
       case 'initial_state': {
-        const payload = message.data as Record<string, any>
+        const payload = message.data as Record<string, any> | undefined
+        if (!payload) break
         const wsOrders = (payload.orders || []) as Array<{
           order_id: string; status: string; risk_score: number;
-          latitude: number; longitude: number;
+          latitude: number; longitude: number; driver_id?: string;
         }>
         if (wsOrders.length === 0) break
 
         const liveOrders: LiveOrder[] = wsOrders.map((o) => ({
           id: o.order_id,
-          driver_id: '',
+          driver_id: o.driver_id ?? '',
           status: o.status === 'completed' ? 'completed' : 'active' as LiveOrder['status'],
           planned_eta: new Date().toISOString(),
           current_eta: new Date().toISOString(),
