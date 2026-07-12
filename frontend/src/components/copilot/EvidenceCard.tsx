@@ -42,9 +42,8 @@ const ClickableEntityLink: React.FC<ClickableEntityLinkProps> = ({ id, validated
     e.stopPropagation()
     if (isOrder) {
       navigate(`/orders/${id}`)
-    } else {
-      navigate(`/drivers/${id}`)
     }
+    // Driver detail page not yet available — driver IDs display as read-only badges
   }
   return (
     <button

@@ -146,16 +146,12 @@ async def websocket_endpoint(websocket: WebSocket):
                     result = await db.execute(
                         text("""
                             SELECT
-                                id::text AS order_id,
+                                CAST(id AS TEXT) AS order_id,
                                 status,
                                 current_risk_score,
-                                driver_id::text AS driver_id,
-                                origin_lat,
-                                origin_lng,
-                                destination_lat,
-                                destination_lng,
+                                CAST(driver_id AS TEXT) AS driver_id,
                                 planned_eta,
-                                current_eta
+                                updated_at
                             FROM orders
                             WHERE tenant_id = :tenant_id
                             ORDER BY updated_at DESC
@@ -169,18 +165,18 @@ async def websocket_endpoint(websocket: WebSocket):
                             "status": row.status or "active",
                             "risk_score": float(row.current_risk_score or 0.5),
                             "driver_id": row.driver_id or "",
-                            "latitude": float(row.origin_lat or 0.0),
-                            "longitude": float(row.origin_lng or 0.0),
-                            "destination_lat": float(row.destination_lat or 0.0),
-                            "destination_lng": float(row.destination_lng or 0.0),
+                            # lat/lng not stored in orders table — frontend
+                            # should use GPS events or Redis for position data
+                            "latitude": 0.0,
+                            "longitude": 0.0,
                             "planned_eta": row.planned_eta.isoformat() if row.planned_eta else None,
-                            "current_eta": row.current_eta.isoformat() if row.current_eta else None,
                         })
             except Exception as e:
-                logger.warning(
+                logger.error(
                     "initial_state_db_load_failed",
                     tenant_id=tenant_id,
                     error=str(e),
+                    note="fleet_map_fallback_broken_check_schema",
                 )
 
         await websocket.send_json({

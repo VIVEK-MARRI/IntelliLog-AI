@@ -321,7 +321,7 @@ async def create_order(
                 status = EXCLUDED.status,
                 planned_stops = EXCLUDED.planned_stops,
                 planned_eta = EXCLUDED.planned_eta,
-                updated_at = NOW()
+                updated_at = CURRENT_TIMESTAMP
             """
         ),
         {

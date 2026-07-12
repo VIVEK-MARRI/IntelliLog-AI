@@ -89,7 +89,7 @@ async def node_update_order_state(state: AgentGraphState) -> AgentGraphState:
         if not all([order_id, driver_id, tenant_id]):
             state["should_skip"] = True
             state["error"] = "Missing required fields in GPS event"
-            await logger.awarning("gps_event_malformed", event=gps_event)
+            logger.warning("gps_event_malformed", event=gps_event)
             return state
         
         # Try to load existing state
@@ -113,7 +113,7 @@ async def node_update_order_state(state: AgentGraphState) -> AgentGraphState:
                 current_eta=datetime.fromisoformat(gps_event["planned_eta"]),
                 driver_on_time_rate=gps_event.get("driver_on_time_rate", 0.85),
             )
-            await logger.ainfo("new_order_state_created", order_id=order_id)
+            logger.info("new_order_state_created", order_id=order_id)
         else:
             # Update existing state with new GPS data
             order_state.ping_sequence += 1
@@ -144,7 +144,7 @@ async def node_update_order_state(state: AgentGraphState) -> AgentGraphState:
                     gps_event["planned_lng"],
                 ) * 1000  # Convert km to meters
             
-            await logger.ainfo(
+            logger.info(
                 "order_state_updated",
                 order_id=order_id,
                 ping_sequence=order_state.ping_sequence,
@@ -160,7 +160,7 @@ async def node_update_order_state(state: AgentGraphState) -> AgentGraphState:
     except Exception as e:
         state["should_skip"] = True
         state["error"] = f"Failed to update order state: {str(e)}"
-        await logger.aerror("update_order_state_failed", error=str(e))
+        logger.error("update_order_state_failed", error=str(e))
         return state
 
 
@@ -214,17 +214,17 @@ async def node_compute_features(state: AgentGraphState) -> AgentGraphState:
         if not feature_builder.validate_features(features):
             state["should_skip"] = True
             state["error"] = "Feature validation failed"
-            await logger.awarning("feature_validation_failed", order_id=order_state.order_id)
+            logger.warning("feature_validation_failed", order_id=order_state.order_id)
             return state
         
         state["features"] = features
-        await logger.ainfo("features_computed", order_id=order_state.order_id)
+        logger.info("features_computed", order_id=order_state.order_id)
         return state
     
     except Exception as e:
         state["should_skip"] = True
         state["error"] = f"Failed to compute features: {str(e)}"
-        await logger.aerror("compute_features_failed", error=str(e))
+        logger.error("compute_features_failed", error=str(e))
         return state
 
 
@@ -251,7 +251,7 @@ async def node_run_prediction(state: AgentGraphState) -> AgentGraphState:
             if seconds_since_last < 30:
                 # Use cached risk score
                 state["prediction"] = None  # No new prediction, use cached
-                await logger.ainfo(
+                logger.info(
                     "prediction_rate_limited",
                     order_id=order_state.order_id,
                     seconds_since_last=seconds_since_last,
@@ -270,7 +270,7 @@ async def node_run_prediction(state: AgentGraphState) -> AgentGraphState:
         order_state.last_prediction_at = datetime.now(timezone.utc)
         
         state["prediction"] = prediction
-        await logger.ainfo(
+        logger.info(
             "prediction_completed",
             order_id=order_state.order_id,
             risk_score=prediction.risk_score,
@@ -282,7 +282,7 @@ async def node_run_prediction(state: AgentGraphState) -> AgentGraphState:
     except Exception as e:
         state["should_skip"] = True
         state["error"] = f"Prediction failed: {str(e)}"
-        await logger.aerror("run_prediction_failed", error=str(e))
+        logger.error("run_prediction_failed", error=str(e))
         return state
 
 
@@ -337,7 +337,7 @@ async def node_evaluate_risk(state: AgentGraphState) -> str:
         return "no_action"
     
     except Exception as e:
-        await logger.aerror("evaluate_risk_failed", error=str(e))
+        logger.error("evaluate_risk_failed", error=str(e))
         return "no_action"
 
 
@@ -396,7 +396,7 @@ async def node_alert_customer(state: AgentGraphState) -> AgentGraphState:
             else:
                 order_state.last_decision = "alert_only"
             order_state.last_decision_at = datetime.now(timezone.utc)
-            await logger.ainfo(
+            logger.info(
                 "customer_notification_sent",
                 order_id=order_state.order_id,
                 alert_count=order_state.alert_sent_count,
@@ -406,7 +406,7 @@ async def node_alert_customer(state: AgentGraphState) -> AgentGraphState:
         return state
     
     except Exception as e:
-        await logger.aerror("alert_customer_failed", order_id=state["order_state"].order_id, error=str(e))
+        logger.error("alert_customer_failed", order_id=state["order_state"].order_id, error=str(e))
         return state
 
 
@@ -435,7 +435,7 @@ async def node_invoke_reroute(state: AgentGraphState) -> AgentGraphState:
             })
         
         if not remaining_stops:
-            await logger.ainfo("no_remaining_stops", order_id=order_state.order_id)
+            logger.info("no_remaining_stops", order_id=order_state.order_id)
             return state
         
         # Call optimizer
@@ -470,13 +470,13 @@ async def node_invoke_reroute(state: AgentGraphState) -> AgentGraphState:
                 redis_client=state["redis_client"],
             )
             
-            await logger.ainfo(
+            logger.info(
                 "reroute_successful",
                 order_id=order_state.order_id,
                 time_saved_minutes=optimizer_result.time_saved_minutes,
             )
         else:
-            await logger.awarning(
+            logger.warning(
                 "reroute_not_beneficial",
                 order_id=order_state.order_id,
                 reason=optimizer_result.solver_status,
@@ -486,7 +486,7 @@ async def node_invoke_reroute(state: AgentGraphState) -> AgentGraphState:
         return state
     
     except Exception as e:
-        await logger.aerror("invoke_reroute_failed", order_id=state["order_state"].order_id, error=str(e))
+        logger.error("invoke_reroute_failed", order_id=state["order_state"].order_id, error=str(e))
         return state
 
 
@@ -498,7 +498,7 @@ async def node_record_no_action(state: AgentGraphState) -> AgentGraphState:
             order_state.last_decision = "no_action"
             order_state.last_decision_at = datetime.now(timezone.utc)
             
-            await logger.ainfo(
+            logger.info(
                 "decision_no_action",
                 order_id=order_state.order_id,
                 risk_score=order_state.current_risk_score,
@@ -507,7 +507,7 @@ async def node_record_no_action(state: AgentGraphState) -> AgentGraphState:
         return state
     
     except Exception as e:
-        await logger.aerror("record_no_action_failed", error=str(e))
+        logger.error("record_no_action_failed", error=str(e))
         return state
 
 
@@ -547,7 +547,7 @@ async def node_write_audit_log(state: AgentGraphState) -> AgentGraphState:
             redis_client=state.get("redis_client"),
         )
         
-        await logger.ainfo(
+        logger.info(
             "audit_log_written",
             order_id=order_state.order_id,
             audit_log_id=audit_log_id,
@@ -557,7 +557,7 @@ async def node_write_audit_log(state: AgentGraphState) -> AgentGraphState:
     
     except Exception as e:
         # Log but don't fail
-        await logger.aerror("write_audit_log_failed", error=str(e))
+        logger.error("write_audit_log_failed", error=str(e))
         return state
 
 
@@ -648,7 +648,7 @@ Return valid JSON:
             state["llm_risk_drivers"] = result.structured.get("risk_drivers", [])
             state["llm_suggested_actions"] = result.structured.get("suggested_actions", [])
             state["llm_severity"] = result.structured.get("severity", "medium")
-            await logger.ainfo(
+            logger.info(
                 "llm_analysis_complete",
                 order_id=order_id,
                 severity=state["llm_severity"],
@@ -656,12 +656,12 @@ Return valid JSON:
             )
         else:
             state["llm_insight"] = "LLM analysis unavailable"
-            await logger.awarning("llm_analysis_failed", order_id=order_id)
+            logger.warning("llm_analysis_failed", order_id=order_id)
 
         return state
 
     except Exception as e:
-        await logger.aerror("llm_analysis_error", error=str(e))
+        logger.error("llm_analysis_error", error=str(e))
         return state
 
 
@@ -711,7 +711,7 @@ async def node_generate_insight(state: AgentGraphState) -> AgentGraphState:
         return state
 
     except Exception as e:
-        await logger.aerror("generate_insight_error", error=str(e))
+        logger.error("generate_insight_error", error=str(e))
         state["generated_insight"] = "Insight generation failed"
         return state
 

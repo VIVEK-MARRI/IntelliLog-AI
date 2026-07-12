@@ -40,7 +40,9 @@ def test_predict_returns_high_risk_result() -> None:
     assert result.order_id == "order-1"
     assert result.is_high_risk is True
     assert result.risk_score == pytest.approx(0.84)
-    assert result.predicted_delay_minutes == 15.0
+    # New proportional formula: (risk_score - threshold) / (1.0 - threshold) * 60
+    # For score=0.84, threshold=0.7: (0.14 / 0.30) * 60 = 28.0
+    assert result.predicted_delay_minutes == pytest.approx(28.0, abs=0.5)
     assert result.confidence == "high"
     assert result.model_version == "2024-01-01"
     assert result.inference_latency_ms >= 0

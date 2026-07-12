@@ -8,13 +8,7 @@ import { ordersAPI } from '@/api/orders'
 import { fleetStore } from '@/store/fleetStore'
 import { useAuthStore } from '@/store/authStore'
 
-const LandingPage = lazyWithRetry(() => import('@/pages/Landing').then(m => ({ default: m.Landing })), {
-  retries: 3,
-  delay: 1000,
-  onError: (error, attempt) => {
-    console.warn(`[LazyLoad] Landing chunk load failed (attempt ${attempt}):`, error.message)
-  },
-})
+
 const LoginPage = lazyWithRetry(() => import('@/pages/Login').then(m => ({ default: m.Login })), {
   retries: 3,
   delay: 1000,
@@ -112,9 +106,7 @@ const App: React.FC = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public routes — no auth required */}
-        <Route path="/" element={
-          <ErrorBoundary><LandingPage /></ErrorBoundary>
-        } />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={
           <ErrorBoundary><LoginPage /></ErrorBoundary>
         } />

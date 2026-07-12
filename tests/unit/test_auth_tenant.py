@@ -25,4 +25,4 @@ def test_rest_and_ws_agree_in_dev_mode():
 def _run(coro):
     import asyncio
 
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)

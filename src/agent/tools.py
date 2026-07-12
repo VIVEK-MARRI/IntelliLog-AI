@@ -94,7 +94,7 @@ async def call_route_optimizer(
             )
             response.raise_for_status()
         except httpx.TimeoutException:
-            await logger.awarning(
+            logger.warning(
                 "route_optimizer_timeout",
                 order_id=order_id,
                 duration_ms=(datetime.now(timezone.utc) - start_time).total_seconds() * 1000,
@@ -105,7 +105,7 @@ async def call_route_optimizer(
                 solver_duration_ms=(datetime.now(timezone.utc) - start_time).total_seconds() * 1000,
             )
         except httpx.HTTPError as e:
-            await logger.aerror(
+            logger.error(
                 "route_optimizer_http_error",
                 order_id=order_id,
                 error=str(e),
@@ -121,7 +121,7 @@ async def call_route_optimizer(
         
         time_saved = result_data.get("time_saved_minutes", 0.0)
         
-        await logger.ainfo(
+        logger.info(
             "route_optimizer_success",
             order_id=order_id,
             time_saved_minutes=time_saved,
@@ -138,7 +138,7 @@ async def call_route_optimizer(
         )
     
     except Exception as e:
-        await logger.aerror(
+        logger.error(
             "route_optimizer_failed",
             order_id=order_id,
             error=str(e),
@@ -183,7 +183,7 @@ async def send_customer_notification(
         last_notified = await redis_client.get(rate_limit_key)
         
         if last_notified is not None:
-            await logger.ainfo(
+            logger.info(
                 "notification_rate_limited",
                 order_id=order_id,
                 reason="notification_sent_in_last_30_min",
@@ -200,7 +200,7 @@ async def send_customer_notification(
         webhook_url = await redis_client.get(webhook_key)
         
         if not webhook_url:
-            await logger.awarning(
+            logger.warning(
                 "no_webhook_configured",
                 tenant_id=tenant_id,
             )
@@ -230,7 +230,7 @@ async def send_customer_notification(
             )
             response.raise_for_status()
         except httpx.TimeoutException:
-            await logger.awarning(
+            logger.warning(
                 "webhook_timeout",
                 order_id=order_id,
                 webhook_url=webhook_url,
@@ -240,7 +240,7 @@ async def send_customer_notification(
                 error_message="Webhook request timed out",
             )
         except httpx.HTTPError as e:
-            await logger.aerror(
+            logger.error(
                 "webhook_http_error",
                 order_id=order_id,
                 webhook_url=webhook_url,
@@ -259,7 +259,7 @@ async def send_customer_notification(
             "1",
         )
         
-        await logger.ainfo(
+        logger.info(
             "notification_sent",
             order_id=order_id,
             tenant_id=tenant_id,
@@ -272,7 +272,7 @@ async def send_customer_notification(
         )
     
     except Exception as e:
-        await logger.aerror(
+        logger.error(
             "send_notification_failed",
             order_id=order_id,
             error=str(e),
@@ -314,7 +314,7 @@ async def update_order_eta(
         )
         
         if result.rowcount == 0:
-            await logger.awarning(
+            logger.warning(
                 "order_not_found_for_eta_update",
                 order_id=order_id,
             )
@@ -356,7 +356,7 @@ async def update_order_eta(
                 ),
             )
         
-        await logger.ainfo(
+        logger.info(
             "eta_updated",
             order_id=order_id,
             new_eta=new_eta.isoformat(),
@@ -366,7 +366,7 @@ async def update_order_eta(
         return True
     
     except Exception as e:
-        await logger.aerror(
+        logger.error(
             "update_eta_failed",
             order_id=order_id,
             error=str(e),
@@ -428,7 +428,7 @@ async def write_audit_log(
         # Mock audit log ID
         audit_log_id = f"audit:{order_id}:{datetime.now(timezone.utc).timestamp()}"
         
-        await logger.ainfo(
+        logger.info(
             "agent_decision_audit",
             **audit_record,
             audit_log_id=audit_log_id,
@@ -476,7 +476,7 @@ async def write_audit_log(
         return audit_log_id
     
     except Exception as e:
-        await logger.aerror(
+        logger.error(
             "write_audit_log_failed",
             order_id=order_id,
             error=str(e),

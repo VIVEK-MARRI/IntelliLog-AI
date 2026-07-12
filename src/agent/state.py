@@ -138,7 +138,7 @@ class StateManager:
             return OrderAgentState(**state_dict)
         
         except Exception as e:
-            await logger.aerror(
+            logger.error(
                 "load_state_failed",
                 order_id=order_id,
                 error=str(e)
@@ -172,7 +172,7 @@ class StateManager:
             )
             
         except Exception as e:
-            await logger.aerror(
+            logger.error(
                 "save_state_failed",
                 order_id=state.order_id,
                 error=str(e)
@@ -191,7 +191,7 @@ class StateManager:
             await self.redis.delete(key)
             
         except Exception as e:
-            await logger.aerror(
+            logger.error(
                 "delete_state_failed",
                 order_id=order_id,
                 error=str(e)
@@ -224,7 +224,7 @@ class StateManager:
             return orders
         
         except Exception as e:
-            await logger.aerror(
+            logger.error(
                 "get_active_orders_failed",
                 tenant_id=tenant_id,
                 error=str(e)

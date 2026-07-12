@@ -136,10 +136,10 @@ class AgentRunner:
             # Prediction service
             self.prediction_service = PredictionService(model_dir=self.models_dir)
             
-            await logger.ainfo("agent_runner_initialized")
+            logger.info("agent_runner_initialized")
         
         except Exception as e:
-            await logger.aerror("agent_runner_setup_failed", error=str(e))
+            logger.error("agent_runner_setup_failed", error=str(e))
             raise
     
     async def cleanup(self):
@@ -152,14 +152,14 @@ class AgentRunner:
             if self.db_engine:
                 await self.db_engine.dispose()
             
-            await logger.ainfo("agent_runner_cleanup_complete")
+            logger.info("agent_runner_cleanup_complete")
         
         except Exception as e:
-            await logger.aerror("agent_runner_cleanup_failed", error=str(e))
+            logger.error("agent_runner_cleanup_failed", error=str(e))
     
     async def run_forever(self):
         """Main event loop - runs indefinitely."""
-        await logger.ainfo("agent_runner_starting")
+        logger.info("agent_runner_starting")
         
         try:
             # Create consumer group if it doesn't exist
@@ -182,13 +182,13 @@ class AgentRunner:
                     await asyncio.sleep(0.1)  # Small delay between batches
                 
                 except Exception as e:
-                    await logger.aerror("batch_processing_failed", error=str(e))
+                    logger.error("batch_processing_failed", error=str(e))
                     await asyncio.sleep(1)  # Backoff on error
         
         except KeyboardInterrupt:
-            await logger.ainfo("agent_runner_stopped_by_user")
+            logger.info("agent_runner_stopped_by_user")
         except Exception as e:
-            await logger.aerror("agent_runner_fatal_error", error=str(e))
+            logger.error("agent_runner_fatal_error", error=str(e))
             raise
     
     async def process_batch(self):
@@ -212,14 +212,14 @@ class AgentRunner:
                     try:
                         await self.process_event(message_id, event_data)
                     except Exception as e:
-                        await logger.aerror(
+                        logger.error(
                             "event_processing_error",
                             message_id=message_id,
                             error=str(e),
                         )
         
         except Exception as e:
-            await logger.aerror("batch_read_failed", error=str(e))
+            logger.error("batch_read_failed", error=str(e))
     
     async def process_event(self, message_id: bytes, event_data: dict) -> Optional[dict]:
         """
@@ -304,7 +304,7 @@ class AgentRunner:
                 # Acknowledge the event
                 await self.redis.xack("gps_pings", "delay_agent", message_id)
                 
-                await logger.ainfo(
+                logger.info(
                     "event_processed",
                     order_id=order_id,
                     tenant_id=tenant_id,
@@ -320,7 +320,7 @@ class AgentRunner:
             EVENTS_PROCESSED.labels(tenant_id=tenant_id, status="failed").inc()
             PROCESSING_FAILURES.labels(tenant_id=tenant_id, reason=str(type(e).__name__)).inc()
             
-            await logger.aerror(
+            logger.error(
                 "event_processing_failed",
                 message_id=message_id,
                 error=str(e),
@@ -332,34 +332,50 @@ class AgentRunner:
             return None
     
     async def check_pending_events(self):
-        """Check and retry stale pending events (older than 30 seconds)."""
+        """Check and retry stale pending events (older than 30 seconds).
+
+        Uses the modern redis-py dict-format API for xpending/xpending_range.
+        The old tuple-unpack (message_id, consumer, idle_ms, delivery_count)
+        was incompatible with redis-py>=4.x, which returns dicts — that's what
+        caused the 'error="0"' warning: str() on the first element of the tuple
+        returned "0" (the count field).
+        """
         try:
-            # Get pending events
-            pending = await self.redis.xpending(
+            # xpending summary — redis-py>=4 returns a dict with 'pending' key
+            pending_summary = await self.redis.xpending(
                 "gps_pings",
                 "delay_agent",
             )
-            
-            if not pending or pending[0] == 0:
+            # Handle both dict and legacy tuple returns gracefully
+            pending_count = (
+                pending_summary.get("pending", 0)
+                if isinstance(pending_summary, dict)
+                else (pending_summary[0] if pending_summary else 0)
+            )
+            if not pending_count:
                 return
-            
-            # Get stale events (older than 30 seconds)
-            now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+
             stale_threshold_ms = 30 * 1000
-            
+
+            # xpending_range — redis-py>=4 returns list of dicts
             stale_events = await self.redis.xpending_range(
                 "gps_pings",
                 "delay_agent",
-                "-",
-                "+",
+                min="-",
+                max="+",
                 count=10,
             )
-            
+
             for event_info in stale_events:
-                message_id, consumer, idle_ms, delivery_count = event_info
-                
+                if isinstance(event_info, dict):
+                    message_id = event_info["message_id"]
+                    idle_ms = event_info["time_since_delivered"]
+                    delivery_count = event_info["times_delivered"]
+                else:
+                    # Legacy tuple format fallback
+                    message_id, _consumer, idle_ms, delivery_count = event_info
+
                 if idle_ms > stale_threshold_ms and delivery_count < self.max_retries:
-                    # Retry
                     await self.redis.xclaim(
                         "gps_pings",
                         "delay_agent",
@@ -367,9 +383,9 @@ class AgentRunner:
                         idle_ms,
                         [message_id],
                     )
-        
+
         except Exception as e:
-            await logger.awarning("pending_event_check_failed", error=str(e))
+            logger.warning("pending_event_check_failed", error=str(e), exc_type=type(e).__name__)
     
     async def handle_failed_event(self, message_id: bytes, event_data: dict):
         """Send failed event to DLQ."""
@@ -388,10 +404,10 @@ class AgentRunner:
             # Acknowledge the failed event
             await self.redis.xack("gps_pings", "delay_agent", message_id)
             
-            await logger.awarning("event_moved_to_dlq", message_id=message_id)
+            logger.warning("event_moved_to_dlq", message_id=message_id)
         
         except Exception as e:
-            await logger.aerror("dlq_write_failed", error=str(e))
+            logger.error("dlq_write_failed", error=str(e))
     
     def get_metrics(self) -> bytes:
         """Return Prometheus metrics."""

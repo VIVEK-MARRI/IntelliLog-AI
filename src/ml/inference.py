@@ -167,8 +167,14 @@ class PredictionService:
             confidence = "low"
         
         # ===== Predicted Delay =====
-        # Rough estimate: if high risk, assume ~15 min delay
-        predicted_delay = 15.0 if is_high_risk else 0.0
+        # Risk-proportional estimate: scales from 0 min at threshold to 60 min at risk=1.0.
+        # This is an approximation until a dedicated regression model is trained.
+        if is_high_risk:
+            excess = risk_score - self.optimal_threshold
+            range_ = max(1.0 - self.optimal_threshold, 1e-6)
+            predicted_delay = round((excess / range_) * 60.0, 1)
+        else:
+            predicted_delay = 0.0
         
         latency_ms = (time.time() - start_time) * 1000
         
@@ -234,7 +240,13 @@ class PredictionService:
             confidence = "low"
         
         # ===== Predicted Delay =====
-        predicted_delay = 15.0 if is_high_risk else 0.0
+        # Risk-proportional estimate (same logic as predict() above).
+        if is_high_risk:
+            excess = risk_score - self.optimal_threshold
+            range_ = max(1.0 - self.optimal_threshold, 1e-6)
+            predicted_delay = round((excess / range_) * 60.0, 1)
+        else:
+            predicted_delay = 0.0
         
         # ===== SHAP Explainability =====
         explainer = self._get_explainer()

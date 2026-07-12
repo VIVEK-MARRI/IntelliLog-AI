@@ -182,7 +182,9 @@ def test_predict_high_risk_and_confidence() -> None:
     result = service.predict("order-1", make_valid_features(service))
 
     assert result.is_high_risk is True
-    assert result.predicted_delay_minutes == 15.0
+    # New proportional formula: (risk_score - threshold) / (1.0 - threshold) * 60
+    # For score=0.92, threshold=0.7: (0.22 / 0.30) * 60 = 44.0
+    assert result.predicted_delay_minutes == pytest.approx(44.0, abs=0.5)
     assert result.confidence == "high"
     assert result.top_risk_factors == []
 

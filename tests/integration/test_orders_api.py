@@ -6,6 +6,7 @@ These exercise real request paths against the live Docker postgres + redis:
 - position update publishes to the gps_pings Redis Stream that the agent-worker consumes
 """
 import asyncio
+import os
 
 import pytest
 import redis.asyncio as aioredis
@@ -54,7 +55,8 @@ def test_position_update_publishes_to_gps_stream(client):
 
 
 async def _read_recent(order_id: str, count: int = 20):
-    client = aioredis.from_url("redis://redis:6379", decode_responses=True)
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379")
+    client = aioredis.from_url(redis_url, decode_responses=True)
     try:
         raw = await client.xrevrange(STREAM, count=count)
         out = []
