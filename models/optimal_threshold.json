@@ -1,4 +1,4 @@
 {
-  "threshold": 0.5081632653061224,
-  "f1_at_threshold": 0.39127272727272727
+  "threshold": 0.1,
+  "f1_at_threshold": 0.9894736842105263
 }

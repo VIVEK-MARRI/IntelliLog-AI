@@ -89,7 +89,7 @@ async def node_update_order_state(state: AgentGraphState) -> AgentGraphState:
         if not all([order_id, driver_id, tenant_id]):
             state["should_skip"] = True
             state["error"] = "Missing required fields in GPS event"
-            logger.warning("gps_event_malformed", event=gps_event)
+            logger.warning("gps_event_malformed", raw_event=gps_event)
             return state
         
         # Try to load existing state

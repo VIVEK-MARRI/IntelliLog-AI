@@ -65,17 +65,8 @@ export const AICommandCenter: React.FC = () => {
       const newIntel: Map<string, OrderIntelligence> = new Map()
 
       for (const order of highRiskOrders) {
-        const prediction = batchResults[order.id] ?? {
-          order_id: order.id,
-          risk_score: order.risk_score,
-          isHighRisk: true,
-          confidence: 0,
-          topRiskFactors: [],
-          predicted_delay_minutes: 0,
-          model_version: '',
-          cached: false,
-          latency_ms: 0,
-        }
+        const prediction = batchResults[order.id]
+        if (!prediction) continue
 
         const decisionResult = decisionsResults.find((d) => d.orderId === order.id)
         const latestDecision = decisionResult?.decisions?.latestDecision ?? null

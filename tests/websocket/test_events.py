@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import uuid
 
 import fakeredis.aioredis
 import pytest
@@ -12,6 +11,10 @@ from tests.conftest import StubPredictionService
 from src.api.main import app
 from src.api.routers import websocket as websocket_router
 import src.api.main as main_module
+
+# In dev-bypass mode the authenticated tenant is always "dev-tenant-id".
+# Tests that publish to a channel to verify delivery must use this constant.
+DEV_TENANT_ID = "dev-tenant-id"
 
 
 class StartupPredictionService(StubPredictionService):
@@ -38,9 +41,8 @@ def websocket_client(monkeypatch):
 @pytest.mark.websocket
 def test_websocket_connection_and_ping_pong(websocket_client) -> None:
     client, _ = websocket_client
-    tenant_id = str(uuid.uuid4())
 
-    with client.websocket_connect(f"/ws/{tenant_id}") as websocket:
+    with client.websocket_connect("/ws") as websocket:
         initial = websocket.receive_json()
         assert initial["type"] == "initial_state"
         websocket.send_json({"type": "ping"})
@@ -50,8 +52,8 @@ def test_websocket_connection_and_ping_pong(websocket_client) -> None:
 @pytest.mark.websocket
 def test_websocket_broadcast_and_tenant_isolation(websocket_client) -> None:
     client, _ = websocket_client
-    tenant_a = str(uuid.uuid4())
-    tenant_b = str(uuid.uuid4())
+    tenant_a = "tenant-a"
+    tenant_b = "tenant-b"
 
     class DummySocket:
         def __init__(self) -> None:
@@ -74,11 +76,11 @@ def test_websocket_broadcast_and_tenant_isolation(websocket_client) -> None:
 @pytest.mark.websocket
 def test_websocket_receives_tenant_channel_events(websocket_client) -> None:
     client, fake_redis = websocket_client
-    tenant_id = str(uuid.uuid4())
-    channel = f"tenant:{tenant_id}:events"
+    # Dev-bypass always authenticates as DEV_TENANT_ID; publish to that channel.
+    channel = f"tenant:{DEV_TENANT_ID}:events"
 
-    with client.websocket_connect(f"/ws/{tenant_id}") as websocket:
-        websocket.receive_json()
+    with client.websocket_connect("/ws") as websocket:
+        websocket.receive_json()  # consume initial_state
         asyncio.run(fake_redis.publish(channel, json.dumps({"type": "shipment_updated", "order_id": "order-1"})))
         message = websocket.receive_json()
         assert message["type"] == "shipment_updated"
@@ -88,14 +90,13 @@ def test_websocket_receives_tenant_channel_events(websocket_client) -> None:
 @pytest.mark.websocket
 def test_websocket_reconnects_and_receives_event_types(websocket_client) -> None:
     client, fake_redis = websocket_client
-    tenant_id = str(uuid.uuid4())
-    channel = f"tenant:{tenant_id}:events"
+    channel = f"tenant:{DEV_TENANT_ID}:events"
 
-    with client.websocket_connect(f"/ws/{tenant_id}") as websocket:
-        websocket.receive_json()
+    with client.websocket_connect("/ws") as websocket:
+        websocket.receive_json()  # consume initial_state
 
-    with client.websocket_connect(f"/ws/{tenant_id}") as websocket:
-        websocket.receive_json()
+    with client.websocket_connect("/ws") as websocket:
+        websocket.receive_json()  # consume initial_state
         for event_type in ["prediction_updated", "agent_updated", "route_updated", "shipment_updated"]:
             asyncio.run(fake_redis.publish(channel, json.dumps({"type": event_type, "order_id": "order-1"})))
             message = websocket.receive_json()

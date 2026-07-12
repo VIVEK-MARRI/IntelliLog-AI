@@ -26,6 +26,8 @@ os.environ.setdefault(
     "postgresql+asyncpg://intelliglog:dev-password@localhost:5432/intelliglog",
 )
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
+# Raise rate limit so performance tests (500 rapid requests) don't hit 429
+os.environ.setdefault("RATE_LIMIT_POSITION_PER_MINUTE", "100000")
 
 import numpy as np
 import pytest

@@ -475,7 +475,7 @@ def train_model(
         )
     
     print(f"\nModel F1: {metrics_test['f1']:.4f}")
-    print(f"✓ Model beats naive baseline!")
+    print(f"[OK] Model beats naive baseline!")
     
     # ===== SHAP Explainability =====
     print("\nComputing SHAP values...")
@@ -557,8 +557,8 @@ def train_model(
     with open(output_path / "training_metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
     
-    print(f"✓ Model saved to {output_path / 'model.joblib'}")
-    print(f"✓ Metadata saved to {output_path / 'training_metadata.json'}")
+    print(f"[OK] Model saved to {output_path / 'model.joblib'}")
+    print(f"[OK] Metadata saved to {output_path / 'training_metadata.json'}")
     
     # ===== MLflow Tracking =====
     if mlflow_tracking:
@@ -591,7 +591,7 @@ def train_model(
                 "feature_set_version": "v1",
             })
         
-        print("✓ Run logged to MLflow")
+        print("[OK] Run logged to MLflow")
     
     print("\n" + "=" * 80)
     print("Training Complete!")

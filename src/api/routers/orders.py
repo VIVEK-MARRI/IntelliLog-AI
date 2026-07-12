@@ -430,12 +430,17 @@ async def update_position(
     risk_score_str = await redis_client.hget(f"order:{order_id}", "risk_score")
     risk_score = float(risk_score_str) if risk_score_str else 0.5
 
+    # Resolve driver_id for the agent graph (requires it to be non-empty)
+    # It was stored in the Redis hash at order creation time.
+    driver_id = await redis_client.hget(f"order:{order_id}", "driver_id") or ""
+
     # Publish to Redis Streams (agent will consume)
     await redis_client.xadd(
         "gps_pings",
         {
             "order_id": order_id,
             "tenant_id": current_tenant.tenant_id,
+            "driver_id": driver_id,
             "latitude": str(request.latitude),
             "longitude": str(request.longitude),
             "speed_kmh": str(request.speed_kmh),

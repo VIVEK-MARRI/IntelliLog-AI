@@ -58,6 +58,13 @@ const AIWorkspacePage = lazyWithRetry(() => import('@/pages/AIWorkspace').then(m
     console.warn(`[LazyLoad] AIWorkspace chunk load failed (attempt ${attempt}):`, error.message)
   },
 })
+const DriverDetailPage = lazyWithRetry(() => import('@/pages/DriverDetail').then(m => ({ default: m.DriverDetail })), {
+  retries: 3,
+  delay: 1000,
+  onError: (error, attempt) => {
+    console.warn(`[LazyLoad] DriverDetail chunk load failed (attempt ${attempt}):`, error.message)
+  },
+})
 
 const PageLoader: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
   <div className="flex items-center justify-center h-screen bg-background">

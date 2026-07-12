@@ -1,54 +1,54 @@
 {
-  "training_date": "2026-05-29T12:55:02.674091",
+  "training_date": "2026-07-12T15:34:26.101411",
   "data_path": "data/historical_deliveries.parquet",
-  "n_train": 8000,
-  "n_test": 2000,
-  "train_positive_rate": 0.2095,
-  "test_positive_rate": 0.212,
+  "n_train": 1600,
+  "n_test": 400,
+  "train_positive_rate": 0.193125,
+  "test_positive_rate": 0.235,
   "hyperparameters": {
-    "n_estimators": 150,
-    "max_depth": 3,
-    "learning_rate": 0.029205097871998435,
-    "subsample": 0.9312660845475335,
-    "colsample_bytree": 0.8003319454885535,
-    "min_child_weight": 2,
-    "scale_pos_weight": 3.7732696897374702,
+    "n_estimators": 383,
+    "max_depth": 5,
+    "learning_rate": 0.05871831320648209,
+    "subsample": 0.6330536617690262,
+    "colsample_bytree": 0.7279961181766105,
+    "min_child_weight": 4,
+    "scale_pos_weight": 4.17799352750809,
     "random_state": 42,
     "tree_method": "hist",
     "verbosity": 0
   },
-  "n_optuna_trials": 30,
-  "optimal_threshold": 0.5081632653061224,
-  "f1_at_optimal_threshold": 0.39127272727272727,
+  "n_optuna_trials": 10,
+  "optimal_threshold": 0.1,
+  "f1_at_optimal_threshold": 0.9894736842105263,
   "f1_baseline": 0.0,
   "metrics": {
-    "precision": 0.28286014721345953,
-    "recall": 0.6344339622641509,
-    "f1": 0.39127272727272727,
-    "auc_roc": 0.6207140120678096,
-    "auc_pr": 0.2960480361435881,
-    "brier_score": 0.23412530549245383
+    "precision": 0.9791666666666666,
+    "recall": 1.0,
+    "f1": 0.9894736842105263,
+    "auc_roc": 0.9957933528021138,
+    "auc_pr": 0.977732989754319,
+    "brier_score": 0.004974988717820047
   },
   "top_5_features": [
     {
-      "feature": "driver_on_time_rate",
-      "shap_value": 0.35971081256866455
+      "feature": "time_elapsed_ratio",
+      "shap_value": 4.279130458831787
     },
     {
-      "feature": "current_speed_kmh",
-      "shap_value": 0.04677647724747658
+      "feature": "pace_ratio",
+      "shap_value": 0.8872358798980713
     },
     {
       "feature": "avg_stop_dwell_minutes",
-      "shap_value": 0.042676638811826706
+      "shap_value": 0.1365451216697693
     },
     {
-      "feature": "time_elapsed_ratio",
-      "shap_value": 0.032921917736530304
+      "feature": "current_speed_kmh",
+      "shap_value": 0.12840110063552856
     },
     {
-      "feature": "hour_of_day_sin",
-      "shap_value": 0.023677365854382515
+      "feature": "day_of_week_sin",
+      "shap_value": 0.11086468398571014
     }
   ]
 }

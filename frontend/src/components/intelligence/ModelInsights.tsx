@@ -146,7 +146,7 @@ export const ModelInsights: React.FC = () => {
 
   const batchResults = useMemo(() => {
     if (!batchQuery.data) return []
-    return Array.isArray(batchQuery.data) ? batchQuery.data : []
+    return Object.values(batchQuery.data)
   }, [batchQuery.data])
 
   const riskScores = useMemo(() => batchResults.map((r: any) => r.risk_score as number), [batchResults])
